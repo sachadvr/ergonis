@@ -22,37 +22,81 @@ const selectedGroupKey = ref<string | null>(null)
 const directionFilter = ref('all')
 const aiFilter = ref('all')
 const linkedFilter = ref('all')
-const senderFilter = ref('all')
+const companyFilter = ref('all')
 
 const previewBody = (body: string) => body.replace(/\s+/g, ' ').trim().slice(0, 100)
 
 const normalizeSubject = (subject: string) => subject.replace(/^(re|fw|fwd)\s*:\s*/gi, '').trim()
 
+const guessLinkedApplication = (email: RecruiterEmail | null): Application | null => {
+  if (!email) return null
+
+  const sender = email.sender.toLowerCase()
+  const subject = normalizeSubject(email.subject).toLowerCase()
+  const body = `${email.subject} ${email.body}`.toLowerCase()
+
+  const exactRecruiterMatch = applications.value.find((application) => {
+    const recruiterEmail = application.jobOffer?.recruiterContactEmail?.toLowerCase()
+    return recruiterEmail && recruiterEmail === sender
+  })
+
+  if (exactRecruiterMatch) return exactRecruiterMatch
+
+  const fuzzyMatch = applications.value.find((application) => {
+    return [application.companyName, application.jobTitle, application.jobOffer?.recruiterContactEmail || '']
+      .join(' ')
+      .toLowerCase()
+      .split(' ')
+      .some((token) => token.length > 3 && (subject.includes(token) || body.includes(token)))
+  })
+
+  return fuzzyMatch || null
+}
+
+const senderDomainFallback = (sender: string) => {
+  const domain = sender.split('@')[1] || sender
+  return domain.replace(/^www\./i, '')
+}
+
+const companyForEmail = (email: RecruiterEmail) => {
+  const linked = guessLinkedApplication(email)
+  if (linked?.companyName) return linked.companyName
+  return senderDomainFallback(email.sender)
+}
+
 const getGroupKey = (email: RecruiterEmail) => {
-  const rootSubject = normalizeSubject(email.subject).toLowerCase()
-  const mailbox = email.sender.toLowerCase()
-  return `${mailbox}__${rootSubject}`
+  return companyForEmail(email).toLowerCase()
 }
 
 const groupedEmails = computed(() => {
-  const groups = new Map<string, { key: string; label: string; secondary: string; emails: RecruiterEmail[]; lastReceivedAt: string }>()
+  const groups = new Map<string, {
+    key: string
+    label: string
+    secondary: string
+    emails: RecruiterEmail[]
+    lastReceivedAt: string
+    latestSubject: string
+  }>()
 
   for (const email of sortedEmails.value) {
     const key = getGroupKey(email)
+    const company = companyForEmail(email)
     const existing = groups.get(key)
 
     if (existing) {
       existing.emails.push(email)
       if (new Date(email.receivedAt).getTime() > new Date(existing.lastReceivedAt).getTime()) {
         existing.lastReceivedAt = email.receivedAt
+        existing.latestSubject = normalizeSubject(email.subject) || email.subject
       }
     } else {
       groups.set(key, {
         key,
-        label: normalizeSubject(email.subject) || email.subject,
+        label: company,
         secondary: email.sender,
         emails: [email],
         lastReceivedAt: email.receivedAt,
+        latestSubject: normalizeSubject(email.subject) || email.subject,
       })
     }
   }
@@ -62,9 +106,9 @@ const groupedEmails = computed(() => {
   )
 })
 
-const senderOptions = computed<SelectOption[]>(() => {
-  const senders = Array.from(new Set(sortedEmails.value.map((email) => email.sender))).sort()
-  return [{ value: 'all', label: 'All senders' }, ...senders.map((sender) => ({ value: sender, label: sender }))]
+const companyOptions = computed<SelectOption[]>(() => {
+  const companies = Array.from(new Set(sortedEmails.value.map((email) => companyForEmail(email)))).sort()
+  return [{ value: 'all', label: 'All companies' }, ...companies.map((company) => ({ value: company, label: company }))]
 })
 
 const directionOptions: SelectOption[] = [
@@ -102,9 +146,9 @@ const filteredGroups = computed(() => {
     const matchesLinked = linkedFilter.value === 'all'
       || (linkedFilter.value === 'linked' && hasLinkedApplication)
       || (linkedFilter.value === 'unlinked' && !hasLinkedApplication)
-    const matchesSender = senderFilter.value === 'all' || group.secondary === senderFilter.value
+    const matchesCompany = companyFilter.value === 'all' || group.label === companyFilter.value
 
-    return matchesSearch && matchesDirection && matchesAi && matchesLinked && matchesSender
+    return matchesSearch && matchesDirection && matchesAi && matchesLinked && matchesCompany
   })
 })
 
@@ -119,31 +163,6 @@ const selectedEmail = computed<RecruiterEmail | null>(() => {
   const current = emailsInSelectedGroup.value.find((email) => email.id === selectedEmailId.value)
   return current ?? emailsInSelectedGroup.value[0] ?? null
 })
-
-const guessLinkedApplication = (email: RecruiterEmail | null): Application | null => {
-  if (!email) return null
-
-  const sender = email.sender.toLowerCase()
-  const subject = normalizeSubject(email.subject).toLowerCase()
-  const body = `${email.subject} ${email.body}`.toLowerCase()
-
-  const exactRecruiterMatch = applications.value.find((application) => {
-    const recruiterEmail = application.jobOffer?.recruiterContactEmail?.toLowerCase()
-    return recruiterEmail && recruiterEmail === sender
-  })
-
-  if (exactRecruiterMatch) return exactRecruiterMatch
-
-  const fuzzyMatch = applications.value.find((application) => {
-    return [application.companyName, application.jobTitle, application.jobOffer?.recruiterContactEmail || '']
-      .join(' ')
-      .toLowerCase()
-      .split(' ')
-      .some((token) => token.length > 3 && (subject.includes(token) || body.includes(token)))
-  })
-
-  return fuzzyMatch || null
-}
 
 const linkedApplication = computed(() => guessLinkedApplication(selectedEmail.value))
 
@@ -206,16 +225,16 @@ onMounted(() => {
     <div class="grid flex-1 gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
       <Card class="flex min-h-0 flex-col overflow-hidden">
         <CardHeader class="border-b border-border pb-4">
-          <CardTitle class="text-lg">Grouped Inbox</CardTitle>
+          <CardTitle class="text-lg">Company Inbox</CardTitle>
           <div class="relative mt-3">
             <Search :size="16" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input v-model="search" placeholder="Search mailbox or thread" class="pl-9" />
+            <Input v-model="search" placeholder="Search company or message" class="pl-9" />
           </div>
           <div class="mt-4 grid gap-3 sm:grid-cols-2">
             <Select v-model="directionFilter" :options="directionOptions" />
             <Select v-model="aiFilter" :options="aiOptions" />
             <Select v-model="linkedFilter" :options="linkedOptions" />
-            <Select v-model="senderFilter" :options="senderOptions" />
+            <Select v-model="companyFilter" :options="companyOptions" />
           </div>
         </CardHeader>
         <CardContent class="min-h-0 flex-1 overflow-y-auto p-0">
@@ -229,17 +248,19 @@ onMounted(() => {
             @click="selectedGroupKey = group.key"
           >
             <div class="flex items-start justify-between gap-3">
-              <span class="truncate text-sm font-semibold">{{ group.secondary }}</span>
+              <span class="truncate text-sm font-semibold">{{ group.label }}</span>
               <span class="shrink-0 text-xs text-muted-foreground">{{ format(new Date(group.lastReceivedAt), 'dd/MM') }}</span>
             </div>
             <div class="flex items-center justify-between gap-3">
-              <div class="truncate text-sm font-medium">{{ group.label }}</div>
+              <div class="truncate text-sm font-medium text-muted-foreground">{{ group.latestSubject }}</div>
               <div class="flex items-center gap-2 text-xs text-muted-foreground">
                 <span>{{ group.emails.length }}</span>
                 <ChevronRight :size="14" />
               </div>
             </div>
-            <div class="line-clamp-2 text-xs text-muted-foreground">{{ previewBody(group.emails[0]?.body || '') }}</div>
+            <div class="line-clamp-2 text-xs text-muted-foreground">
+              {{ group.emails[0]?.sender }} - {{ previewBody(group.emails[0]?.body || '') }}
+            </div>
           </button>
 
           <div v-if="!isLoading && filteredGroups.length === 0" class="p-6 text-sm text-muted-foreground">

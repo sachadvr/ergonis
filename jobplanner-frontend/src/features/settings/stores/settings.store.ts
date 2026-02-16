@@ -34,7 +34,6 @@ export const useSettingsStore = defineStore('settings', () => {
 
   async function saveMailboxSettings(data: Partial<UserMailboxSettings>) {
     try {
-      isLoading.value = true
       error.value = null
 
       let saved: UserMailboxSettings
@@ -54,13 +53,12 @@ export const useSettingsStore = defineStore('settings', () => {
       console.error('Error saving mailbox settings:', e)
       throw e
     } finally {
-      isLoading.value = false
+      // Handled locally in component
     }
   }
 
   async function saveFollowUpRule(id: number, data: Partial<FollowUpRule>) {
     try {
-      isLoading.value = true
       error.value = null
 
       const saved = await settingsApi.updateFollowUpRule(id, data)
@@ -75,7 +73,21 @@ export const useSettingsStore = defineStore('settings', () => {
       console.error('Error saving follow-up rule:', e)
       throw e
     } finally {
-      isLoading.value = false
+      // Handled locally in component
+    }
+  }
+
+  async function testMailboxConnection(): Promise<{ success: boolean; message: string }> {
+    try {
+      error.value = null
+      return await settingsApi.testMailboxConnection()
+    } catch (e) {
+      const err = e as { success?: boolean; message?: string }
+      const result = { 
+        success: err.success ?? false, 
+        message: err.message ?? 'Failed to test connection' 
+      }
+      return result
     }
   }
 
@@ -88,5 +100,6 @@ export const useSettingsStore = defineStore('settings', () => {
     fetchSettings,
     saveMailboxSettings,
     saveFollowUpRule,
+    testMailboxConnection,
   }
 })

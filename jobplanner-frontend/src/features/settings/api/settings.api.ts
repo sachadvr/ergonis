@@ -1,6 +1,7 @@
 import type { AppConfig, FollowUpRule, UserMailboxSettings } from '@/types/models.types'
 import type { PaginatedResponse } from '@/types/api.types'
 import { apiClient } from '@/lib/api/client'
+import type { User } from '@/types/models.types'
 import { API_ENDPOINTS } from '@/lib/constants/api.constants'
 
 export const settingsApi = {
@@ -31,7 +32,7 @@ export const settingsApi = {
       method: 'POST',
       body: data,
       headers: {
-        'Content-Type': 'application/ld+json',
+        'Content-Type': 'application/merge-patch+json',
       },
     })
   },
@@ -43,6 +44,35 @@ export const settingsApi = {
       headers: {
         'Content-Type': 'application/ld+json',
       },
+    })
+  },
+
+  async testMailboxConnection(): Promise<{ success: boolean; message: string }> {
+    return apiClient(API_ENDPOINTS.SETTINGS.MAILBOX_TEST, {
+      method: 'POST',
+      retry: 0,
+    })
+  },
+
+  async getGoogleAuthUrl(): Promise<{ url: string }> {
+    return apiClient('/api/auth/google/url')
+  },
+
+  async confirmGoogleAuth(code: string): Promise<{ success: boolean; email: string; token?: string; user?: User }> {
+    return apiClient('/api/auth/google/callback', {
+      method: 'POST',
+      body: { code },
+    })
+  },
+
+  async getMicrosoftAuthUrl(): Promise<{ url: string }> {
+    return apiClient('/api/auth/microsoft/url')
+  },
+
+  async confirmMicrosoftAuth(code: string): Promise<{ success: boolean; email: string; token?: string; user?: User }> {
+    return apiClient('/api/auth/microsoft/callback', {
+      method: 'POST',
+      body: { code },
     })
   },
 }

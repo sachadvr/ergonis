@@ -139,6 +139,8 @@ export interface UserMailboxSettings {
   smtpUser?: string
   smtpPassword?: string
   isActive: boolean
+  oauthProvider?: string
+  tokenExpiresAt?: string
   createdAt: string
   updatedAt?: string
 }

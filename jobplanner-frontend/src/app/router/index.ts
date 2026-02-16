@@ -18,6 +18,18 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/features/auth/views/RegisterView.vue'),
         meta: { requiresAuth: false },
       },
+      {
+        path: 'google/callback',
+        name: 'GoogleCallback',
+        component: () => import('@/features/settings/views/GoogleCallbackView.vue'),
+        meta: { requiresAuth: false },
+      },
+      {
+        path: 'microsoft/callback',
+        name: 'MicrosoftCallback',
+        component: () => import('@/features/settings/views/MicrosoftCallbackView.vue'),
+        meta: { requiresAuth: false },
+      },
     ],
   },
   {
@@ -60,6 +72,7 @@ const routes: RouteRecordRaw[] = [
         name: 'Settings',
         component: () => import('@/features/settings/views/SettingsView.vue'),
       },
+
     ],
   },
   {
@@ -90,6 +103,11 @@ router.beforeEach(async (to, _from, next) => {
   } else {
     next()
   }
+})
+
+// Handle unauthorized event from apiClient without full page reload
+window.addEventListener('auth:unauthorized', () => {
+  router.push({ name: 'Login' })
 })
 
 export default router

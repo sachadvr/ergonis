@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { format } from 'date-fns'
@@ -10,6 +10,7 @@ import {
   ExternalLink,
   Mail,
   MapPin,
+  GripVertical,
   ScrollText,
   Sparkles,
   Target,
@@ -18,18 +19,54 @@ import { useApplicationsStore } from '../stores/applications.store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import ApplicationFormDialog from '../components/ApplicationFormDialog.vue'
 import { interviewsApi } from '@/features/interviews/api/interviews.api'
 import { extractIdFromIri } from '@/lib/api/transforms'
-import type { Application, Interview } from '@/types/models.types'
+import type { Application, ApplicationFormValues, Interview } from '@/types/models.types'
 
 const route = useRoute()
 const router = useRouter()
 const applicationsStore = useApplicationsStore()
 const { currentApplication, isLoading } = storeToRefs(applicationsStore)
 
-const isDialogOpen = ref(false)
+type EditorBlock = 'notes' | 'interviewPrep'
+type BlockId =
+  | 'overview'
+  | 'recruiterEmails'
+  | 'notes'
+  | 'interviewPrep'
+  | 'metadata'
+  | 'interviews'
+  | 'followups'
+  | 'history'
+
 const detailedInterviews = ref<Interview[]>([])
+const editableForm = ref<ApplicationFormValues | null>(null)
+const inlineSaveState = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
+const activeEditor = ref<EditorBlock | null>(null)
+const saveErrorMessage = ref('')
+const jobTitleEditorRef = ref<HTMLElement | null>(null)
+const companyEditorRef = ref<HTMLElement | null>(null)
+const locationEditorRef = ref<HTMLElement | null>(null)
+const jobUrlEditorRef = ref<HTMLElement | null>(null)
+const notesEditorRef = ref<HTMLElement | null>(null)
+const interviewPrepEditorRef = ref<HTMLElement | null>(null)
+const blockOrder = ref<BlockId[]>([
+  'overview',
+  'recruiterEmails',
+  'notes',
+  'interviewPrep',
+  'metadata',
+  'interviews',
+  'followups',
+  'history',
+])
+const draggedBlock = ref<BlockId | null>(null)
+const dragOverTarget = ref<BlockId | null>(null)
+
+let notesDraftHtml = ''
+let interviewPrepDraftHtml = ''
+let saveDebounceTimer: ReturnType<typeof setTimeout> | null = null
+let saveStateTimer: ReturnType<typeof setTimeout> | null = null
 
 const applicationId = computed(() => String(route.params.id))
 
@@ -84,9 +121,235 @@ const interviewsToDisplay = computed(() => {
   return objectInterviews.length ? objectInterviews : detailedInterviews.value
 })
 
+const toEditableForm = (application: Application): ApplicationFormValues => ({
+  jobTitle: application.jobTitle,
+  companyName: application.companyName,
+  location: application.location || '',
+  status: application.status,
+  jobUrl: application.url || '',
+  salaryMin: application.salaryMin,
+  salaryMax: application.salaryMax,
+  notes: application.notes || '',
+  appliedAt: application.appliedAt,
+  pipelinePosition: application.pipelinePosition,
+  recruiterContactEmail: application.jobOffer?.recruiterContactEmail || '',
+  sourceUrl: application.jobOffer?.sourceUrl || '',
+  interviewPrep: application.jobOffer?.interviewPrep || '',
+})
+
+const hasInlineChanges = computed(() => {
+  if (!currentApplication.value || !editableForm.value) return false
+  const live = toEditableForm(currentApplication.value)
+  const draft = {
+    ...editableForm.value,
+    notes: notesDraftHtml,
+    interviewPrep: interviewPrepDraftHtml,
+  }
+  return JSON.stringify(live) !== JSON.stringify(draft)
+})
+
+const canManualSave = computed(() => inlineSaveState.value !== 'saving')
+
+const normalizeInlineText = (value: string) => value.replace(/\n+/g, ' ').trim()
+
+const syncPlainField = (field: keyof ApplicationFormValues, editor: HTMLElement | null) => {
+  if (!editableForm.value || !editor) return
+  editableForm.value[field] = normalizeInlineText(editor.innerText) as never
+}
+
+const syncAllEditableDrafts = () => {
+  syncPlainField('jobTitle', jobTitleEditorRef.value)
+  syncPlainField('companyName', companyEditorRef.value)
+  syncPlainField('location', locationEditorRef.value)
+  syncPlainField('jobUrl', jobUrlEditorRef.value)
+  syncEditorDraft('notes')
+  syncEditorDraft('interviewPrep')
+}
+
+const queueSave = () => {
+  if (saveDebounceTimer) {
+    clearTimeout(saveDebounceTimer)
+  }
+
+  saveDebounceTimer = setTimeout(() => {
+    saveInlineChanges()
+  }, 700)
+}
+
+const syncEditorDraft = (field: EditorBlock) => {
+  const editor = field === 'notes' ? notesEditorRef.value : interviewPrepEditorRef.value
+  if (!editor) return
+
+  if (field === 'notes') {
+    notesDraftHtml = editor.innerHTML
+    return
+  }
+
+  interviewPrepDraftHtml = editor.innerHTML
+}
+
+const saveInlineChanges = async () => {
+  syncAllEditableDrafts()
+
+  if (!currentApplication.value || !editableForm.value || !hasInlineChanges.value) return
+
+  if (saveDebounceTimer) {
+    clearTimeout(saveDebounceTimer)
+    saveDebounceTimer = null
+  }
+
+  if (saveStateTimer) {
+    clearTimeout(saveStateTimer)
+    saveStateTimer = null
+  }
+
+  inlineSaveState.value = 'saving'
+  saveErrorMessage.value = ''
+
+  try {
+    await applicationsStore.updateApplication(
+      currentApplication.value.id,
+      {
+        ...editableForm.value,
+        notes: notesDraftHtml,
+        interviewPrep: interviewPrepDraftHtml,
+      },
+      currentApplication.value.jobOffer?.id,
+    )
+    inlineSaveState.value = 'saved'
+    saveStateTimer = setTimeout(() => {
+      inlineSaveState.value = 'idle'
+    }, 1400)
+  } catch {
+    inlineSaveState.value = 'error'
+    saveErrorMessage.value = 'Could not save changes. Please retry.'
+  }
+}
+
+const handlePlainEditableInput = (field: keyof ApplicationFormValues, event: Event) => {
+  if (!editableForm.value) return
+
+  const content = normalizeInlineText((event.target as HTMLElement).innerText)
+  editableForm.value[field] = content as never
+  queueSave()
+}
+
+const commitInlineTextField = (field: keyof ApplicationFormValues, event: Event) => {
+  handlePlainEditableInput(field, event)
+  flushInlineSave()
+}
+
+const handleRichInput = (field: EditorBlock) => {
+  syncEditorDraft(field)
+  queueSave()
+}
+
+const flushInlineSave = () => {
+  saveInlineChanges()
+}
+
+const setActiveEditor = (field: EditorBlock) => {
+  activeEditor.value = field
+}
+
+const applyRichCommand = (command: string, value?: string) => {
+  if (!activeEditor.value) return
+  document.execCommand('styleWithCSS', false, 'true')
+  document.execCommand(command, false, value)
+  syncEditorDraft(activeEditor.value)
+  queueSave()
+}
+
+const highlightSelection = () => {
+  applyRichCommand('hiliteColor', '#fff2a8')
+}
+
+const getBlockOrderStyle = (blockId: BlockId) => ({
+  order: blockOrder.value.indexOf(blockId) + 1,
+})
+
+const handleDragStart = (blockId: BlockId, event: DragEvent) => {
+  draggedBlock.value = blockId
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+  }
+}
+
+const handleDragEnd = () => {
+  draggedBlock.value = null
+  dragOverTarget.value = null
+}
+
+const handleDragOver = (targetBlock: BlockId) => {
+  if (!draggedBlock.value || draggedBlock.value === targetBlock) return
+  dragOverTarget.value = targetBlock
+}
+
+const handleDragLeave = (targetBlock: BlockId) => {
+  if (dragOverTarget.value === targetBlock) {
+    dragOverTarget.value = null
+  }
+}
+
+const handleDrop = (targetBlock: BlockId) => {
+  if (!draggedBlock.value || draggedBlock.value === targetBlock) return
+
+  const fromIndex = blockOrder.value.indexOf(draggedBlock.value)
+  const toIndex = blockOrder.value.indexOf(targetBlock)
+
+  if (fromIndex !== -1 && toIndex !== -1) {
+    const [movedBlock] = blockOrder.value.splice(fromIndex, 1)
+    if (movedBlock) {
+      blockOrder.value.splice(toIndex, 0, movedBlock)
+    }
+  }
+
+  draggedBlock.value = null
+  dragOverTarget.value = null
+}
+
+const handleSaveShortcut = (event: KeyboardEvent) => {
+  const isSaveShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's'
+  if (!isSaveShortcut) return
+  event.preventDefault()
+  saveInlineChanges()
+}
+
+watch(currentApplication, (application) => {
+  if (!application || editableForm.value) return
+
+  editableForm.value = toEditableForm(application)
+
+  notesDraftHtml = application.notes || ''
+  interviewPrepDraftHtml = application.jobOffer?.interviewPrep || ''
+
+  nextTick(() => {
+    if (notesEditorRef.value) {
+      notesEditorRef.value.innerHTML = notesDraftHtml
+    }
+
+    if (interviewPrepEditorRef.value) {
+      interviewPrepEditorRef.value.innerHTML = interviewPrepDraftHtml
+    }
+  })
+})
+
 watch(applicationId, () => {
+  editableForm.value = null
+  notesDraftHtml = ''
+  interviewPrepDraftHtml = ''
   loadApplication()
 }, { immediate: true })
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleSaveShortcut)
+  if (saveDebounceTimer) clearTimeout(saveDebounceTimer)
+  if (saveStateTimer) clearTimeout(saveStateTimer)
+})
+
+onMounted(() => {
+  window.addEventListener('keydown', handleSaveShortcut)
+})
 </script>
 
 <template>
@@ -98,171 +361,353 @@ watch(applicationId, () => {
         </Button>
         <div>
           <p class="section-kicker mb-2">Application detail</p>
-          <h1 class="display-title text-4xl font-semibold">{{ currentApplication.jobTitle }}</h1>
-          <p class="mt-2 text-muted-foreground">{{ currentApplication.companyName }}</p>
+          <h1
+            ref="jobTitleEditorRef"
+            class="display-title editable-inline text-4xl font-semibold"
+            contenteditable="true"
+            @keydown.enter.prevent
+            @input="handlePlainEditableInput('jobTitle', $event)"
+            @blur="commitInlineTextField('jobTitle', $event)"
+          >{{ editableForm?.jobTitle || currentApplication.jobTitle }}</h1>
+          <p
+            ref="companyEditorRef"
+            class="editable-inline mt-2 text-muted-foreground"
+            contenteditable="true"
+            @keydown.enter.prevent
+            @input="handlePlainEditableInput('companyName', $event)"
+            @blur="commitInlineTextField('companyName', $event)"
+          >{{ editableForm?.companyName || currentApplication.companyName }}</p>
         </div>
       </div>
 
       <div class="flex items-center gap-3">
         <Badge :variant="statusVariant(currentApplication.status)">{{ statusLabel(currentApplication.status) }}</Badge>
-        <Button @click="isDialogOpen = true">Edit application</Button>
+        <Button
+          variant="outline"
+          size="sm"
+          :disabled="!canManualSave"
+          @click="saveInlineChanges"
+        >
+          Save
+        </Button>
+        <div v-if="inlineSaveState === 'saving'" class="text-xs text-muted-foreground">Saving...</div>
+        <div v-else-if="inlineSaveState === 'saved'" class="text-xs text-emerald-700">Saved</div>
+        <div v-else-if="inlineSaveState === 'error'" class="text-xs text-destructive">{{ saveErrorMessage }}</div>
       </div>
     </div>
 
-    <div class="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(340px,0.75fr)]">
-      <div class="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle class="flex items-center gap-2"><Building2 :size="18" /> Overview</CardTitle>
-          </CardHeader>
-          <CardContent class="grid gap-4 md:grid-cols-2">
-            <div class="rounded-2xl bg-secondary/50 p-4">
-              <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground">Company</div>
-              <div class="mt-2 text-lg font-semibold">{{ currentApplication.companyName }}</div>
-            </div>
-            <div class="rounded-2xl bg-secondary/50 p-4">
-              <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground">Pipeline position</div>
-              <div class="mt-2 text-lg font-semibold">{{ currentApplication.pipelinePosition }}</div>
-            </div>
-            <div v-if="currentApplication.location" class="rounded-2xl bg-secondary/50 p-4">
-              <div class="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-muted-foreground"><MapPin :size="14" /> Location</div>
-              <div class="mt-2 text-base font-medium">{{ currentApplication.location }}</div>
-            </div>
-            <div v-if="currentApplication.appliedAt" class="rounded-2xl bg-secondary/50 p-4">
-              <div class="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-muted-foreground"><CalendarDays :size="14" /> Applied at</div>
-              <div class="mt-2 text-base font-medium">{{ formatDate(currentApplication.appliedAt) }}</div>
-            </div>
-            <div v-if="currentApplication.url" class="rounded-2xl bg-secondary/50 p-4 md:col-span-2">
-              <div class="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-muted-foreground"><ExternalLink :size="14" /> Job URL</div>
-              <a :href="currentApplication.url" target="_blank" rel="noreferrer" class="mt-2 inline-flex items-center gap-2 text-base font-medium text-primary hover:underline">
-                Open posting
-                <ExternalLink :size="14" />
-              </a>
-            </div>
-          </CardContent>
-        </Card>
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <Card
+        :class="['cursor-default', dragOverTarget === 'overview' ? 'drag-over-card' : '']"
+        :style="getBlockOrderStyle('overview')"
+        @dragenter.prevent="handleDragOver('overview')"
+        @dragover.prevent="handleDragOver('overview')"
+        @dragleave="handleDragLeave('overview')"
+        @drop="handleDrop('overview')"
+      >
+        <CardHeader class="flex flex-row items-center justify-between gap-4">
+          <CardTitle class="flex items-center gap-2"><Building2 :size="18" /> Overview</CardTitle>
+          <button type="button" class="drag-handle" draggable="true" title="Drag to reorder" @dragstart="handleDragStart('overview', $event)" @dragend="handleDragEnd">
+            <GripVertical :size="16" />
+          </button>
+        </CardHeader>
+        <CardContent class="grid gap-4 md:grid-cols-2">
+          <div class="rounded-2xl bg-secondary/50 p-4">
+            <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground">Company</div>
+            <div class="mt-2 text-lg font-semibold">{{ editableForm?.companyName || currentApplication.companyName }}</div>
+          </div>
+          <div class="rounded-2xl bg-secondary/50 p-4">
+            <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground">Pipeline position</div>
+            <div class="mt-2 text-lg font-semibold">{{ currentApplication.pipelinePosition }}</div>
+          </div>
+          <div class="rounded-2xl bg-secondary/50 p-4">
+            <div class="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-muted-foreground"><MapPin :size="14" /> Location</div>
+            <div ref="locationEditorRef" class="editable-inline mt-2 text-base font-medium" data-placeholder="Add a location" contenteditable="true" @keydown.enter.prevent @input="handlePlainEditableInput('location', $event)" @blur="commitInlineTextField('location', $event)">{{ editableForm?.location }}</div>
+          </div>
+          <div v-if="currentApplication.appliedAt" class="rounded-2xl bg-secondary/50 p-4">
+            <div class="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-muted-foreground"><CalendarDays :size="14" /> Applied at</div>
+            <div class="mt-2 text-base font-medium">{{ formatDate(currentApplication.appliedAt) }}</div>
+          </div>
+          <div class="rounded-2xl bg-secondary/50 p-4 md:col-span-2">
+            <div class="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-muted-foreground"><ExternalLink :size="14" /> Job URL</div>
+            <div ref="jobUrlEditorRef" class="editable-inline mt-2 text-base font-medium" data-placeholder="Paste job posting URL" contenteditable="true" @keydown.enter.prevent @input="handlePlainEditableInput('jobUrl', $event)" @blur="commitInlineTextField('jobUrl', $event)">{{ editableForm?.jobUrl }}</div>
+            <a v-if="editableForm?.jobUrl" :href="editableForm.jobUrl" target="_blank" rel="noreferrer" class="mt-2 inline-flex items-center gap-2 text-base font-medium text-primary hover:underline">
+              Open posting
+              <ExternalLink :size="14" />
+            </a>
+          </div>
+        </CardContent>
+      </Card>
 
-        <Card v-if="currentApplication.notes">
-          <CardHeader>
-            <CardTitle class="flex items-center gap-2"><ScrollText :size="18" /> Notes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div class="whitespace-pre-wrap text-sm leading-7 text-foreground">{{ currentApplication.notes }}</div>
-          </CardContent>
-        </Card>
-
-        <Card v-if="currentApplication.jobOffer?.interviewPrep">
-          <CardHeader>
-            <CardTitle class="flex items-center gap-2"><Target :size="18" /> Interview prep</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div class="whitespace-pre-wrap text-sm leading-7 text-foreground">{{ currentApplication.jobOffer.interviewPrep }}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Recruiter Emails</CardTitle>
-          </CardHeader>
-          <CardContent class="space-y-4">
-            <div v-if="!currentApplication.recruiterEmails?.length" class="text-sm text-muted-foreground">No recruiter emails yet.</div>
-            <div
-              v-for="email in currentApplication.recruiterEmails"
-              :key="email.id"
-              class="rounded-[1.25rem] border border-border/80 bg-card/70 p-4"
-            >
-              <div class="flex items-start justify-between gap-4">
-                <div>
-                  <div class="font-medium text-foreground">{{ email.subject }}</div>
-                  <div class="mt-1 flex items-center gap-2 text-sm text-muted-foreground"><Mail :size="14" /> {{ email.sender }}</div>
-                </div>
-                <div class="text-xs text-muted-foreground">{{ format(new Date(email.receivedAt), 'PP p') }}</div>
+      <Card
+        :class="['cursor-default', dragOverTarget === 'recruiterEmails' ? 'drag-over-card' : '']"
+        :style="getBlockOrderStyle('recruiterEmails')"
+        @dragenter.prevent="handleDragOver('recruiterEmails')"
+        @dragover.prevent="handleDragOver('recruiterEmails')"
+        @dragleave="handleDragLeave('recruiterEmails')"
+        @drop="handleDrop('recruiterEmails')"
+      >
+        <CardHeader class="flex flex-row items-center justify-between gap-4">
+          <CardTitle>Recruiter Emails</CardTitle>
+          <button type="button" class="drag-handle" draggable="true" title="Drag to reorder" @dragstart="handleDragStart('recruiterEmails', $event)" @dragend="handleDragEnd">
+            <GripVertical :size="16" />
+          </button>
+        </CardHeader>
+        <CardContent class="space-y-4">
+          <div v-if="!currentApplication.recruiterEmails?.length" class="text-sm text-muted-foreground">No recruiter emails yet.</div>
+          <div v-for="email in currentApplication.recruiterEmails" :key="email.id" class="rounded-[1.25rem] border border-border/80 bg-card/70 p-4">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <div class="font-medium text-foreground">{{ email.subject }}</div>
+                <div class="mt-1 flex items-center gap-2 text-sm text-muted-foreground"><Mail :size="14" /> {{ email.sender }}</div>
               </div>
-              <div class="mt-3 whitespace-pre-wrap text-sm leading-6 text-foreground">{{ email.body }}</div>
-              <div v-if="email.aiSummary" class="mt-3 rounded-xl bg-accent/40 p-3 text-sm text-muted-foreground">
-                <div class="mb-1 flex items-center gap-2 font-medium text-foreground"><Sparkles :size="14" /> AI Summary</div>
-                {{ email.aiSummary }}
-              </div>
+              <div class="text-xs text-muted-foreground">{{ format(new Date(email.receivedAt), 'PP p') }}</div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            <div class="mt-3 whitespace-pre-wrap text-sm leading-6 text-foreground">{{ email.body }}</div>
+            <div v-if="email.aiSummary" class="mt-3 rounded-xl bg-accent/40 p-3 text-sm text-muted-foreground border">
+              <div class="mb-1 flex items-center gap-2 font-medium text-foreground"><Sparkles :size="14" /> AI Summary</div>
+              {{ email.aiSummary }}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-      <div class="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Application Metadata</CardTitle>
-          </CardHeader>
-          <CardContent class="space-y-4 text-sm">
-            <div class="flex items-center justify-between"><span class="text-muted-foreground">Created</span><strong>{{ formatDateTime(currentApplication.createdAt) }}</strong></div>
-            <div v-if="currentApplication.lastActivityAt" class="flex items-center justify-between"><span class="text-muted-foreground">Last activity</span><strong>{{ formatDateTime(currentApplication.lastActivityAt) }}</strong></div>
-            <div v-if="currentApplication.jobOffer?.sourceUrl" class="space-y-2">
-              <div class="text-muted-foreground">Source URL</div>
-              <a :href="currentApplication.jobOffer.sourceUrl" target="_blank" rel="noreferrer" class="inline-flex items-center gap-2 text-primary hover:underline">
-                {{ currentApplication.jobOffer.sourceUrl }}
-              </a>
-            </div>
-            <div v-if="currentApplication.jobOffer?.recruiterContactEmail" class="space-y-2">
-              <div class="text-muted-foreground">Recruiter contact</div>
-              <div class="font-medium">{{ currentApplication.jobOffer.recruiterContactEmail }}</div>
-            </div>
-          </CardContent>
-        </Card>
+      <Card
+        :class="['cursor-default', dragOverTarget === 'notes' ? 'drag-over-card' : '']"
+        :style="getBlockOrderStyle('notes')"
+        @dragenter.prevent="handleDragOver('notes')"
+        @dragover.prevent="handleDragOver('notes')"
+        @dragleave="handleDragLeave('notes')"
+        @drop="handleDrop('notes')"
+      >
+        <CardHeader class="flex flex-row items-center justify-between gap-4">
+          <CardTitle class="flex items-center gap-2"><ScrollText :size="18" /> Notes</CardTitle>
+          <div class="flex items-center gap-2">
+            <button type="button" class="drag-handle" draggable="true" title="Drag to reorder" @dragstart="handleDragStart('notes', $event)" @dragend="handleDragEnd">
+              <GripVertical :size="16" />
+            </button>
+            <button type="button" class="editor-action" @click="applyRichCommand('bold')">Bold</button>
+            <button type="button" class="editor-action" @click="applyRichCommand('italic')">Italic</button>
+            <button type="button" class="editor-action" @click="highlightSelection">Highlight</button>
+            <button type="button" class="editor-action" @click="applyRichCommand('insertUnorderedList')">Bullets</button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div ref="notesEditorRef" class="rich-editor text-sm leading-7 text-foreground" data-placeholder="Write notes, format text, and highlight key points..." contenteditable="true" @focus="setActiveEditor('notes')" @input="handleRichInput('notes')" @blur="flushInlineSave"></div>
+        </CardContent>
+      </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Interviews</CardTitle>
-          </CardHeader>
-          <CardContent class="space-y-3">
-            <div v-if="!interviewsToDisplay.length" class="text-sm text-muted-foreground">No interviews recorded.</div>
-            <div v-for="interview in interviewsToDisplay" :key="interview.id" class="rounded-2xl bg-secondary/50 p-4 text-sm">
-              <div class="font-medium">{{ format(new Date(interview.scheduledAt), 'PPP p') }}</div>
-              <div class="mt-1 text-muted-foreground">{{ interview.type }}</div>
-              <div v-if="interview.locationOrLink" class="mt-2 text-muted-foreground">{{ interview.locationOrLink }}</div>
-              <div v-if="interview.notes" class="mt-2 whitespace-pre-wrap text-foreground">{{ interview.notes }}</div>
-            </div>
-          </CardContent>
-        </Card>
+      <Card
+        :class="['cursor-default', dragOverTarget === 'interviewPrep' ? 'drag-over-card' : '']"
+        :style="getBlockOrderStyle('interviewPrep')"
+        @dragenter.prevent="handleDragOver('interviewPrep')"
+        @dragover.prevent="handleDragOver('interviewPrep')"
+        @dragleave="handleDragLeave('interviewPrep')"
+        @drop="handleDrop('interviewPrep')"
+      >
+        <CardHeader class="flex flex-row items-center justify-between gap-4">
+          <CardTitle class="flex items-center gap-2"><Target :size="18" /> Interview prep</CardTitle>
+          <div class="flex items-center gap-2">
+            <button type="button" class="drag-handle" draggable="true" title="Drag to reorder" @dragstart="handleDragStart('interviewPrep', $event)" @dragend="handleDragEnd">
+              <GripVertical :size="16" />
+            </button>
+            <button type="button" class="editor-action" @click="applyRichCommand('bold')">Bold</button>
+            <button type="button" class="editor-action" @click="applyRichCommand('italic')">Italic</button>
+            <button type="button" class="editor-action" @click="highlightSelection">Highlight</button>
+            <button type="button" class="editor-action" @click="applyRichCommand('insertUnorderedList')">Bullets</button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div ref="interviewPrepEditorRef" class="rich-editor text-sm leading-7 text-foreground" data-placeholder="Capture prep notes, likely questions, and talking points..." contenteditable="true" @focus="setActiveEditor('interviewPrep')" @input="handleRichInput('interviewPrep')" @blur="flushInlineSave"></div>
+        </CardContent>
+      </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Scheduled Follow-ups</CardTitle>
-          </CardHeader>
-          <CardContent class="space-y-3">
-            <div v-if="!currentApplication.scheduledFollowUps?.length" class="text-sm text-muted-foreground">No scheduled follow-ups.</div>
-            <div v-for="followUp in currentApplication.scheduledFollowUps" :key="followUp.id" class="rounded-2xl bg-secondary/50 p-4 text-sm">
-              <div class="font-medium">{{ format(new Date(followUp.scheduledAt), 'PPP p') }}</div>
-              <div class="mt-1 text-muted-foreground">{{ followUp.status }}</div>
-              <div v-if="followUp.generatedContent" class="mt-2 whitespace-pre-wrap text-foreground">{{ followUp.generatedContent }}</div>
-            </div>
-          </CardContent>
-        </Card>
+      <Card
+        :class="['cursor-default', dragOverTarget === 'metadata' ? 'drag-over-card' : '']"
+        :style="getBlockOrderStyle('metadata')"
+        @dragenter.prevent="handleDragOver('metadata')"
+        @dragover.prevent="handleDragOver('metadata')"
+        @dragleave="handleDragLeave('metadata')"
+        @drop="handleDrop('metadata')"
+      >
+        <CardHeader class="flex flex-row items-center justify-between gap-4">
+          <CardTitle>Application Metadata</CardTitle>
+          <button type="button" class="drag-handle" draggable="true" title="Drag to reorder" @dragstart="handleDragStart('metadata', $event)" @dragend="handleDragEnd">
+            <GripVertical :size="16" />
+          </button>
+        </CardHeader>
+        <CardContent class="space-y-4 text-sm">
+          <div class="flex items-center justify-between"><span class="text-muted-foreground">Created</span><strong>{{ formatDateTime(currentApplication.createdAt) }}</strong></div>
+          <div v-if="currentApplication.lastActivityAt" class="flex items-center justify-between"><span class="text-muted-foreground">Last activity</span><strong>{{ formatDateTime(currentApplication.lastActivityAt) }}</strong></div>
+          <div v-if="currentApplication.jobOffer?.sourceUrl" class="space-y-2">
+            <div class="text-muted-foreground">Source URL</div>
+            <a :href="currentApplication.jobOffer.sourceUrl" target="_blank" rel="noreferrer" class="inline-flex items-center gap-2 text-primary hover:underline">
+              {{ currentApplication.jobOffer.sourceUrl }}
+            </a>
+          </div>
+          <div v-if="currentApplication.jobOffer?.recruiterContactEmail" class="space-y-2">
+            <div class="text-muted-foreground">Recruiter contact</div>
+            <div class="font-medium">{{ currentApplication.jobOffer.recruiterContactEmail }}</div>
+          </div>
+        </CardContent>
+      </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>History</CardTitle>
-          </CardHeader>
-          <CardContent class="space-y-3">
-            <div v-if="!currentApplication.history?.length" class="text-sm text-muted-foreground">No history yet.</div>
-            <div v-for="entry in currentApplication.history" :key="entry.id" class="rounded-2xl bg-secondary/50 p-4 text-sm">
-              <div class="font-medium text-foreground">{{ entry.actionType }}</div>
-              <div v-if="entry.description" class="mt-1 text-muted-foreground">{{ entry.description }}</div>
-              <div class="mt-2 text-xs text-muted-foreground">{{ format(new Date(entry.createdAt), 'PP p') }}</div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Card
+        :class="['cursor-default', dragOverTarget === 'interviews' ? 'drag-over-card' : '']"
+        :style="getBlockOrderStyle('interviews')"
+        @dragenter.prevent="handleDragOver('interviews')"
+        @dragover.prevent="handleDragOver('interviews')"
+        @dragleave="handleDragLeave('interviews')"
+        @drop="handleDrop('interviews')"
+      >
+        <CardHeader class="flex flex-row items-center justify-between gap-4">
+          <CardTitle>Interviews</CardTitle>
+          <button type="button" class="drag-handle" draggable="true" title="Drag to reorder" @dragstart="handleDragStart('interviews', $event)" @dragend="handleDragEnd">
+            <GripVertical :size="16" />
+          </button>
+        </CardHeader>
+        <CardContent class="space-y-3">
+          <div v-if="!interviewsToDisplay.length" class="text-sm text-muted-foreground">No interviews recorded.</div>
+          <div v-for="interview in interviewsToDisplay" :key="interview.id" class="rounded-2xl bg-secondary/50 p-4 text-sm">
+            <div class="font-medium">{{ format(new Date(interview.scheduledAt), 'PPP p') }}</div>
+            <div class="mt-1 text-muted-foreground">{{ interview.type }}</div>
+            <div v-if="interview.locationOrLink" class="mt-2 text-muted-foreground">{{ interview.locationOrLink }}</div>
+            <div v-if="interview.notes" class="mt-2 whitespace-pre-wrap text-foreground">{{ interview.notes }}</div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card
+        :class="['cursor-default', dragOverTarget === 'followups' ? 'drag-over-card' : '']"
+        :style="getBlockOrderStyle('followups')"
+        @dragenter.prevent="handleDragOver('followups')"
+        @dragover.prevent="handleDragOver('followups')"
+        @dragleave="handleDragLeave('followups')"
+        @drop="handleDrop('followups')"
+      >
+        <CardHeader class="flex flex-row items-center justify-between gap-4">
+          <CardTitle>Scheduled Follow-ups</CardTitle>
+          <button type="button" class="drag-handle" draggable="true" title="Drag to reorder" @dragstart="handleDragStart('followups', $event)" @dragend="handleDragEnd">
+            <GripVertical :size="16" />
+          </button>
+        </CardHeader>
+        <CardContent class="space-y-3">
+          <div v-if="!currentApplication.scheduledFollowUps?.length" class="text-sm text-muted-foreground">No scheduled follow-ups.</div>
+          <div v-for="followUp in currentApplication.scheduledFollowUps" :key="followUp.id" class="rounded-2xl bg-secondary/50 p-4 text-sm">
+            <div class="font-medium">{{ format(new Date(followUp.scheduledAt), 'PPP p') }}</div>
+            <div class="mt-1 text-muted-foreground">{{ followUp.status }}</div>
+            <div v-if="followUp.generatedContent" class="mt-2 whitespace-pre-wrap text-foreground">{{ followUp.generatedContent }}</div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card
+        :class="['cursor-default', dragOverTarget === 'history' ? 'drag-over-card' : '']"
+        :style="getBlockOrderStyle('history')"
+        @dragenter.prevent="handleDragOver('history')"
+        @dragover.prevent="handleDragOver('history')"
+        @dragleave="handleDragLeave('history')"
+        @drop="handleDrop('history')"
+      >
+        <CardHeader class="flex flex-row items-center justify-between gap-4">
+          <CardTitle>History</CardTitle>
+          <button type="button" class="drag-handle" draggable="true" title="Drag to reorder" @dragstart="handleDragStart('history', $event)" @dragend="handleDragEnd">
+            <GripVertical :size="16" />
+          </button>
+        </CardHeader>
+        <CardContent class="space-y-3">
+          <div v-if="!currentApplication.history?.length" class="text-sm text-muted-foreground">No history yet.</div>
+          <div v-for="entry in currentApplication.history" :key="entry.id" class="rounded-2xl bg-secondary/50 p-4 text-sm">
+            <div class="font-medium text-foreground">{{ entry.actionType }}</div>
+            <div v-if="entry.description" class="mt-1 text-muted-foreground">{{ entry.description }}</div>
+            <div class="mt-2 text-xs text-muted-foreground">{{ format(new Date(entry.createdAt), 'PP p') }}</div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
 
-    <ApplicationFormDialog
-      :open="isDialogOpen"
-      :application="currentApplication"
-      @update:open="isDialogOpen = $event"
-      @success="loadApplication"
-    />
   </div>
 
   <div v-else class="flex min-h-[320px] items-center justify-center text-muted-foreground">
     {{ isLoading ? 'Loading application...' : 'Application not found.' }}
   </div>
 </template>
+
+<style scoped>
+.editable-inline {
+  border-radius: 0.5rem;
+  cursor: text;
+  outline: none;
+  transition: background-color 0.2s ease;
+}
+
+.editable-inline:hover {
+  background: color-mix(in srgb, var(--accent) 65%, transparent);
+}
+
+.editable-inline:focus {
+  background: color-mix(in srgb, var(--accent) 90%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 28%, transparent);
+}
+
+.editable-inline[contenteditable='true']:empty::before,
+.rich-editor[contenteditable='true']:empty::before {
+  color: hsl(var(--muted-foreground));
+  content: attr(data-placeholder);
+  pointer-events: none;
+}
+
+.editor-action {
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.65rem;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.2rem 0.55rem;
+}
+
+.editor-action:hover {
+  background: color-mix(in srgb, var(--accent) 80%, transparent);
+}
+
+.drag-handle {
+  align-items: center;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.65rem;
+  color: hsl(var(--muted-foreground));
+  cursor: grab;
+  display: inline-flex;
+  justify-content: center;
+  padding: 0.2rem;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-handle:hover {
+  background: color-mix(in srgb, var(--accent) 80%, transparent);
+}
+
+.drag-over-card {
+  border-color: color-mix(in srgb, var(--primary) 45%, hsl(var(--border)));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 22%, transparent);
+  background: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.rich-editor {
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius: 1rem;
+  cursor: text;
+  min-height: 10rem;
+  outline: none;
+  padding: 0.85rem 1rem;
+}
+
+.rich-editor:focus {
+  border-color: color-mix(in srgb, var(--primary) 42%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 25%, transparent);
+}
+</style>

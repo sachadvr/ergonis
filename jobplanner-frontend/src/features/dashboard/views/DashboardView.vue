@@ -26,6 +26,14 @@ const recentApplications = computed(() => {
 // Computed: Active applications (applied + interview)
 const activeCount = computed(() => stats.value.applied + stats.value.interview)
 
+const openApplications = () => {
+  router.push({ name: 'Applications' })
+}
+
+const openInterviews = () => {
+  router.push({ name: 'Interviews' })
+}
+
 // Fetch applications on mount
 onMounted(() => {
   if (applications.value.length === 0) {
@@ -76,7 +84,14 @@ onMounted(() => {
     </div>
 
     <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-      <Card class="border-l-[6px] border-l-primary">
+      <Card
+        class="cursor-pointer border-l-[6px] border-l-primary transition-colors hover:bg-accent/25 focus-within:ring-2 focus-within:ring-primary/30"
+        role="button"
+        tabindex="0"
+        @click="openApplications"
+        @keydown.enter="openApplications"
+        @keydown.space.prevent="openApplications"
+      >
         <CardContent class="pt-6">
           <div class="flex items-center justify-between">
             <div class="text-sm font-medium text-muted-foreground">Total Applications</div>
@@ -87,7 +102,14 @@ onMounted(() => {
         </CardContent>
       </Card>
 
-      <Card class="border-l-[6px] border-l-sky-800/70">
+      <Card
+        class="cursor-pointer border-l-[6px] border-l-sky-800/70 transition-colors hover:bg-accent/25 focus-within:ring-2 focus-within:ring-primary/30"
+        role="button"
+        tabindex="0"
+        @click="openApplications"
+        @keydown.enter="openApplications"
+        @keydown.space.prevent="openApplications"
+      >
         <CardContent class="pt-6">
           <div class="flex items-center justify-between">
             <div class="text-sm font-medium text-muted-foreground">Active</div>
@@ -98,7 +120,14 @@ onMounted(() => {
         </CardContent>
       </Card>
 
-      <Card class="border-l-[6px] border-l-amber-700/70">
+      <Card
+        class="cursor-pointer border-l-[6px] border-l-amber-700/70 transition-colors hover:bg-accent/25 focus-within:ring-2 focus-within:ring-primary/30"
+        role="button"
+        tabindex="0"
+        @click="openInterviews"
+        @keydown.enter="openInterviews"
+        @keydown.space.prevent="openInterviews"
+      >
         <CardContent class="pt-6">
           <div class="flex items-center justify-between">
             <div class="text-sm font-medium text-muted-foreground">Interviews</div>
@@ -109,7 +138,14 @@ onMounted(() => {
         </CardContent>
       </Card>
 
-      <Card class="border-l-[6px] border-l-emerald-800/70">
+      <Card
+        class="cursor-pointer border-l-[6px] border-l-emerald-800/70 transition-colors hover:bg-accent/25 focus-within:ring-2 focus-within:ring-primary/30"
+        role="button"
+        tabindex="0"
+        @click="openApplications"
+        @keydown.enter="openApplications"
+        @keydown.space.prevent="openApplications"
+      >
         <CardContent class="pt-6">
           <div class="flex items-center justify-between">
             <div class="text-sm font-medium text-muted-foreground">Offers</div>

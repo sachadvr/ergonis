@@ -93,6 +93,13 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('auth_token')
   }
 
+  const completeSocialLogin = async (tokenValue: string, userData: User) => {
+    token.value = tokenValue
+    user.value = userData
+    localStorage.setItem('auth_token', tokenValue)
+    localStorage.setItem('auth_user', JSON.stringify(userData))
+  }
+
   const $reset = () => {
     user.value = null
     token.value = null
@@ -117,6 +124,7 @@ export const useAuthStore = defineStore('auth', () => {
     fetchMe,
     initialize,
     logout,
+    completeSocialLogin,
     $reset,
   }
 })
