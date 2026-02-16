@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * { box-sizing: border-box; }
+        body { width: 380px; min-height: 200px; font-family: system-ui, sans-serif; margin: 0; padding: 16px; }
+        h2 { margin: 0 0 12px; font-size: 16px; }
+        .field { margin-bottom: 12px; }
+        label { display: block; font-size: 12px; color: #666; margin-bottom: 4px; }
+        input, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
+        textarea { min-height: 60px; resize: vertical; }
+        .btn { padding: 10px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; }
+        .btn-primary { background: #10b981; color: white; width: 100%; }
+        .btn-primary:hover { background: #059669; }
+        .btn-primary:disabled { background: #9ca3af; cursor: not-allowed; }
+        .btn-secondary { background: #e5e7eb; color: #374151; margin-top: 8px; width: 100%; }
+        .error { color: #dc2626; font-size: 12px; margin-top: 8px; }
+        .success { color: #059669; font-size: 12px; margin-top: 8px; }
+        .config { margin-bottom: 16px; padding: 12px; background: #f3f4f6; border-radius: 4px; font-size: 12px; }
+        .config a { color: #10b981; }
+    </style>
+</head>
+<body>
+    <h2>Ajouter à JobPlanner</h2>
+    <div id="config-msg" class="config" style="display:none;">
+        <a href="#" id="config-link">Configurer le token et l'URL API</a>
+    </div>
+    <div id="form">
+        <div class="field">
+            <label>Titre / Poste</label>
+            <input type="text" id="title" placeholder="Ex: Développeur Full Stack">
+        </div>
+        <div class="field">
+            <label>URL</label>
+            <input type="url" id="url" placeholder="https://...">
+        </div>
+        <div class="field">
+            <label>Contenu (optionnel)</label>
+            <textarea id="content" placeholder="Sélectionnez du texte sur la page ou laissez vide"></textarea>
+        </div>
+        <div class="field">
+            <label><input type="checkbox" id="createApp" checked> Créer une candidature</label>
+        </div>
+        <button class="btn btn-primary" id="submit">Ajouter</button>
+        <button class="btn btn-secondary" id="openSettings">Paramètres</button>
+    </div>
+    <div id="message"></div>
+    <script src="popup.js"></script>
+</body>
+</html>

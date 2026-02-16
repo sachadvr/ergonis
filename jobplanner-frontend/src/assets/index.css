@@ -1,0 +1,92 @@
+@import 'tailwindcss';
+
+@layer base {
+  :root {
+    --background: 38 41% 95%;
+    --foreground: 200 24% 16%;
+
+    --card: 36 46% 98%;
+    --card-foreground: 200 24% 16%;
+
+    --popover: 36 46% 98%;
+    --popover-foreground: 200 24% 16%;
+
+    --primary: 191 49% 27%;
+    --primary-foreground: 42 50% 96%;
+
+    --secondary: 39 31% 89%;
+    --secondary-foreground: 200 24% 16%;
+
+    --muted: 34 26% 90%;
+    --muted-foreground: 202 12% 38%;
+
+    --accent: 171 22% 84%;
+    --accent-foreground: 196 41% 20%;
+
+    --destructive: 6 62% 46%;
+    --destructive-foreground: 35 40% 96%;
+
+    --border: 33 24% 82%;
+    --input: 35 28% 88%;
+    --ring: 191 49% 27%;
+
+    --radius: 1rem;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    background-image:
+      radial-gradient(circle at top left, rgba(27, 97, 103, 0.10), transparent 28%),
+      radial-gradient(circle at right 20%, rgba(174, 125, 62, 0.10), transparent 22%),
+      linear-gradient(180deg, rgba(255, 251, 244, 0.9), rgba(245, 238, 226, 0.92));
+    font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+    min-height: 100vh;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  ::selection {
+    background: rgba(27, 97, 103, 0.18);
+  }
+}
+
+@layer utilities {
+  .app-shell {
+    background: linear-gradient(180deg, rgba(255, 252, 247, 0.82), rgba(243, 237, 226, 0.92));
+    backdrop-filter: blur(22px);
+  }
+
+  .paper-panel {
+    background: linear-gradient(180deg, rgba(255, 252, 247, 0.95), rgba(250, 246, 239, 0.92));
+    box-shadow: 0 18px 40px rgba(74, 61, 39, 0.08);
+  }
+
+  .section-kicker {
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .display-title {
+    font-family: "Avenir Next", "Segoe UI", sans-serif;
+    letter-spacing: -0.04em;
+  }
+}
