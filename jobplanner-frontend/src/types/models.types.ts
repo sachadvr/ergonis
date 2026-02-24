@@ -48,6 +48,12 @@ export interface Application {
   url?: string
   notes?: string
   interviewPrep?: string
+  rawContent?: string
+  jobSummary?: string
+  salaryCurrency?: string
+  contractType?: string
+  remotePolicy?: string
+  details?: Record<string, unknown>
   salaryMin?: number
   salaryMax?: number
   // Original nested structure
@@ -103,6 +109,20 @@ export interface RecruiterEmail {
   isDeleted: boolean
   isDraft: boolean
   labels: string[]
+}
+
+export interface NotificationItem {
+  id: number
+  type: 'email_received'
+  title: string
+  message: string
+  createdAt: string
+  applicationId: number
+  applicationTitle: string
+  sender: string
+  subject: string
+  isSeen: boolean
+  href: string
 }
 
 export interface Interview {

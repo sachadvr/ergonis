@@ -23,6 +23,18 @@ services:
       MP_SMTP_AUTH_ACCEPT_ANY: 1
       MP_SMTP_AUTH_ALLOW_INSECURE: 1
 
+  mercure:
+    image: dunglas/mercure:latest
+    ports:
+      - "3000:3000"
+    environment:
+      SERVER_NAME: ':3000'
+      MERCURE_PUBLISHER_JWT_KEY: ${MERCURE_JWT_SECRET:-dev-mercure-secret}
+      MERCURE_SUBSCRIBER_JWT_KEY: ${MERCURE_JWT_SECRET:-dev-mercure-secret}
+      MERCURE_EXTRA_DIRECTIVES: |
+        cors_origins http://localhost:5173 http://127.0.0.1:5173
+    command: /usr/bin/caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+
   api:
     build:
       context: ./jobplanner-api
@@ -35,9 +47,13 @@ services:
       MAILER_DSN: smtp://mailpit:1025
       CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN:-}
       SIMULATION_MODE: ${SIMULATION_MODE:-false}
+      MERCURE_PUBLIC_URL: http://mercure:3000/.well-known/mercure
+      MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET:-dev-mercure-secret}
     depends_on:
       database:
         condition: service_healthy
+      mercure:
+        condition: service_started
 
   scheduler:
     build:
@@ -48,10 +64,14 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-!ChangeMe!}@database:5432/${POSTGRES_DB:-app}?serverVersion=16&charset=utf8
       MAILER_DSN: smtp://mailpit:1025
       SIMULATION_MODE: ${SIMULATION_MODE:-false}
+      MERCURE_PUBLIC_URL: http://mercure:3000/.well-known/mercure
+      MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET:-dev-mercure-secret}
     command: php bin/console messenger:consume scheduler_default --time-limit=3600 --memory-limit=256M --no-interaction -vv
     depends_on:
       database:
         condition: service_healthy
+      mercure:
+        condition: service_started
 
   # frontend:
   #   build:

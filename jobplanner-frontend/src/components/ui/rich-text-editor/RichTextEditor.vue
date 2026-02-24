@@ -47,7 +47,7 @@ watch(
     const nextValue = value || ''
     if (!instance) return
     if (instance.getHTML() !== nextValue) {
-      instance.commands.setContent(nextValue, false)
+      instance.commands.setContent(nextValue, { emitUpdate: false })
     }
   },
   { immediate: true },

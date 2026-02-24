@@ -72,6 +72,7 @@ export const settingsApi = {
   async confirmMicrosoftAuth(code: string): Promise<{ success: boolean; email: string; token?: string; user?: User }> {
     return apiClient('/api/auth/microsoft/callback', {
       method: 'POST',
+      retry: 0,
       body: { code },
     })
   },

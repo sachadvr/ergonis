@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { format } from 'date-fns'
-import { Briefcase, ChevronRight, ExternalLink, MailOpen, RefreshCw, Search, Sparkles, Tag } from 'lucide-vue-next'
+import { Briefcase, ChevronRight, ExternalLink, MailOpen, RefreshCw, Search, Sparkles } from 'lucide-vue-next'
 import { useEmailsStore } from '../stores/emails.store'
 import { useApplicationsStore } from '@/features/applications/stores/applications.store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'

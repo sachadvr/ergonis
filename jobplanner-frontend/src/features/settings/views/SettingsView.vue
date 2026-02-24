@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { settingsApi } from '../api/settings.api'
 import { storeToRefs } from 'pinia'
@@ -18,9 +18,8 @@ import Skeleton from '@/components/ui/skeleton/Skeleton.vue'
 
 const route = useRoute()
 const settingsStore = useSettingsStore()
-const { config, mailboxSettings, followUpRules, isLoading, error } = storeToRefs(settingsStore)
+const { mailboxSettings, followUpRules, isLoading, error } = storeToRefs(settingsStore)
 
-const simulationLabel = computed(() => (config.value?.simulationMode ? 'Enabled' : 'Disabled'))
 const mailboxForm = ref<Partial<UserMailboxSettings>>({})
 const isSavingMailbox = ref(false)
 const isTestingMailbox = ref(false)

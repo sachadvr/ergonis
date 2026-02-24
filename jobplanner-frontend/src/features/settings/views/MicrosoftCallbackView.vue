@@ -10,6 +10,7 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const error = ref<string | null>(null)
+const errorDetails = ref<string | null>(null)
 
 onMounted(async () => {
   const code = route.query.code as string
@@ -33,7 +34,9 @@ onMounted(async () => {
       error.value = 'Failed to connect Microsoft account.'
     }
   } catch (e: any) {
-    error.value = e.message || 'An error occurred during authentication.'
+    const data = e?.data || e?.response?.data || null
+    error.value = data?.error_description || data?.error || e.message || 'An error occurred during authentication.'
+    errorDetails.value = data ? JSON.stringify(data, null, 2) : null
   }
 })
 </script>
@@ -53,6 +56,7 @@ onMounted(async () => {
           <div class="rounded-lg bg-destructive/10 p-4 text-sm text-destructive">
             {{ error }}
           </div>
+          <pre v-if="errorDetails" class="overflow-auto rounded-lg bg-muted p-4 text-left text-xs">{{ errorDetails }}</pre>
           <router-link to="/settings" class="inline-block text-sm font-medium text-blue-600 hover:underline">
             Back to settings
           </router-link>

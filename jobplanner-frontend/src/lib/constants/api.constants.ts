@@ -24,6 +24,12 @@ export const API_ENDPOINTS = {
     BASE: '/api/recruiter_emails',
     BY_ID: (id: string) => `/api/recruiter_emails/${id}`,
   },
+  MERCURE: {
+    TOKEN: '/api/mercure/token',
+  },
+  NOTIFICATIONS: {
+    BASE: '/api/notifications',
+  },
   SETTINGS: {
     CONFIG: '/api/config',
     MAILBOX: '/api/user_mailbox_settings',

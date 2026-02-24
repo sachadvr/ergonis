@@ -17,6 +17,8 @@ services:
       CORS_ALLOW_ORIGIN: '^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'
       SIMULATION_MODE: "true"
       OLLAMA_URL: http://host.docker.internal:11434
+      MERCURE_PUBLIC_URL: http://mercure:3000/.well-known/mercure
+      MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET:-dev-mercure-secret}
 
   database:
     ports:
@@ -33,9 +35,22 @@ services:
     environment:
       VITE_API_URL: http://api:8000
       VITE_USE_PROXY: "true"
+      VITE_MERCURE_URL: http://localhost:3000/.well-known/mercure
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
     depends_on:
       - api
+
+  mercure:
+    image: dunglas/mercure:latest
+    ports:
+      - "3000:3000"
+    environment:
+      SERVER_NAME: ':3000'
+      MERCURE_PUBLISHER_JWT_KEY: ${MERCURE_JWT_SECRET:-dev-mercure-secret}
+      MERCURE_SUBSCRIBER_JWT_KEY: ${MERCURE_JWT_SECRET:-dev-mercure-secret}
+      MERCURE_EXTRA_DIRECTIVES: |
+        cors_origins http://localhost:5173 http://127.0.0.1:5173
+    command: /usr/bin/caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
 
   worker:
     build:
@@ -78,8 +93,11 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-!ChangeMe!}@database:5432/${POSTGRES_DB:-app}?serverVersion=16&charset=utf8
       MAILER_DSN: smtp://mailpit:1025
       SIMULATION_MODE: "true"
+      MERCURE_PUBLIC_URL: http://mercure:3000/.well-known/mercure
+      MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET:-dev-mercure-secret}
     depends_on:
       - database
+      - mercure
 
 volumes:
   api_vendor:

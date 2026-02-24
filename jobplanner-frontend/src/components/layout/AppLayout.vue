@@ -2,6 +2,7 @@
 import { RouterView, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/features/auth/stores/auth.store'
 import { Button } from '@/components/ui/button'
+import NotificationPopover from '@/features/notifications/components/NotificationPopover.vue'
 import { 
   LayoutDashboard, 
   Briefcase, 
@@ -97,8 +98,11 @@ const handleLogout = () => {
             <p class="section-kicker mb-2">Workspace</p>
             <h2 class="display-title text-2xl font-semibold">{{ route.meta.title }}</h2>
           </div>
-          <div class="rounded-full bg-secondary/70 px-4 py-2 text-sm text-muted-foreground">
-            Focused mode
+          <div class="flex items-center gap-3">
+            <div class="rounded-full bg-secondary/70 px-4 py-2 text-sm text-muted-foreground">
+              Focused mode
+            </div>
+            <NotificationPopover />
           </div>
         </div>
       </header>
