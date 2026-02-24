@@ -28,4 +28,10 @@ export const jobOffersApi = {
       },
     })
   },
+
+  async delete(id: string): Promise<void> {
+    return apiClient(API_ENDPOINTS.JOB_OFFERS.BY_ID(id), {
+      method: 'DELETE',
+    })
+  },
 }

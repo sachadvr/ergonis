@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { format } from 'date-fns'
-import { Briefcase, ChevronRight, MailOpen, RefreshCw, Search, Sparkles } from 'lucide-vue-next'
+import { Briefcase, ChevronRight, ExternalLink, MailOpen, RefreshCw, Search, Sparkles, Tag } from 'lucide-vue-next'
 import { useEmailsStore } from '../stores/emails.store'
 import { useApplicationsStore } from '@/features/applications/stores/applications.store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -210,7 +210,7 @@ onMounted(() => {
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-3xl font-bold">Emails</h1>
-        <p class="text-muted-foreground">Simple recruiter mailbox, Apple Mail style</p>
+        <p class="text-muted-foreground">Simple candidate mailbox, Apple Mail style</p>
       </div>
       <Button variant="outline" :disabled="isLoading" @click="emailsStore.fetchEmails()">
         <RefreshCw :size="16" :class="{ 'animate-spin': isLoading }" />
@@ -289,6 +289,13 @@ onMounted(() => {
                   <div v-if="linkedApplication.jobOffer?.recruiterContactEmail" class="text-xs text-muted-foreground">
                     recruiter: {{ linkedApplication.jobOffer.recruiterContactEmail }}
                   </div>
+
+                  <RouterLink :to="`/applications/${linkedApplication.id}`" class="text-xs text-muted-foreground flex items-center gap-2">
+                    <div class="inline-flex items-center gap-2 rounded-full bg-[#e0f7fa] px-3 py-1.5 text-primary">
+                      <ExternalLink :size="14" />
+                      <span>View application in Job Planner</span>
+                    </div>
+                  </RouterLink>
                 </div>
                 <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground">
                   {{ emailsInSelectedGroup.length }} message{{ emailsInSelectedGroup.length > 1 ? 's' : '' }} in this thread

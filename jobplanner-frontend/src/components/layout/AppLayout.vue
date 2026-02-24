@@ -17,6 +17,8 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
+// Logo path is /logo.png (served from public folder)
+
 const navItems = [
   { name: 'Dashboard', path: '/', icon: LayoutDashboard },
   { name: 'Applications', path: '/applications', icon: Briefcase },
@@ -33,12 +35,14 @@ const handleLogout = () => {
 </script>
 
 <template>
-  <div class="flex min-h-screen bg-background px-3 py-3 sm:px-4 sm:py-4">
+  <div class="flex min-h-screen bg-[#FFF] px-3 py-3 sm:px-4 sm:py-4">
     <!-- Sidebar -->
-    <aside class="app-shell paper-panel hidden w-72 flex-col overflow-hidden rounded-[2rem] border border-border/70 lg:flex">
+    <aside class="app-shell paper-panel hidden w-52 flex-col overflow-hidden rounded-[2rem] border border-border/70 lg:flex">
       <div class="border-b border-border/70 px-7 py-7">
         <p class="section-kicker mb-3">Career Atelier</p>
-        <h1 class="display-title text-3xl font-semibold text-foreground">JobPlanner</h1>
+        <h1 class="display-title text-3xl font-semibold text-foreground">
+          <img src="/logo_dark.png" alt="JobPlanner" class="h-10 w-auto rounded-sm" />
+        </h1>
         <p class="mt-2 text-sm text-muted-foreground">A calmer command center for your search.</p>
       </div>
       
@@ -49,7 +53,7 @@ const handleLogout = () => {
           :to="item.path"
           class="relative flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200 hover:bg-accent/60"
           :class="{
-            'bg-primary text-primary-foreground shadow-[0_16px_30px_rgba(27,97,103,0.16)]': route.path === item.path || (item.path !== '/' && route.path.startsWith(item.path)),
+            'bg-[#161632] text-[#FFF] shadow-[0_16px_30px_rgba(27,97,103,0.16)]': route.path === item.path || (item.path !== '/' && route.path.startsWith(item.path)),
             'text-muted-foreground hover:text-foreground': route.path !== item.path && !(item.path !== '/' && route.path.startsWith(item.path)),
           }"
         >
@@ -68,15 +72,15 @@ const handleLogout = () => {
       <div class="mt-auto border-t border-border/70 p-4">
         <div class="rounded-[1.5rem] bg-secondary/70 p-3">
           <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">Signed in</div>
-          <div class="flex items-center gap-3 rounded-xl px-1 py-2">
-          <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/12 text-primary">
+          <div class="flex items-center gap-3 rounded-xl px-1 py-2 border bg-white cursor-pointer"  @click="handleLogout">
+          <div class="flex h-10 w-10 items-center justify-center  bg-primary/12 text-primary">
             <User :size="16" />
           </div>
           <div class="flex-1 text-sm">
             <div class="font-medium text-foreground">{{ authStore.user?.email || 'User' }}</div>
             <div class="text-xs text-muted-foreground">Personal workspace</div>
           </div>
-          <Button variant="ghost" size="icon" @click="handleLogout" title="Logout">
+          <Button variant="ghost" size="icon" title="Logout">
             <LogOut :size="16" />
           </Button>
           </div>
@@ -91,7 +95,7 @@ const handleLogout = () => {
         <div class="flex items-center justify-between gap-4">
           <div>
             <p class="section-kicker mb-2">Workspace</p>
-            <h2 class="display-title text-2xl font-semibold">{{ route.meta.title || 'JobPlanner' }}</h2>
+            <h2 class="display-title text-2xl font-semibold">{{ route.meta.title }}</h2>
           </div>
           <div class="rounded-full bg-secondary/70 px-4 py-2 text-sm text-muted-foreground">
             Focused mode

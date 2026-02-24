@@ -49,7 +49,7 @@ onMounted(() => {
         <CardContent class="grid gap-6 p-8 lg:grid-cols-[1fr_auto] lg:items-end">
           <div>
             <p class="section-kicker mb-3">Search rhythm</p>
-            <h1 class="display-title text-5xl font-semibold leading-none">A sharper view of your pipeline.</h1>
+            <h1 class="display-title text-5xl font-semibold leading-none">A sharper view of <span class="text-[#171733] underline">your pipeline.</span></h1>
             <p class="mt-4 max-w-2xl text-base text-muted-foreground">
               Track momentum, recent movement, and the applications that deserve your next decision.
             </p>

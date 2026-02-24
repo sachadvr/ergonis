@@ -145,7 +145,7 @@ onMounted(() => {
             <div
               v-for="day in calendarDays"
               :key="format(day, 'yyyy-MM-dd')"
-              class="min-h-28 rounded-lg border border-border/70 bg-background/70 p-2"
+              class="min-h-28 rounded-lg border border-border/70 bg-[#FFF]/70 p-2"
               :class="{
                 'opacity-45': !isSameMonth(day, currentMonth),
                 'ring-1 ring-primary/40': isToday(day),

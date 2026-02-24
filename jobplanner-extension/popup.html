@@ -5,45 +5,79 @@
     <style>
         * { box-sizing: border-box; }
         body { width: 380px; min-height: 200px; font-family: system-ui, sans-serif; margin: 0; padding: 16px; }
-        h2 { margin: 0 0 12px; font-size: 16px; }
+        .brand { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+        .brand-left { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; }
+        .brand img { width: 120px; height: auto; display: block; flex: 0 0 auto; }
+        h2 { margin: 0; font-size: 16px; }
+        .icon-btn { width: 32px; height: 32px; border: none; border-radius: 999px; background: #161632; color: white; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex: 0 0 auto; }
+        .icon-btn:hover { background: #1f1f45; }
+        .icon-btn svg { width: 16px; height: 16px; display: block; }
         .field { margin-bottom: 12px; }
         label { display: block; font-size: 12px; color: #666; margin-bottom: 4px; }
         input, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
         textarea { min-height: 60px; resize: vertical; }
         .btn { padding: 10px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; }
-        .btn-primary { background: #10b981; color: white; width: 100%; }
-        .btn-primary:hover { background: #059669; }
+        .btn-primary { background: #161632; color: white; width: 100%; }
+        .btn-primary:hover { background: #1f1f45; }
         .btn-primary:disabled { background: #9ca3af; cursor: not-allowed; }
         .btn-secondary { background: #e5e7eb; color: #374151; margin-top: 8px; width: 100%; }
+        .btn-debug { background: #f3f4f6; color: #111827; margin-top: 8px; width: 100%; }
+        .btn-debug:hover { background: #e5e7eb; }
         .error { color: #dc2626; font-size: 12px; margin-top: 8px; }
         .success { color: #059669; font-size: 12px; margin-top: 8px; }
         .config { margin-bottom: 16px; padding: 12px; background: #f3f4f6; border-radius: 4px; font-size: 12px; }
         .config a { color: #10b981; }
+        .auth { margin-bottom: 16px; padding: 12px; background: #f3f4f6; border-radius: 8px; }
+        .auth-title { margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #111827; }
+        .auth-text { margin: 0; font-size: 12px; color: #6b7280; }
+        .sync-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+        .sync-label { font-size: 13px; font-weight: 500; color: #111827; }
     </style>
 </head>
 <body>
-    <h2>Ajouter à JobPlanner</h2>
+    <div class="brand">
+        <div class="brand-left">
+            <img src="logo_dark.png" alt="JobPlanner" />
+            <h2>Add this page to applications</h2>
+        </div>
+        <button class="icon-btn" id="openSettings" type="button" aria-label="Open settings" title="Settings">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="currentColor" stroke-width="2"/>
+                <path d="M19.4 15a7.9 7.9 0 0 0 .1-1 7.9 7.9 0 0 0-.1-1l2-1.5-1.9-3.3-2.4 1a8.2 8.2 0 0 0-1.7-1L15 5.7h-4l-.4 2.5a8.2 8.2 0 0 0-1.7 1l-2.4-1L4.6 11l2 1.5a7.9 7.9 0 0 0-.1 1 7.9 7.9 0 0 0 .1 1l-2 1.5 1.9 3.3 2.4-1a8.2 8.2 0 0 0 1.7 1l.4 2.5h4l.4-2.5a8.2 8.2 0 0 0 1.7-1l2.4 1 1.9-3.3-2-1.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            </svg>
+        </button>
+    </div>
     <div id="config-msg" class="config" style="display:none;">
-        <a href="#" id="config-link">Configurer le token et l'URL API</a>
+        <a href="#" id="config-link">Open JobPlanner</a>
+    </div>
+    <div id="auth-msg" class="auth" style="display:none;">
+        <p class="auth-title">Please connect to Career Atelier to access this extension.</p>
+        <p class="auth-text">Your login session is missing or expired.</p>
+        <div class="sync-row">
+            <span class="sync-label">Sync login</span>
+            <button class="icon-btn" id="syncLogin" type="button" aria-label="Sync login" title="Sync login">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M7 17 17 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M9 7h8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
     </div>
     <div id="form">
         <div class="field">
-            <label>Titre / Poste</label>
-            <input type="text" id="title" placeholder="Ex: Développeur Full Stack">
+            <label>Title / Role</label>
+            <input type="text" id="title" placeholder="Ex: Full Stack Developer">
         </div>
         <div class="field">
             <label>URL</label>
             <input type="url" id="url" placeholder="https://...">
         </div>
         <div class="field">
-            <label>Contenu (optionnel)</label>
-            <textarea id="content" placeholder="Sélectionnez du texte sur la page ou laissez vide"></textarea>
+            <label>Content (optional)</label>
+            <textarea id="content" placeholder="Select text on the page or leave blank"></textarea>
         </div>
-        <div class="field">
-            <label><input type="checkbox" id="createApp" checked> Créer une candidature</label>
-        </div>
-        <button class="btn btn-primary" id="submit">Ajouter</button>
-        <button class="btn btn-secondary" id="openSettings">Paramètres</button>
+        <button class="btn btn-primary" id="submit">Add</button>
+        <button class="btn btn-debug" id="resetToken" type="button">Reset token</button>
     </div>
     <div id="message"></div>
     <script src="popup.js"></script>

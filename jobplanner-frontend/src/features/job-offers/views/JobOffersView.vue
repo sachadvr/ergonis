@@ -5,6 +5,7 @@ import { ExternalLink, MapPin, Building2, Mail } from 'lucide-vue-next'
 import { useJobOffersStore } from '../stores/job-offers.store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { stripHtml } from '@/lib/utils/html'
 
 const jobOffersStore = useJobOffersStore()
 const { sortedJobOffers, isLoading, error } = storeToRefs(jobOffersStore)
@@ -47,7 +48,7 @@ onMounted(() => {
           <div class="flex items-center gap-2"><Building2 :size="16" /> {{ offer.company }}</div>
           <div v-if="offer.location" class="flex items-center gap-2 text-muted-foreground"><MapPin :size="16" /> {{ offer.location }}</div>
           <div v-if="offer.recruiterContactEmail" class="flex items-center gap-2 text-muted-foreground"><Mail :size="16" /> {{ offer.recruiterContactEmail }}</div>
-          <p v-if="offer.notes" class="text-muted-foreground">{{ offer.notes }}</p>
+          <p v-if="offer.notes" class="text-muted-foreground">{{ stripHtml(offer.notes) }}</p>
         </CardContent>
       </Card>
     </div>

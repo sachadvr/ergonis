@@ -3,6 +3,19 @@ import type { PaginatedResponse } from '@/types/api.types'
 import { apiClient } from '@/lib/api/client'
 import { API_ENDPOINTS } from '@/lib/constants/api.constants'
 
+export interface CreateRecruiterEmailDto {
+  application: string
+  sender: string
+  subject: string
+  body: string
+  receivedAt: string
+  direction?: RecruiterEmail['direction']
+  isFavourite?: boolean
+  isDeleted?: boolean
+  isDraft?: boolean
+  labels?: string[]
+}
+
 export const emailsApi = {
   async getAll(): Promise<PaginatedResponse<RecruiterEmail>> {
     return apiClient(API_ENDPOINTS.EMAILS.BASE)
@@ -10,5 +23,15 @@ export const emailsApi = {
 
   async getById(id: string): Promise<RecruiterEmail> {
     return apiClient(API_ENDPOINTS.EMAILS.BY_ID(id))
+  },
+
+  async create(data: CreateRecruiterEmailDto): Promise<RecruiterEmail> {
+    return apiClient(API_ENDPOINTS.EMAILS.BASE, {
+      method: 'POST',
+      body: data,
+      headers: {
+        'Content-Type': 'application/ld+json',
+      },
+    })
   },
 }

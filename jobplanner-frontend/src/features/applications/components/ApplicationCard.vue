@@ -5,6 +5,7 @@ import type { Application } from '@/types/models.types'
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Building2, Calendar, MapPin, DollarSign } from 'lucide-vue-next'
+import { stripHtml } from '@/lib/utils/html'
 
 interface ApplicationCardProps {
   application: Application
@@ -110,7 +111,7 @@ const formattedSalary = computed(() => {
       <!-- Notes Preview -->
       <div v-if="application.notes" class="mt-3 border-t border-border/70 pt-3">
         <p class="text-xs text-muted-foreground line-clamp-2">
-          {{ application.notes }}
+          {{ stripHtml(application.notes) }}
         </p>
       </div>
     </CardContent>

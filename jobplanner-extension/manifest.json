@@ -2,9 +2,15 @@
   "manifest_version": 3,
   "name": "JobPlanner - Candidatures",
   "version": "1.0.0",
-  "description": "Ajoutez des offres d'emploi depuis n'importe quelle page vers JobPlanner",
-  "permissions": ["storage", "activeTab"],
-  "host_permissions": ["http://localhost:8000/*", "http://localhost/*", "https://*/*"],
+  "description": "Add job offers from any page to JobPlanner",
+  "icons": {
+    "16": "logo_icon.png",
+    "32": "logo_icon.png",
+    "48": "logo_icon.png",
+    "128": "logo_icon.png"
+  },
+  "permissions": ["storage", "activeTab", "tabs"],
+  "host_permissions": ["http://localhost:8000/*", "http://localhost:5173/*", "http://localhost/*", "https://*/*"],
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
@@ -15,6 +21,12 @@
   "options_page": "options.html",
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Ajouter à JobPlanner"
+    "default_title": "Add this page to applications",
+    "default_icon": {
+      "16": "logo_icon.png",
+      "32": "logo_icon.png",
+      "48": "logo_icon.png",
+      "128": "logo_icon.png"
+    }
   }
 }

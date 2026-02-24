@@ -120,9 +120,10 @@ export const useApplicationsStore = defineStore('applications', () => {
     try {
       isLoading.value = true
       error.value = null
+      let updatedJobOffer = null
 
-      if (jobOfferId) {
-        await jobOffersApi.update(String(jobOfferId), prepareJobOfferForApi(data))
+      if (jobOfferId !== undefined && jobOfferId !== null) {
+        updatedJobOffer = await jobOffersApi.update(String(jobOfferId), prepareJobOfferForApi(data))
       }
 
       const rawApplication = await applicationsApi.update(
@@ -130,6 +131,16 @@ export const useApplicationsStore = defineStore('applications', () => {
         prepareApplicationForUpdate(data) as unknown as Partial<Application>,
       )
       const updatedApplication = transformApplication(rawApplication)
+      if (updatedJobOffer) {
+        updatedApplication.jobOffer = {
+          ...updatedApplication.jobOffer,
+          ...updatedJobOffer,
+          notes: updatedJobOffer.notes ?? updatedApplication.jobOffer.notes,
+          interviewPrep: updatedJobOffer.interviewPrep ?? updatedApplication.jobOffer.interviewPrep,
+        }
+        updatedApplication.notes = updatedApplication.jobOffer.notes
+        updatedApplication.interviewPrep = updatedApplication.jobOffer.interviewPrep
+      }
       
       // Update in the list
       const index = applications.value.findIndex((a) => a.id === id)
@@ -165,6 +176,34 @@ export const useApplicationsStore = defineStore('applications', () => {
       applications.value = applications.value.filter((a) => a.id !== id)
 
       // Clear current if it's the same
+      if (currentApplication.value?.id === id) {
+        currentApplication.value = null
+      }
+    } catch (e) {
+      error.value = 'Failed to delete application'
+      console.error('Error deleting application:', e)
+      throw e
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
+   * Delete an application and its linked job offer
+   */
+  async function deleteApplicationWithJobOffer(id: number, jobOfferId?: number) {
+    try {
+      isLoading.value = true
+      error.value = null
+
+      await applicationsApi.delete(String(id))
+
+      if (jobOfferId !== undefined && jobOfferId !== null) {
+        await jobOffersApi.delete(String(jobOfferId))
+      }
+
+      applications.value = applications.value.filter((a) => a.id !== id)
+
       if (currentApplication.value?.id === id) {
         currentApplication.value = null
       }
@@ -230,6 +269,7 @@ export const useApplicationsStore = defineStore('applications', () => {
     createApplication,
     updateApplication,
     deleteApplication,
+    deleteApplicationWithJobOffer,
     updateApplicationStatus,
     $reset,
   }

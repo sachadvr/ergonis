@@ -55,7 +55,7 @@ const handleMicrosoftLogin = async () => {
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-background p-4">
+  <div class="flex min-h-screen items-center justify-center bg-[#FFF] p-4">
     <div class="grid w-full max-w-6xl gap-6 lg:grid-cols-[1.05fr_0.95fr]">
       <Card class="hidden min-h-[640px] overflow-hidden lg:block">
         <CardContent class="flex h-full flex-col justify-between p-10">

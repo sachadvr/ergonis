@@ -16,9 +16,12 @@ import {
   Target,
 } from 'lucide-vue-next'
 import { useApplicationsStore } from '../stores/applications.store'
+import { useSettingsStore } from '@/features/settings/stores/settings.store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import RichTextEditor from '@/components/ui/rich-text-editor/RichTextEditor.vue'
+import { emailsApi } from '@/features/emails/api/emails.api'
 import { interviewsApi } from '@/features/interviews/api/interviews.api'
 import { extractIdFromIri } from '@/lib/api/transforms'
 import type { Application, ApplicationFormValues, Interview } from '@/types/models.types'
@@ -26,9 +29,10 @@ import type { Application, ApplicationFormValues, Interview } from '@/types/mode
 const route = useRoute()
 const router = useRouter()
 const applicationsStore = useApplicationsStore()
+const settingsStore = useSettingsStore()
 const { currentApplication, isLoading } = storeToRefs(applicationsStore)
+const { mailboxSettings } = storeToRefs(settingsStore)
 
-type EditorBlock = 'notes' | 'interviewPrep'
 type BlockId =
   | 'overview'
   | 'recruiterEmails'
@@ -42,14 +46,20 @@ type BlockId =
 const detailedInterviews = ref<Interview[]>([])
 const editableForm = ref<ApplicationFormValues | null>(null)
 const inlineSaveState = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
-const activeEditor = ref<EditorBlock | null>(null)
+const recruiterEmailSaveState = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
 const saveErrorMessage = ref('')
+const recruiterEmailError = ref('')
+const deleteState = ref<'idle' | 'deleting' | 'error'>('idle')
+const deleteErrorMessage = ref('')
 const jobTitleEditorRef = ref<HTMLElement | null>(null)
 const companyEditorRef = ref<HTMLElement | null>(null)
+const companyOverviewEditorRef = ref<HTMLElement | null>(null)
 const locationEditorRef = ref<HTMLElement | null>(null)
 const jobUrlEditorRef = ref<HTMLElement | null>(null)
-const notesEditorRef = ref<HTMLElement | null>(null)
-const interviewPrepEditorRef = ref<HTMLElement | null>(null)
+const recruiterContactEmailEditorRef = ref<HTMLElement | null>(null)
+const recruiterSenderRef = ref<HTMLElement | null>(null)
+const recruiterSubjectRef = ref<HTMLElement | null>(null)
+const recruiterBodyRef = ref<HTMLElement | null>(null)
 const blockOrder = ref<BlockId[]>([
   'overview',
   'recruiterEmails',
@@ -63,12 +73,17 @@ const blockOrder = ref<BlockId[]>([
 const draggedBlock = ref<BlockId | null>(null)
 const dragOverTarget = ref<BlockId | null>(null)
 
-let notesDraftHtml = ''
-let interviewPrepDraftHtml = ''
+const notesDraftHtml = ref('')
+const interviewPrepDraftHtml = ref('')
+let recruiterSenderDraft = ''
+let recruiterSubjectDraft = ''
+let recruiterBodyDraft = ''
 let saveDebounceTimer: ReturnType<typeof setTimeout> | null = null
 let saveStateTimer: ReturnType<typeof setTimeout> | null = null
+let recruiterEmailStateTimer: ReturnType<typeof setTimeout> | null = null
 
 const applicationId = computed(() => String(route.params.id))
+const currentMailboxImapUser = computed(() => mailboxSettings.value[0]?.imapUser || '')
 
 const statusVariant = (status: Application['status']) => {
   if (status === 'rejected') return 'destructive'
@@ -120,6 +135,81 @@ const interviewsToDisplay = computed(() => {
   const objectInterviews = interviews.filter((interview): interview is Interview => typeof interview === 'object')
   return objectInterviews.length ? objectInterviews : detailedInterviews.value
 })
+const currentJobOfferId = computed(() => currentApplication.value?.jobOffer?.id)
+
+const formatSalary = (min?: number, max?: number, currency?: string) => {
+  if (min == null && max == null) return null
+
+  const formatValue = (value?: number) => (value == null ? null : value.toLocaleString())
+  const minLabel = formatValue(min)
+  const maxLabel = formatValue(max)
+  const suffix = currency ? ` ${currency}` : ''
+
+  if (minLabel && maxLabel) return `${minLabel} - ${maxLabel}${suffix}`
+  if (minLabel) return `From ${minLabel}${suffix}`
+  if (maxLabel) return `Up to ${maxLabel}${suffix}`
+
+  return null
+}
+
+const getDetailSummary = () => {
+  const details = currentApplication.value?.jobOffer?.details
+  if (!details || typeof details !== 'object') return []
+
+  const entries: Array<{ label: string; value: string }> = []
+  const data = details as Record<string, unknown>
+  const location = data.location as Record<string, unknown> | undefined
+  const candidateFit = data.candidate_fit as Record<string, unknown> | undefined
+
+  const push = (label: string, value: unknown) => {
+    if (value === null || value === undefined) return
+    const text = String(value).trim()
+    if (!text) return
+    entries.push({ label, value: text })
+  }
+
+  push('City', location?.city)
+  push('Country', location?.country)
+  push('Remote policy', location?.remote_policy)
+  push('Seniority', candidateFit?.seniority_level)
+  push('Target profile', candidateFit?.target_profile)
+
+  return entries
+}
+
+const normalizeStringList = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return []
+
+  return value
+    .map((item) => (typeof item === 'string' ? item.trim() : String(item ?? '').trim()))
+    .filter((item): item is string => item.length > 0)
+}
+
+const getResponsibilities = () => {
+  const details = currentApplication.value?.jobOffer?.details
+  if (!details || typeof details !== 'object') return []
+
+  const data = details as Record<string, unknown>
+  return normalizeStringList(data.main_responsibilities)
+}
+
+const getRequiredSkillGroups = () => {
+  const details = currentApplication.value?.jobOffer?.details
+  if (!details || typeof details !== 'object') return []
+
+  const required = (details as Record<string, unknown>).required_skills as Record<string, unknown> | undefined
+  if (!required) return []
+
+  return [
+    { label: 'Technical', items: normalizeStringList(required.technical) },
+    { label: 'Tools', items: normalizeStringList(required.tools) },
+    { label: 'Soft skills', items: normalizeStringList(required.soft_skills) },
+    { label: 'Languages', items: normalizeStringList(required.languages) },
+    { label: 'Certifications', items: normalizeStringList(required.certifications) },
+    { label: 'Education', items: normalizeStringList(required.education) },
+    { label: 'Experience', items: normalizeStringList(required.experience) },
+  ].filter((group) => group.items.length > 0)
+}
 
 const toEditableForm = (application: Application): ApplicationFormValues => ({
   jobTitle: application.jobTitle,
@@ -134,16 +224,26 @@ const toEditableForm = (application: Application): ApplicationFormValues => ({
   pipelinePosition: application.pipelinePosition,
   recruiterContactEmail: application.jobOffer?.recruiterContactEmail || '',
   sourceUrl: application.jobOffer?.sourceUrl || '',
-  interviewPrep: application.jobOffer?.interviewPrep || '',
+  interviewPrep: application.interviewPrep || '',
 })
+
+const resetRecruiterEmailDraft = () => {
+  recruiterSenderDraft = currentMailboxImapUser.value || currentApplication.value?.jobOffer?.recruiterContactEmail || ''
+  recruiterSubjectDraft = `Re: ${currentApplication.value?.jobTitle || ''}`.trim()
+  recruiterBodyDraft = ''
+
+  if (recruiterSenderRef.value) recruiterSenderRef.value.innerText = recruiterSenderDraft
+  if (recruiterSubjectRef.value) recruiterSubjectRef.value.innerText = recruiterSubjectDraft
+  if (recruiterBodyRef.value) recruiterBodyRef.value.innerText = recruiterBodyDraft
+}
 
 const hasInlineChanges = computed(() => {
   if (!currentApplication.value || !editableForm.value) return false
   const live = toEditableForm(currentApplication.value)
   const draft = {
     ...editableForm.value,
-    notes: notesDraftHtml,
-    interviewPrep: interviewPrepDraftHtml,
+    notes: notesDraftHtml.value,
+    interviewPrep: interviewPrepDraftHtml.value,
   }
   return JSON.stringify(live) !== JSON.stringify(draft)
 })
@@ -152,18 +252,30 @@ const canManualSave = computed(() => inlineSaveState.value !== 'saving')
 
 const normalizeInlineText = (value: string) => value.replace(/\n+/g, ' ').trim()
 
+const syncPlainEditorText = (editor: HTMLElement | null, value: string) => {
+  if (!editor) return
+  if (editor.innerText !== value) {
+    editor.innerText = value
+  }
+}
+
 const syncPlainField = (field: keyof ApplicationFormValues, editor: HTMLElement | null) => {
   if (!editableForm.value || !editor) return
   editableForm.value[field] = normalizeInlineText(editor.innerText) as never
 }
 
-const syncAllEditableDrafts = () => {
+const syncPlainEditableDrafts = () => {
   syncPlainField('jobTitle', jobTitleEditorRef.value)
   syncPlainField('companyName', companyEditorRef.value)
+  syncPlainField('companyName', companyOverviewEditorRef.value)
   syncPlainField('location', locationEditorRef.value)
   syncPlainField('jobUrl', jobUrlEditorRef.value)
-  syncEditorDraft('notes')
-  syncEditorDraft('interviewPrep')
+}
+
+const syncRecruiterEmailDrafts = () => {
+  recruiterSenderDraft = normalizeInlineText(recruiterSenderRef.value?.innerText || '')
+  recruiterSubjectDraft = normalizeInlineText(recruiterSubjectRef.value?.innerText || '')
+  recruiterBodyDraft = (recruiterBodyRef.value?.innerText || '').trim()
 }
 
 const queueSave = () => {
@@ -176,20 +288,16 @@ const queueSave = () => {
   }, 700)
 }
 
-const syncEditorDraft = (field: EditorBlock) => {
-  const editor = field === 'notes' ? notesEditorRef.value : interviewPrepEditorRef.value
-  if (!editor) return
+const resolveJobOfferId = () => {
+  const jobOffer = currentApplication.value?.jobOffer as { id?: number; '@id'?: string } | undefined
+  if (typeof jobOffer?.id === 'number') return jobOffer.id
 
-  if (field === 'notes') {
-    notesDraftHtml = editor.innerHTML
-    return
-  }
-
-  interviewPrepDraftHtml = editor.innerHTML
+  const match = jobOffer?.['@id']?.match(/\/(\d+)$/)
+  return match ? Number(match[1]) : undefined
 }
 
 const saveInlineChanges = async () => {
-  syncAllEditableDrafts()
+  syncPlainEditableDrafts()
 
   if (!currentApplication.value || !editableForm.value || !hasInlineChanges.value) return
 
@@ -211,10 +319,10 @@ const saveInlineChanges = async () => {
       currentApplication.value.id,
       {
         ...editableForm.value,
-        notes: notesDraftHtml,
-        interviewPrep: interviewPrepDraftHtml,
+        notes: notesDraftHtml.value,
+        interviewPrep: interviewPrepDraftHtml.value,
       },
-      currentApplication.value.jobOffer?.id,
+      resolveJobOfferId(),
     )
     inlineSaveState.value = 'saved'
     saveStateTimer = setTimeout(() => {
@@ -239,29 +347,70 @@ const commitInlineTextField = (field: keyof ApplicationFormValues, event: Event)
   flushInlineSave()
 }
 
-const handleRichInput = (field: EditorBlock) => {
-  syncEditorDraft(field)
-  queueSave()
-}
-
 const flushInlineSave = () => {
   saveInlineChanges()
 }
 
-const setActiveEditor = (field: EditorBlock) => {
-  activeEditor.value = field
+const createRecruiterEmail = async () => {
+  if (!currentApplication.value) return
+
+  syncRecruiterEmailDrafts()
+  const sender = recruiterSenderDraft.trim()
+  const subject = recruiterSubjectDraft.trim()
+  const body = recruiterBodyDraft.trim()
+
+  if (!sender || !subject || !body) {
+    recruiterEmailError.value = 'Sender, subject and body are required.'
+    recruiterEmailSaveState.value = 'error'
+    return
+  }
+
+  recruiterEmailSaveState.value = 'saving'
+  recruiterEmailError.value = ''
+
+  try {
+    await emailsApi.create({
+      application: `/api/applications/${currentApplication.value.id}`,
+      sender,
+      subject,
+      body,
+      receivedAt: new Date().toISOString(),
+      direction: 'INCOMING',
+      isFavourite: false,
+      isDeleted: false,
+      isDraft: false,
+      labels: [],
+    })
+
+    recruiterEmailSaveState.value = 'saved'
+    await applicationsStore.fetchApplicationById(applicationId.value)
+    resetRecruiterEmailDraft()
+    if (recruiterEmailStateTimer) clearTimeout(recruiterEmailStateTimer)
+    recruiterEmailStateTimer = setTimeout(() => {
+      recruiterEmailSaveState.value = 'idle'
+    }, 1400)
+  } catch {
+    recruiterEmailSaveState.value = 'error'
+    recruiterEmailError.value = 'Could not add recruiter email.'
+  }
 }
 
-const applyRichCommand = (command: string, value?: string) => {
-  if (!activeEditor.value) return
-  document.execCommand('styleWithCSS', false, 'true')
-  document.execCommand(command, false, value)
-  syncEditorDraft(activeEditor.value)
-  queueSave()
-}
+const deleteApplicationAndJobOffer = async () => {
+  if (!currentApplication.value) return
 
-const highlightSelection = () => {
-  applyRichCommand('hiliteColor', '#fff2a8')
+  const confirmed = window.confirm('Delete this application and its job offer? This cannot be undone.')
+  if (!confirmed) return
+
+  deleteState.value = 'deleting'
+  deleteErrorMessage.value = ''
+
+  try {
+    await applicationsStore.deleteApplicationWithJobOffer(currentApplication.value.id, currentJobOfferId.value)
+    await router.push({ name: 'Applications' })
+  } catch {
+    deleteState.value = 'error'
+    deleteErrorMessage.value = 'Could not delete the application.'
+  }
 }
 
 const getBlockOrderStyle = (blockId: BlockId) => ({
@@ -320,34 +469,49 @@ watch(currentApplication, (application) => {
 
   editableForm.value = toEditableForm(application)
 
-  notesDraftHtml = application.notes || ''
-  interviewPrepDraftHtml = application.jobOffer?.interviewPrep || ''
+  notesDraftHtml.value = application.notes || ''
+  interviewPrepDraftHtml.value = application.interviewPrep || ''
 
   nextTick(() => {
-    if (notesEditorRef.value) {
-      notesEditorRef.value.innerHTML = notesDraftHtml
-    }
-
-    if (interviewPrepEditorRef.value) {
-      interviewPrepEditorRef.value.innerHTML = interviewPrepDraftHtml
-    }
+    syncPlainEditorText(jobTitleEditorRef.value, editableForm.value?.jobTitle || '')
+    syncPlainEditorText(companyEditorRef.value, editableForm.value?.companyName || '')
+    syncPlainEditorText(companyOverviewEditorRef.value, editableForm.value?.companyName || '')
+    syncPlainEditorText(locationEditorRef.value, editableForm.value?.location || '')
+    syncPlainEditorText(jobUrlEditorRef.value, editableForm.value?.jobUrl || '')
+    syncPlainEditorText(recruiterContactEmailEditorRef.value, editableForm.value?.recruiterContactEmail || '')
+    syncPlainEditorText(recruiterSenderRef.value, recruiterSenderDraft)
+    syncPlainEditorText(recruiterSubjectRef.value, recruiterSubjectDraft)
+    syncPlainEditorText(recruiterBodyRef.value, recruiterBodyDraft)
   })
+
+  resetRecruiterEmailDraft()
 })
 
 watch(applicationId, () => {
   editableForm.value = null
-  notesDraftHtml = ''
-  interviewPrepDraftHtml = ''
+  notesDraftHtml.value = ''
+  interviewPrepDraftHtml.value = ''
   loadApplication()
 }, { immediate: true })
+
+watch(currentMailboxImapUser, (imapUser) => {
+  if (!imapUser) return
+  recruiterSenderDraft = imapUser
+  if (recruiterSenderRef.value) recruiterSenderRef.value.innerText = imapUser
+})
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleSaveShortcut)
   if (saveDebounceTimer) clearTimeout(saveDebounceTimer)
   if (saveStateTimer) clearTimeout(saveStateTimer)
+  if (recruiterEmailStateTimer) clearTimeout(recruiterEmailStateTimer)
 })
 
 onMounted(() => {
+  if (!mailboxSettings.value.length) {
+    settingsStore.fetchSettings()
+  }
+
   window.addEventListener('keydown', handleSaveShortcut)
 })
 </script>
@@ -361,22 +525,22 @@ onMounted(() => {
         </Button>
         <div>
           <p class="section-kicker mb-2">Application detail</p>
-          <h1
-            ref="jobTitleEditorRef"
-            class="display-title editable-inline text-4xl font-semibold"
-            contenteditable="true"
-            @keydown.enter.prevent
-            @input="handlePlainEditableInput('jobTitle', $event)"
-            @blur="commitInlineTextField('jobTitle', $event)"
-          >{{ editableForm?.jobTitle || currentApplication.jobTitle }}</h1>
-          <p
-            ref="companyEditorRef"
-            class="editable-inline mt-2 text-muted-foreground"
-            contenteditable="true"
-            @keydown.enter.prevent
-            @input="handlePlainEditableInput('companyName', $event)"
-            @blur="commitInlineTextField('companyName', $event)"
-          >{{ editableForm?.companyName || currentApplication.companyName }}</p>
+            <h1
+              ref="jobTitleEditorRef"
+              class="display-title editable-inline text-4xl font-semibold"
+              contenteditable="true"
+              @keydown.enter.prevent
+              @input="handlePlainEditableInput('jobTitle', $event)"
+              @blur="commitInlineTextField('jobTitle', $event)"
+            ></h1>
+            <p
+              ref="companyEditorRef"
+              class="editable-inline mt-2 text-muted-foreground"
+              contenteditable="true"
+              @keydown.enter.prevent
+              @input="handlePlainEditableInput('companyName', $event)"
+              @blur="commitInlineTextField('companyName', $event)"
+            ></p>
         </div>
       </div>
 
@@ -390,9 +554,20 @@ onMounted(() => {
         >
           Save
         </Button>
+        <Button
+          variant="destructive"
+          size="sm"
+          class="!bg-red-600 !text-white hover:!bg-red-700"
+          :disabled="deleteState === 'deleting'"
+          @click="deleteApplicationAndJobOffer"
+        >
+          Delete
+        </Button>
         <div v-if="inlineSaveState === 'saving'" class="text-xs text-muted-foreground">Saving...</div>
         <div v-else-if="inlineSaveState === 'saved'" class="text-xs text-emerald-700">Saved</div>
         <div v-else-if="inlineSaveState === 'error'" class="text-xs text-destructive">{{ saveErrorMessage }}</div>
+        <div v-if="deleteState === 'deleting'" class="text-xs text-muted-foreground">Deleting...</div>
+        <div v-else-if="deleteState === 'error'" class="text-xs text-destructive">{{ deleteErrorMessage }}</div>
       </div>
     </div>
 
@@ -406,7 +581,7 @@ onMounted(() => {
         @drop="handleDrop('overview')"
       >
         <CardHeader class="flex flex-row items-center justify-between gap-4">
-          <CardTitle class="flex items-center gap-2"><Building2 :size="18" /> Overview</CardTitle>
+          <CardTitle class="flex items-center gap-2 bg-[#161632] text-white p-2 rounded-sm -mb-2"><Building2 :size="18" /> Overview</CardTitle>
           <button type="button" class="drag-handle" draggable="true" title="Drag to reorder" @dragstart="handleDragStart('overview', $event)" @dragend="handleDragEnd">
             <GripVertical :size="16" />
           </button>
@@ -414,15 +589,19 @@ onMounted(() => {
         <CardContent class="grid gap-4 md:grid-cols-2">
           <div class="rounded-2xl bg-secondary/50 p-4">
             <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground">Company</div>
-            <div class="mt-2 text-lg font-semibold">{{ editableForm?.companyName || currentApplication.companyName }}</div>
-          </div>
-          <div class="rounded-2xl bg-secondary/50 p-4">
-            <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground">Pipeline position</div>
-            <div class="mt-2 text-lg font-semibold">{{ currentApplication.pipelinePosition }}</div>
+            <div
+              ref="companyOverviewEditorRef"
+              class="editable-inline mt-2 px-3 py-2 text-lg font-semibold"
+              data-placeholder="Add company name"
+              contenteditable="true"
+              @keydown.enter.prevent
+              @input="handlePlainEditableInput('companyName', $event)"
+              @blur="commitInlineTextField('companyName', $event)"
+            ></div>
           </div>
           <div class="rounded-2xl bg-secondary/50 p-4">
             <div class="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-muted-foreground"><MapPin :size="14" /> Location</div>
-            <div ref="locationEditorRef" class="editable-inline mt-2 text-base font-medium" data-placeholder="Add a location" contenteditable="true" @keydown.enter.prevent @input="handlePlainEditableInput('location', $event)" @blur="commitInlineTextField('location', $event)">{{ editableForm?.location }}</div>
+            <div ref="locationEditorRef" class="editable-inline mt-2 text-base font-medium" data-placeholder="Add a location" contenteditable="true" @keydown.enter.prevent @input="handlePlainEditableInput('location', $event)" @blur="commitInlineTextField('location', $event)"></div>
           </div>
           <div v-if="currentApplication.appliedAt" class="rounded-2xl bg-secondary/50 p-4">
             <div class="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-muted-foreground"><CalendarDays :size="14" /> Applied at</div>
@@ -430,11 +609,57 @@ onMounted(() => {
           </div>
           <div class="rounded-2xl bg-secondary/50 p-4 md:col-span-2">
             <div class="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-muted-foreground"><ExternalLink :size="14" /> Job URL</div>
-            <div ref="jobUrlEditorRef" class="editable-inline mt-2 text-base font-medium" data-placeholder="Paste job posting URL" contenteditable="true" @keydown.enter.prevent @input="handlePlainEditableInput('jobUrl', $event)" @blur="commitInlineTextField('jobUrl', $event)">{{ editableForm?.jobUrl }}</div>
+            <div ref="jobUrlEditorRef" class="editable-inline mt-2 text-base font-medium" data-placeholder="Paste job posting URL" contenteditable="true" @keydown.enter.prevent @input="handlePlainEditableInput('jobUrl', $event)" @blur="commitInlineTextField('jobUrl', $event)"></div>
             <a v-if="editableForm?.jobUrl" :href="editableForm.jobUrl" target="_blank" rel="noreferrer" class="mt-2 inline-flex items-center gap-2 text-base font-medium text-primary hover:underline">
               Open posting
               <ExternalLink :size="14" />
             </a>
+          </div>
+          <div v-if="currentApplication.jobOffer?.jobSummary" class="rounded-2xl bg-secondary/50 p-4 md:col-span-2">
+            <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground">Job summary</div>
+            <p class="mt-2 whitespace-pre-wrap text-sm leading-6 text-foreground">{{ currentApplication.jobOffer.jobSummary }}</p>
+          </div>
+          <div v-if="formatSalary(currentApplication.jobOffer?.salaryMin, currentApplication.jobOffer?.salaryMax, currentApplication.jobOffer?.salaryCurrency)" class="rounded-2xl bg-secondary/50 p-4">
+            <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground">Salary</div>
+            <div class="mt-2 text-base font-medium">{{ formatSalary(currentApplication.jobOffer?.salaryMin, currentApplication.jobOffer?.salaryMax, currentApplication.jobOffer?.salaryCurrency) }}</div>
+          </div>
+          <div v-if="currentApplication.jobOffer?.contractType" class="rounded-2xl bg-secondary/50 p-4">
+            <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground">Contract</div>
+            <div class="mt-2 text-base font-medium">{{ currentApplication.jobOffer.contractType }}</div>
+          </div>
+          <div v-if="currentApplication.jobOffer?.remotePolicy" class="rounded-2xl bg-secondary/50 p-4 md:col-span-2">
+            <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground">Remote policy</div>
+            <div class="mt-2 text-base font-medium">{{ currentApplication.jobOffer.remotePolicy }}</div>
+          </div>
+          <div v-if="currentApplication.jobOffer?.details" class="rounded-2xl bg-secondary/50 p-4 md:col-span-2">
+            <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground">Useful details</div>
+            <div class="mt-3 grid gap-3 md:grid-cols-2">
+              <div v-for="item in getDetailSummary()" :key="item.label" class="rounded-xl bg-card/80 p-3">
+                <div class="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{{ item.label }}</div>
+                <div class="mt-1 text-sm font-medium text-foreground">{{ item.value }}</div>
+              </div>
+            </div>
+            <div v-if="getResponsibilities().length" class="mt-5 rounded-xl bg-card/80 p-3">
+              <div class="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Responsibilities</div>
+              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-foreground">
+                <li v-for="item in getResponsibilities()" :key="item">{{ item }}</li>
+              </ul>
+            </div>
+            <div v-if="getRequiredSkillGroups().length" class="mt-5 space-y-3">
+              <div class="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Required skills</div>
+              <div v-for="group in getRequiredSkillGroups()" :key="group.label" class="rounded-xl bg-card/80 p-3">
+                <div class="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{{ group.label }}</div>
+                <div class="mt-2 flex flex-wrap gap-2">
+                  <span
+                    v-for="skill in group.items"
+                    :key="skill"
+                    class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-foreground"
+                  >
+                    {{ skill }}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -454,7 +679,18 @@ onMounted(() => {
           </button>
         </CardHeader>
         <CardContent class="space-y-4">
-          <div v-if="!currentApplication.recruiterEmails?.length" class="text-sm text-muted-foreground">No recruiter emails yet.</div>
+          <div class="space-y-2 rounded-[1.25rem] border border-border/80 bg-secondary/30 p-4">
+            <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground">Contact email</div>
+            <div
+              ref="recruiterContactEmailEditorRef"
+              class="editable-inline mt-2 px-3 py-2 text-sm font-medium"
+              data-placeholder="Add recruiter email"
+              contenteditable="true"
+              @keydown.enter.prevent
+              @input="handlePlainEditableInput('recruiterContactEmail', $event)"
+              @blur="commitInlineTextField('recruiterContactEmail', $event)"
+            ></div>
+          </div>
           <div v-for="email in currentApplication.recruiterEmails" :key="email.id" class="rounded-[1.25rem] border border-border/80 bg-card/70 p-4">
             <div class="flex items-start justify-between gap-4">
               <div>
@@ -467,6 +703,29 @@ onMounted(() => {
             <div v-if="email.aiSummary" class="mt-3 rounded-xl bg-accent/40 p-3 text-sm text-muted-foreground border">
               <div class="mb-1 flex items-center gap-2 font-medium text-foreground"><Sparkles :size="14" /> AI Summary</div>
               {{ email.aiSummary }}
+            </div>
+          </div>
+
+          <div class="rounded-[1.25rem] border border-dashed border-border/80 bg-secondary/30 p-4 space-y-3">
+            <div>
+              <div class="grid grid-cols-2 justify-center items-center">
+                <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground mb-1">Sender</div>
+                <div ref="recruiterSenderRef" class="editable-inline min-h-10 px-3 py-2 text-sm" contenteditable="true" @keydown.enter.prevent @blur="syncRecruiterEmailDrafts"></div>
+              </div>
+              <div class="grid grid-cols-2 justify-center items-center">
+                <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground mb-1">Subject</div>
+                <div ref="recruiterSubjectRef" class="editable-inline min-h-10 px-3 py-2 text-sm" contenteditable="true" @keydown.enter.prevent @blur="syncRecruiterEmailDrafts"></div>
+              </div>
+            </div>
+            <div>
+              <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground mb-1">Body</div>
+              <div ref="recruiterBodyRef" class="editable-inline min-h-24 px-3 py-2 text-sm whitespace-pre-wrap" contenteditable="true" @blur="syncRecruiterEmailDrafts"></div>
+            </div>
+            <div class="flex items-center gap-3">
+              <Button size="sm" :disabled="recruiterEmailSaveState === 'saving'" @click="createRecruiterEmail">Add email</Button>
+              <div v-if="recruiterEmailSaveState === 'saving'" class="text-xs text-muted-foreground">Saving...</div>
+              <div v-else-if="recruiterEmailSaveState === 'saved'" class="text-xs text-emerald-700">Saved</div>
+              <div v-else-if="recruiterEmailSaveState === 'error'" class="text-xs text-destructive">{{ recruiterEmailError }}</div>
             </div>
           </div>
         </CardContent>
@@ -482,18 +741,16 @@ onMounted(() => {
       >
         <CardHeader class="flex flex-row items-center justify-between gap-4">
           <CardTitle class="flex items-center gap-2"><ScrollText :size="18" /> Notes</CardTitle>
-          <div class="flex items-center gap-2">
-            <button type="button" class="drag-handle" draggable="true" title="Drag to reorder" @dragstart="handleDragStart('notes', $event)" @dragend="handleDragEnd">
-              <GripVertical :size="16" />
-            </button>
-            <button type="button" class="editor-action" @click="applyRichCommand('bold')">Bold</button>
-            <button type="button" class="editor-action" @click="applyRichCommand('italic')">Italic</button>
-            <button type="button" class="editor-action" @click="highlightSelection">Highlight</button>
-            <button type="button" class="editor-action" @click="applyRichCommand('insertUnorderedList')">Bullets</button>
-          </div>
+          <button type="button" class="drag-handle" draggable="true" title="Drag to reorder" @dragstart="handleDragStart('notes', $event)" @dragend="handleDragEnd">
+            <GripVertical :size="16" />
+          </button>
         </CardHeader>
         <CardContent>
-          <div ref="notesEditorRef" class="rich-editor text-sm leading-7 text-foreground" data-placeholder="Write notes, format text, and highlight key points..." contenteditable="true" @focus="setActiveEditor('notes')" @input="handleRichInput('notes')" @blur="flushInlineSave"></div>
+          <RichTextEditor
+            v-model="notesDraftHtml"
+            placeholder="Write notes, format text, and highlight key points..."
+            @blur="flushInlineSave"
+          />
         </CardContent>
       </Card>
 
@@ -507,18 +764,16 @@ onMounted(() => {
       >
         <CardHeader class="flex flex-row items-center justify-between gap-4">
           <CardTitle class="flex items-center gap-2"><Target :size="18" /> Interview prep</CardTitle>
-          <div class="flex items-center gap-2">
-            <button type="button" class="drag-handle" draggable="true" title="Drag to reorder" @dragstart="handleDragStart('interviewPrep', $event)" @dragend="handleDragEnd">
-              <GripVertical :size="16" />
-            </button>
-            <button type="button" class="editor-action" @click="applyRichCommand('bold')">Bold</button>
-            <button type="button" class="editor-action" @click="applyRichCommand('italic')">Italic</button>
-            <button type="button" class="editor-action" @click="highlightSelection">Highlight</button>
-            <button type="button" class="editor-action" @click="applyRichCommand('insertUnorderedList')">Bullets</button>
-          </div>
+          <button type="button" class="drag-handle" draggable="true" title="Drag to reorder" @dragstart="handleDragStart('interviewPrep', $event)" @dragend="handleDragEnd">
+            <GripVertical :size="16" />
+          </button>
         </CardHeader>
         <CardContent>
-          <div ref="interviewPrepEditorRef" class="rich-editor text-sm leading-7 text-foreground" data-placeholder="Capture prep notes, likely questions, and talking points..." contenteditable="true" @focus="setActiveEditor('interviewPrep')" @input="handleRichInput('interviewPrep')" @blur="flushInlineSave"></div>
+          <RichTextEditor
+            v-model="interviewPrepDraftHtml"
+            placeholder="Capture prep notes, likely questions, and talking points..."
+            @blur="flushInlineSave"
+          />
         </CardContent>
       </Card>
 
@@ -538,16 +793,13 @@ onMounted(() => {
         </CardHeader>
         <CardContent class="space-y-4 text-sm">
           <div class="flex items-center justify-between"><span class="text-muted-foreground">Created</span><strong>{{ formatDateTime(currentApplication.createdAt) }}</strong></div>
+          <div class="flex items-center justify-between"><span class="text-muted-foreground">Updated</span><strong>{{ formatDateTime(currentApplication.updatedAt) }}</strong></div>
           <div v-if="currentApplication.lastActivityAt" class="flex items-center justify-between"><span class="text-muted-foreground">Last activity</span><strong>{{ formatDateTime(currentApplication.lastActivityAt) }}</strong></div>
           <div v-if="currentApplication.jobOffer?.sourceUrl" class="space-y-2">
             <div class="text-muted-foreground">Source URL</div>
             <a :href="currentApplication.jobOffer.sourceUrl" target="_blank" rel="noreferrer" class="inline-flex items-center gap-2 text-primary hover:underline">
               {{ currentApplication.jobOffer.sourceUrl }}
             </a>
-          </div>
-          <div v-if="currentApplication.jobOffer?.recruiterContactEmail" class="space-y-2">
-            <div class="text-muted-foreground">Recruiter contact</div>
-            <div class="font-medium">{{ currentApplication.jobOffer.recruiterContactEmail }}</div>
           </div>
         </CardContent>
       </Card>
@@ -650,24 +902,10 @@ onMounted(() => {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 28%, transparent);
 }
 
-.editable-inline[contenteditable='true']:empty::before,
-.rich-editor[contenteditable='true']:empty::before {
+.editable-inline[contenteditable='true']:empty::before {
   color: hsl(var(--muted-foreground));
   content: attr(data-placeholder);
   pointer-events: none;
-}
-
-.editor-action {
-  border: 1px solid hsl(var(--border));
-  border-radius: 0.65rem;
-  cursor: pointer;
-  font-size: 0.75rem;
-  font-weight: 500;
-  padding: 0.2rem 0.55rem;
-}
-
-.editor-action:hover {
-  background: color-mix(in srgb, var(--accent) 80%, transparent);
 }
 
 .drag-handle {
@@ -697,17 +935,4 @@ onMounted(() => {
   background: color-mix(in srgb, var(--accent) 55%, transparent);
 }
 
-.rich-editor {
-  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
-  border-radius: 1rem;
-  cursor: text;
-  min-height: 10rem;
-  outline: none;
-  padding: 0.85rem 1rem;
-}
-
-.rich-editor:focus {
-  border-color: color-mix(in srgb, var(--primary) 42%, transparent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 25%, transparent);
-}
 </style>

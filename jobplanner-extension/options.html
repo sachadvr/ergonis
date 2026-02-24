@@ -3,30 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        body { font-family: system-ui, sans-serif; max-width: 480px; margin: 40px auto; padding: 0 20px; }
-        h1 { font-size: 20px; }
-        .field { margin-bottom: 16px; }
-        label { display: block; font-weight: 500; margin-bottom: 6px; }
-        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
-        button { padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        button:hover { background: #059669; }
+        * { box-sizing: border-box; }
+        body { min-height: 100vh; font-family: system-ui, sans-serif; margin: 0; padding: 32px 24px; background: #fff; }
+        .page { width: 100%; max-width: 720px; margin: 0 auto; }
+        .brand { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+        .brand-left { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; }
+        .brand img { width: 120px; height: auto; display: block; flex: 0 0 auto; }
+        h1 { margin: 0; font-size: 16px; }
+        .icon-btn { width: 32px; height: 32px; border: none; border-radius: 999px; background: #161632; color: white; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex: 0 0 auto; }
+        .icon-btn:hover { background: #1f1f45; }
+        .icon-btn svg { width: 16px; height: 16px; display: block; }
+        .field { margin-bottom: 12px; }
+        label { display: block; font-size: 12px; color: #666; margin-bottom: 4px; }
+        input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
+        .btn { padding: 10px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; width: 100%; }
+        .btn-primary { background: #161632; color: white; }
+        .btn-primary:hover { background: #1f1f45; }
+        .btn-secondary { background: #e5e7eb; color: #374151; margin-top: 8px; }
         .hint { font-size: 12px; color: #666; margin-top: 4px; }
+        .status { margin-top: 16px; font-size: 14px; }
     </style>
 </head>
 <body>
-    <h1>Paramètres JobPlanner</h1>
-    <div class="field">
-        <label>URL de l'API</label>
-        <input type="url" id="apiUrl" placeholder="http://localhost:8000">
-        <div class="hint">Ex: http://localhost:8000 pour le dev local</div>
+    <div class="page">
+        <div class="brand">
+            <div class="brand-left">
+                <img src="logo_dark.png" alt="JobPlanner" />
+                <h1>Settings</h1>
+            </div>
+            <button class="icon-btn" id="openFrontend" type="button" aria-label="Open JobPlanner" title="Open JobPlanner">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M7 17 17 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M9 7h8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="field">
+            <label>API URL</label>
+            <input type="url" id="apiUrl" placeholder="http://localhost:8000">
+            <div class="hint">Example: http://localhost:8000 for local development</div>
+        </div>
+        <div class="field">
+            <label>Frontend URL</label>
+            <input type="url" id="frontendUrl" placeholder="http://localhost:5173">
+            <div class="hint">Open the frontend, sign in, then sync the token.</div>
+        </div>
+        <button class="btn btn-primary" id="save">Save</button>
+        <p id="status" class="status"></p>
     </div>
-    <div class="field">
-        <label>Token JWT</label>
-        <input type="password" id="token" placeholder="Collez votre token JWT">
-        <div class="hint">Obtenu après connexion sur JobPlanner (F12 → Application → Local Storage)</div>
-    </div>
-    <button id="save">Enregistrer</button>
-    <p id="status" style="margin-top: 16px; font-size: 14px;"></p>
     <script src="options.js"></script>
 </body>
 </html>

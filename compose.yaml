@@ -16,9 +16,9 @@ services:
   mailpit:
     image: axllent/mailpit:latest
     ports:
-      - "1025:1025"   # SMTP
-      - "8025:8025"   # Web UI
-      - "1110:1110"   # POP3
+      - "1025:1025"
+      - "8025:8025"
+      - "1110:1110"
     environment:
       MP_SMTP_AUTH_ACCEPT_ANY: 1
       MP_SMTP_AUTH_ALLOW_INSECURE: 1
@@ -30,24 +30,37 @@ services:
     ports:
       - "8000:8000"
     environment:
-      APP_ENV: dev
+      APP_ENV: ${APP_ENV:-prod}
       DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-!ChangeMe!}@database:5432/${POSTGRES_DB:-app}?serverVersion=16&charset=utf8
       MAILER_DSN: smtp://mailpit:1025
-      CORS_ALLOW_ORIGIN: '^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'
-      SIMULATION_MODE: ${SIMULATION_MODE:-true}
+      CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN:-}
+      SIMULATION_MODE: ${SIMULATION_MODE:-false}
     depends_on:
       database:
         condition: service_healthy
 
-  frontend:
+  scheduler:
     build:
-      context: ./jobplanner-frontend
+      context: ./jobplanner-api
       dockerfile: Dockerfile
-    ports:
-      - "80:80"
+    environment:
+      APP_ENV: ${APP_ENV:-prod}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-!ChangeMe!}@database:5432/${POSTGRES_DB:-app}?serverVersion=16&charset=utf8
+      MAILER_DSN: smtp://mailpit:1025
+      SIMULATION_MODE: ${SIMULATION_MODE:-false}
+    command: php bin/console messenger:consume scheduler_default --time-limit=3600 --memory-limit=256M --no-interaction -vv
     depends_on:
-      - api
+      database:
+        condition: service_healthy
+
+  # frontend:
+  #   build:
+  #     context: ./jobplanner-frontend
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "80:80"
+  #   depends_on:
+  #     - api
 
 volumes:
   database_data:
-  api_vendor:

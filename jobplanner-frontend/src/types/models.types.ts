@@ -27,8 +27,14 @@ export interface JobOffer {
   interviewPrep?: string
   sourceUrl?: string
   recruiterContactEmail?: string
+  rawContent?: string
+  jobSummary?: string
   salaryMin?: number
   salaryMax?: number
+  salaryCurrency?: string
+  contractType?: string
+  remotePolicy?: string
+  details?: Record<string, unknown>
   createdAt: string
   updatedAt?: string
 }
@@ -41,6 +47,7 @@ export interface Application {
   location?: string
   url?: string
   notes?: string
+  interviewPrep?: string
   salaryMin?: number
   salaryMax?: number
   // Original nested structure

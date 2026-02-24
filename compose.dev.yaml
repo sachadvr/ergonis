@@ -1,0 +1,86 @@
+services:
+  api:
+    volumes:
+      - ./jobplanner-api:/srv/app
+      - api_vendor:/srv/app/vendor
+    command: >
+      sh -c "
+        composer install --no-interaction --no-scripts &&
+        php bin/console cache:clear &&
+        (test -f config/jwt/private.pem || (mkdir -p config/jwt && openssl genrsa -out config/jwt/private.pem 4096 && openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem)) &&
+        php -S 0.0.0.0:8000 -t public
+      "
+    environment:
+      APP_ENV: dev
+      APP_DEBUG: 1
+      AI_PROVIDER: ollama
+      CORS_ALLOW_ORIGIN: '^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'
+      SIMULATION_MODE: "true"
+      OLLAMA_URL: http://host.docker.internal:11434
+
+  database:
+    ports:
+      - "5432:5432"
+
+  frontend:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - ./jobplanner-frontend:/app
+      - frontend_node_modules:/app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://api:8000
+      VITE_USE_PROXY: "true"
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    depends_on:
+      - api
+
+  worker:
+    build:
+      context: ./jobplanner-api
+      dockerfile: Dockerfile
+    volumes:
+      - ./jobplanner-api:/srv/app
+      - api_vendor:/srv/app/vendor
+    command: >
+      sh -c "
+        composer install --no-interaction --no-scripts &&
+        php bin/console messenger:consume async --time-limit=3600 --memory-limit=256M --no-interaction -vv
+      "
+    environment:
+      APP_ENV: dev
+      APP_DEBUG: 1
+      AI_PROVIDER: ollama
+      DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-!ChangeMe!}@database:5432/${POSTGRES_DB:-app}?serverVersion=16&charset=utf8
+      OLLAMA_URL: http://host.docker.internal:11434
+      MAILER_DSN: smtp://mailpit:1025
+      SIMULATION_MODE: "true"
+    depends_on:
+      - database
+
+  scheduler:
+    build:
+      context: ./jobplanner-api
+      dockerfile: Dockerfile
+    volumes:
+      - ./jobplanner-api:/srv/app
+      - api_vendor:/srv/app/vendor
+    command: >
+      sh -c "
+        composer install --no-interaction --no-scripts &&
+        php bin/console messenger:consume scheduler_default --time-limit=3600 --memory-limit=256M --no-interaction -vv
+      "
+    environment:
+      APP_ENV: dev
+      APP_DEBUG: 1
+      DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-!ChangeMe!}@database:5432/${POSTGRES_DB:-app}?serverVersion=16&charset=utf8
+      MAILER_DSN: smtp://mailpit:1025
+      SIMULATION_MODE: "true"
+    depends_on:
+      - database
+
+volumes:
+  api_vendor:
+  frontend_node_modules:

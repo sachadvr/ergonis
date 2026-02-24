@@ -9,6 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tiptap/extension-highlight": "^3.22.3",
+    "@tiptap/extension-placeholder": "^3.22.3",
+    "@tiptap/starter-kit": "^3.22.3",
+    "@tiptap/vue-3": "^3.22.3",
     "@vueuse/core": "^14.2.1",
     "@vueuse/integrations": "^14.2.1",
     "@vueuse/motion": "^3.0.3",
