@@ -699,11 +699,11 @@ onMounted(() => {
               </div>
               <div class="text-xs text-muted-foreground">{{ format(new Date(email.receivedAt), 'PP p') }}</div>
             </div>
-            <div class="mt-3 whitespace-pre-wrap text-sm leading-6 text-foreground">{{ email.body }}</div>
-            <div v-if="email.aiSummary" class="mt-3 rounded-xl bg-accent/40 p-3 text-sm text-muted-foreground border">
-              <div class="mb-1 flex items-center gap-2 font-medium text-foreground"><Sparkles :size="14" /> AI Summary</div>
+            <div v-if="email.aiSummary" class="mt-3 rounded-xl bg-accent/40 p-3 text-sm text-muted-foreground bg-[#161632] text-white">
+              <div class="mb-1 flex items-center gap-2 font-medium text-[#01B79D]"><Sparkles :size="14" /> AI Summary</div>
               {{ email.aiSummary }}
             </div>
+            <div class="mt-3 whitespace-pre-wrap text-sm leading-6 text-foreground">{{ email.body }}</div>
           </div>
 
           <div class="rounded-[1.25rem] border border-dashed border-border/80 bg-secondary/30 p-4 space-y-3">

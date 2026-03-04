@@ -67,7 +67,7 @@ function refreshNotifications() {
       <Badge
         v-if="unreadCount > 0"
         variant="default"
-        class="absolute -right-1 -top-1 h-5 min-w-5 justify-center rounded-full px-1 text-[10px]"
+        class="absolute -right-1 -top-1 h-5 min-w-5 justify-center rounded-full px-1 text-[10px] bg-red-500 text-white"
       >
         {{ unreadCount }}
       </Badge>

@@ -309,7 +309,19 @@ onMounted(() => {
           </CardHeader>
 
           <CardContent class="flex-1 overflow-y-auto space-y-6 p-6">
-            <div v-if="emailsInSelectedGroup.length > 1" class="space-y-3 rounded-[1.25rem] bg-secondary/45 p-4">
+            <div v-if="selectedEmail.aiSummary && selectedEmail.body.length > 200" class="flex items-start gap-3 rounded-xl border border-border bg-accent/40 p-4 text-sm text-muted-foreground bg-[#161632] text-white">
+              
+              <div>
+                <div class="mb-1 font-medium text-[#01B79D] flex gap-2"> <Sparkles :size="16" class="mt-0.5 shrink-0" />AI summary</div>
+                <div>{{ selectedEmail.aiSummary }}</div>
+              </div>
+            </div>
+
+            <div class="whitespace-pre-wrap text-sm leading-7 text-foreground">
+              {{ selectedEmail.body }}
+            </div>
+
+            <div v-if="emailsInSelectedGroup.length > 1" class="space-y-3 rounded-[1.25rem] bg-secondary/45 border rounded-none p-2">
               <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground">Thread timeline</div>
               <div
                 v-for="threadEmail in emailsInSelectedGroup"
@@ -321,20 +333,8 @@ onMounted(() => {
                   <span>{{ format(new Date(threadEmail.receivedAt), 'PP p') }}</span>
                 </div>
                 <div class="mt-2 text-sm font-medium text-foreground">{{ threadEmail.subject }}</div>
-                <div class="mt-2 line-clamp-2 text-sm text-muted-foreground">{{ previewBody(threadEmail.body) }}</div>
+                <div class="mt-2 line-clamp-2 text-sm text-muted-foreground">{{ previewBody(threadEmail.aiSummary || threadEmail.body) }}</div>
               </div>
-            </div>
-
-            <div v-if="selectedEmail.aiSummary" class="flex items-start gap-3 rounded-xl border border-border bg-accent/40 p-4 text-sm text-muted-foreground">
-              <Sparkles :size="16" class="mt-0.5 shrink-0" />
-              <div>
-                <div class="mb-1 font-medium text-foreground">AI summary</div>
-                <div>{{ selectedEmail.aiSummary }}</div>
-              </div>
-            </div>
-
-            <div class="whitespace-pre-wrap text-sm leading-7 text-foreground">
-              {{ selectedEmail.body }}
             </div>
           </CardContent>
         </template>

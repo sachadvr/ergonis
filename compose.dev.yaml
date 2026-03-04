@@ -67,8 +67,8 @@ services:
     environment:
       APP_ENV: dev
       APP_DEBUG: 1
-      AI_PROVIDER: ollama
       DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-!ChangeMe!}@database:5432/${POSTGRES_DB:-app}?serverVersion=16&charset=utf8
+      AI_PROVIDER: ollama
       OLLAMA_URL: http://host.docker.internal:11434
       MAILER_DSN: smtp://mailpit:1025
       SIMULATION_MODE: "true"
@@ -95,6 +95,8 @@ services:
       SIMULATION_MODE: "true"
       MERCURE_PUBLIC_URL: http://mercure:3000/.well-known/mercure
       MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET:-dev-mercure-secret}
+      AI_PROVIDER: ollama
+      OLLAMA_URL: http://host.docker.internal:11434
     depends_on:
       - database
       - mercure
