@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Application, ApplicationFormValues } from '@/types/models.types'
+import type { Application, ApplicationCvFitAnalysis, ApplicationFormValues } from '@/types/models.types'
 import { applicationsApi } from '../api/applications.api'
 import { jobOffersApi } from '@/features/job-offers/api/job-offers.api'
 import {
@@ -243,6 +243,56 @@ export const useApplicationsStore = defineStore('applications', () => {
   }
 
   /**
+   * Analyze a PDF CV against an application
+   */
+  async function analyzeApplicationCvFit(id: number, file: File) {
+    try {
+      isLoading.value = true
+      error.value = null
+      return await applicationsApi.analyzeCvFit(String(id), file)
+    } catch (e) {
+      error.value = 'Failed to analyze CV fit'
+      console.error('Error analyzing CV fit:', e)
+      throw e
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
+   * Update CV fit analysis fields from a Mercure event
+   */
+  function patchApplicationCvFit(
+    id: number,
+    data: {
+      status?: Application['cvFitAnalysisStatus']
+      result?: ApplicationCvFitAnalysis | null
+      requestedAt?: string | null
+      completedAt?: string | null
+    },
+  ) {
+    const applyPatch = (application: Application) => {
+      application.cvFitAnalysisStatus = data.status ?? application.cvFitAnalysisStatus
+      application.cvFitAnalysisResult = data.result ?? application.cvFitAnalysisResult ?? null
+      application.cvFitAnalysisRequestedAt = data.requestedAt ?? application.cvFitAnalysisRequestedAt ?? null
+      application.cvFitAnalysisCompletedAt = data.completedAt ?? application.cvFitAnalysisCompletedAt ?? null
+    }
+
+    const current = currentApplication.value
+    if (current?.id === id) {
+      applyPatch(current)
+    }
+
+    const index = applications.value.findIndex((app) => app.id === id)
+    if (index !== -1) {
+      const application = applications.value[index]
+      if (application) {
+        applyPatch(application)
+      }
+    }
+  }
+
+  /**
    * Reset store
    */
   function $reset() {
@@ -271,6 +321,8 @@ export const useApplicationsStore = defineStore('applications', () => {
     deleteApplication,
     deleteApplicationWithJobOffer,
     updateApplicationStatus,
+    analyzeApplicationCvFit,
+    patchApplicationCvFit,
     $reset,
   }
 })

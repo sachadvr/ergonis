@@ -7,36 +7,43 @@ import {
   ArrowLeft,
   Building2,
   CalendarDays,
+  FileText,
   ExternalLink,
   Mail,
   MapPin,
   GripVertical,
+  Upload,
   ScrollText,
   Sparkles,
   Target,
 } from 'lucide-vue-next'
 import { useApplicationsStore } from '../stores/applications.store'
+import { useAuthStore } from '@/features/auth/stores/auth.store'
+import { useNotificationsStore } from '@/features/notifications/stores/notifications.store'
 import { useSettingsStore } from '@/features/settings/stores/settings.store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import RichTextEditor from '@/components/ui/rich-text-editor/RichTextEditor.vue'
-import { emailsApi } from '@/features/emails/api/emails.api'
 import { interviewsApi } from '@/features/interviews/api/interviews.api'
 import { extractIdFromIri } from '@/lib/api/transforms'
-import type { Application, ApplicationFormValues, Interview } from '@/types/models.types'
+import type { Application, ApplicationCvFitAnalysis, ApplicationFormValues, Interview } from '@/types/models.types'
 
 const route = useRoute()
 const router = useRouter()
 const applicationsStore = useApplicationsStore()
+const authStore = useAuthStore()
+const notificationsStore = useNotificationsStore()
 const settingsStore = useSettingsStore()
 const { currentApplication, isLoading } = storeToRefs(applicationsStore)
+const { user } = storeToRefs(authStore)
 const { mailboxSettings } = storeToRefs(settingsStore)
 
 type BlockId =
   | 'overview'
   | 'recruiterEmails'
   | 'notes'
+  | 'cvFit'
   | 'interviewPrep'
   | 'metadata'
   | 'interviews'
@@ -46,9 +53,7 @@ type BlockId =
 const detailedInterviews = ref<Interview[]>([])
 const editableForm = ref<ApplicationFormValues | null>(null)
 const inlineSaveState = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
-const recruiterEmailSaveState = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
 const saveErrorMessage = ref('')
-const recruiterEmailError = ref('')
 const deleteState = ref<'idle' | 'deleting' | 'error'>('idle')
 const deleteErrorMessage = ref('')
 const jobTitleEditorRef = ref<HTMLElement | null>(null)
@@ -62,25 +67,30 @@ const recruiterSubjectRef = ref<HTMLElement | null>(null)
 const recruiterBodyRef = ref<HTMLElement | null>(null)
 const blockOrder = ref<BlockId[]>([
   'overview',
-  'recruiterEmails',
   'notes',
+  'cvFit',
   'interviewPrep',
-  'metadata',
+  'recruiterEmails',
   'interviews',
-  'followups',
+  'metadata',
   'history',
+  'followups',
 ])
 const draggedBlock = ref<BlockId | null>(null)
 const dragOverTarget = ref<BlockId | null>(null)
 
 const notesDraftHtml = ref('')
 const interviewPrepDraftHtml = ref('')
+const cvFileInputRef = ref<HTMLInputElement | null>(null)
+const cvFile = ref<File | null>(null)
+const cvFitState = ref<'idle' | 'uploading' | 'queued' | 'done' | 'error'>('idle')
+const cvFitError = ref('')
 let recruiterSenderDraft = ''
 let recruiterSubjectDraft = ''
 let recruiterBodyDraft = ''
 let saveDebounceTimer: ReturnType<typeof setTimeout> | null = null
 let saveStateTimer: ReturnType<typeof setTimeout> | null = null
-let recruiterEmailStateTimer: ReturnType<typeof setTimeout> | null = null
+let unsubscribeCvFitMercure: (() => void) | null = null
 
 const applicationId = computed(() => String(route.params.id))
 const currentMailboxImapUser = computed(() => mailboxSettings.value[0]?.imapUser || '')
@@ -136,6 +146,23 @@ const interviewsToDisplay = computed(() => {
   return objectInterviews.length ? objectInterviews : detailedInterviews.value
 })
 const currentJobOfferId = computed(() => currentApplication.value?.jobOffer?.id)
+const cvFitResult = computed<ApplicationCvFitAnalysis | null>(() => currentApplication.value?.cvFitAnalysisResult ?? null)
+const cvFitStatus = computed(() => currentApplication.value?.cvFitAnalysisStatus ?? null)
+const cvFitScore = computed(() => cvFitResult.value?.overall_fit?.score ?? null)
+const cvFitLevel = computed(() => cvFitResult.value?.overall_fit?.level ?? null)
+const cvFitRecommendation = computed(() => cvFitResult.value?.overall_fit?.recommendation ?? null)
+
+const listFromAnalysis = (value?: string[] | null) => (Array.isArray(value) ? value.filter((item) => item.trim().length > 0) : [])
+
+const cvFitResultList = computed(() => ({
+  strongMatches: listFromAnalysis(cvFitResult.value?.strong_matches),
+  gaps: listFromAnalysis(cvFitResult.value?.gaps),
+  keywords: listFromAnalysis(cvFitResult.value?.ats_keywords_to_add),
+  cvCustomization: listFromAnalysis(cvFitResult.value?.cv_customization_points),
+  motivation: listFromAnalysis(cvFitResult.value?.motivation_letter_points),
+  interviewTopics: listFromAnalysis(cvFitResult.value?.interview_topics_to_prepare),
+  redFlags: listFromAnalysis(cvFitResult.value?.red_flags_or_unclear_points),
+}))
 
 const formatSalary = (min?: number, max?: number, currency?: string) => {
   if (min == null && max == null) return null
@@ -351,50 +378,6 @@ const flushInlineSave = () => {
   saveInlineChanges()
 }
 
-const createRecruiterEmail = async () => {
-  if (!currentApplication.value) return
-
-  syncRecruiterEmailDrafts()
-  const sender = recruiterSenderDraft.trim()
-  const subject = recruiterSubjectDraft.trim()
-  const body = recruiterBodyDraft.trim()
-
-  if (!sender || !subject || !body) {
-    recruiterEmailError.value = 'Sender, subject and body are required.'
-    recruiterEmailSaveState.value = 'error'
-    return
-  }
-
-  recruiterEmailSaveState.value = 'saving'
-  recruiterEmailError.value = ''
-
-  try {
-    await emailsApi.create({
-      application: `/api/applications/${currentApplication.value.id}`,
-      sender,
-      subject,
-      body,
-      receivedAt: new Date().toISOString(),
-      direction: 'INCOMING',
-      isFavourite: false,
-      isDeleted: false,
-      isDraft: false,
-      labels: [],
-    })
-
-    recruiterEmailSaveState.value = 'saved'
-    await applicationsStore.fetchApplicationById(applicationId.value)
-    resetRecruiterEmailDraft()
-    if (recruiterEmailStateTimer) clearTimeout(recruiterEmailStateTimer)
-    recruiterEmailStateTimer = setTimeout(() => {
-      recruiterEmailSaveState.value = 'idle'
-    }, 1400)
-  } catch {
-    recruiterEmailSaveState.value = 'error'
-    recruiterEmailError.value = 'Could not add recruiter email.'
-  }
-}
-
 const deleteApplicationAndJobOffer = async () => {
   if (!currentApplication.value) return
 
@@ -410,6 +393,103 @@ const deleteApplicationAndJobOffer = async () => {
   } catch {
     deleteState.value = 'error'
     deleteErrorMessage.value = 'Could not delete the application.'
+  }
+}
+
+const disconnectCvFitMercure = () => {
+  if (unsubscribeCvFitMercure) {
+    unsubscribeCvFitMercure()
+    unsubscribeCvFitMercure = null
+  }
+}
+
+const connectCvFitMercure = () => {
+  if (!user.value?.id || unsubscribeCvFitMercure) return
+
+  notificationsStore.start(user.value.id)
+
+  unsubscribeCvFitMercure = notificationsStore.subscribeMercure((payload) => {
+    try {
+      const event = payload as {
+        type?: string
+        applicationId?: number
+        status?: Application['cvFitAnalysisStatus']
+        result?: ApplicationCvFitAnalysis | null
+        requestedAt?: string | null
+        completedAt?: string | null
+      }
+
+      if (
+        event.type !== 'application.cv_fit.updated' ||
+        typeof event.applicationId !== 'number' ||
+        event.applicationId !== currentApplication.value?.id
+      ) {
+        return
+      }
+
+      applicationsStore.patchApplicationCvFit(event.applicationId, {
+        status: event.status,
+        result: event.result ?? null,
+        requestedAt: event.requestedAt ?? null,
+        completedAt: event.completedAt ?? null,
+      })
+
+      if (event.status === 'completed') {
+        cvFitState.value = 'done'
+        cvFitError.value = ''
+        disconnectCvFitMercure()
+      }
+
+      if (event.status === 'failed') {
+        cvFitState.value = 'error'
+        cvFitError.value = 'Could not analyze the CV.'
+        disconnectCvFitMercure()
+      }
+
+      if (event.status === 'queued' || event.status === 'processing') {
+        cvFitState.value = 'queued'
+      }
+    } catch (error) {
+      console.error('Invalid CV fit Mercure payload:', error)
+    }
+  })
+}
+
+const resetCvFitState = () => {
+  cvFile.value = null
+  cvFitState.value = 'idle'
+  cvFitError.value = ''
+  if (cvFileInputRef.value) {
+    cvFileInputRef.value.value = ''
+  }
+}
+
+const onCvFileSelected = (event: Event) => {
+  const input = event.target as HTMLInputElement | null
+  const file = input?.files?.[0] ?? null
+
+  cvFile.value = file
+  cvFitError.value = ''
+  cvFitState.value = 'idle'
+}
+
+const analyzeCvFit = async () => {
+  if (!currentApplication.value || !cvFile.value) {
+    cvFitError.value = 'Select a PDF file first.'
+    cvFitState.value = 'error'
+    return
+  }
+
+  cvFitState.value = 'uploading'
+  cvFitError.value = ''
+
+  try {
+    await applicationsStore.analyzeApplicationCvFit(currentApplication.value.id, cvFile.value)
+    cvFitState.value = 'queued'
+    await connectCvFitMercure()
+  } catch {
+    cvFitState.value = 'error'
+    cvFitError.value = 'Could not analyze the CV.'
   }
 }
 
@@ -491,8 +571,26 @@ watch(applicationId, () => {
   editableForm.value = null
   notesDraftHtml.value = ''
   interviewPrepDraftHtml.value = ''
+  resetCvFitState()
+  disconnectCvFitMercure()
   loadApplication()
 }, { immediate: true })
+
+watch(cvFitStatus, (status) => {
+  if (status === 'queued' || status === 'processing') {
+    cvFitState.value = 'queued'
+  }
+
+  if (status === 'completed') {
+    cvFitState.value = 'done'
+    disconnectCvFitMercure()
+  }
+
+  if (status === 'failed') {
+    cvFitState.value = 'error'
+    disconnectCvFitMercure()
+  }
+})
 
 watch(currentMailboxImapUser, (imapUser) => {
   if (!imapUser) return
@@ -504,7 +602,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleSaveShortcut)
   if (saveDebounceTimer) clearTimeout(saveDebounceTimer)
   if (saveStateTimer) clearTimeout(saveStateTimer)
-  if (recruiterEmailStateTimer) clearTimeout(recruiterEmailStateTimer)
+  disconnectCvFitMercure()
 })
 
 onMounted(() => {
@@ -665,6 +763,169 @@ onMounted(() => {
       </Card>
 
       <Card
+        :class="['cursor-default', dragOverTarget === 'notes' ? 'drag-over-card' : '']"
+        :style="getBlockOrderStyle('notes')"
+        @dragenter.prevent="handleDragOver('notes')"
+        @dragover.prevent="handleDragOver('notes')"
+        @dragleave="handleDragLeave('notes')"
+        @drop="handleDrop('notes')"
+      >
+        <CardHeader class="flex flex-row items-center justify-between gap-4">
+          <CardTitle class="flex items-center gap-2"><ScrollText :size="18" /> Notes</CardTitle>
+          <button type="button" class="drag-handle" draggable="true" title="Drag to reorder" @dragstart="handleDragStart('notes', $event)" @dragend="handleDragEnd">
+            <GripVertical :size="16" />
+          </button>
+        </CardHeader>
+        <CardContent>
+          <RichTextEditor
+            v-model="notesDraftHtml"
+            placeholder="Write notes, format text, and highlight key points..."
+            @blur="flushInlineSave"
+          />
+        </CardContent>
+      </Card>
+
+      <Card
+        :class="['cursor-default', dragOverTarget === 'cvFit' ? 'drag-over-card' : '']"
+        :style="getBlockOrderStyle('cvFit')"
+        @dragenter.prevent="handleDragOver('cvFit')"
+        @dragover.prevent="handleDragOver('cvFit')"
+        @dragleave="handleDragLeave('cvFit')"
+        @drop="handleDrop('cvFit')"
+      >
+        <CardHeader class="flex flex-row items-center justify-between gap-4">
+          <CardTitle class="flex items-center gap-2"><FileText :size="18" /> CV fit analysis</CardTitle>
+          <button type="button" class="drag-handle" draggable="true" title="Drag to reorder" @dragstart="handleDragStart('cvFit', $event)" @dragend="handleDragEnd">
+            <GripVertical :size="16" />
+          </button>
+        </CardHeader>
+        <CardContent class="space-y-4">
+          <div class="rounded-2xl border border-dashed border-border/80 bg-secondary/30 p-4 space-y-3">
+            
+            <input
+              ref="cvFileInputRef"
+              type="file"
+              class="hidden"
+              id="cvFileInput"
+              accept="application/pdf,.pdf"
+              @change="onCvFileSelected"
+            />
+            <div v-if="cvFile" class="flex items-center gap-2 text-sm text-foreground">
+              <Upload :size="14" />
+              <span>{{ cvFile.name }}</span>
+            </div>
+            <div class="flex items-center gap-3 w-full">
+              <label for="cvFileInput" class="cursor-pointer flex items-center gap-2 text-sm w-fit border p-2 rounded-md bg-[#161632] text-white text-nowrap">
+                <Upload :size="14" />Upload a PDF</label>
+                
+              <Button :disabled="cvFitState === 'uploading' || !cvFile" @click="analyzeCvFit" class="w-full rounded-md">
+                {{ cvFitState === 'uploading' ? 'Analyzing...' : 'Analyze CV fit' }}
+              </Button>
+            </div>
+            <p v-if="cvFitError" class="text-sm text-destructive">{{ cvFitError }}</p>
+            <p v-else-if="cvFitStatus === 'queued' || cvFitStatus === 'processing'" class="text-sm text-muted-foreground">
+              Analysis in progress...
+            </p>
+          </div>
+
+          <div v-if="cvFitResult" class="space-y-4 rounded-2xl bg-secondary/40 p-4">
+            <div class="flex flex-wrap items-center gap-3">
+              <Badge variant="secondary" class="bg-[#161632] text-white">Score: <span class="font-bold text-[#01B79D] ml-2">{{ cvFitScore ?? 'n/a' }}/100</span></Badge>
+              <Badge v-if="cvFitLevel" variant="outline" class="bg-[#01B79D] text-white">Level: {{ cvFitLevel }}</Badge>
+              <Badge v-if="cvFitRecommendation" variant="outline" class="bg-[#161632] text-white">{{ cvFitRecommendation }}</Badge>
+            </div>
+            <blockquote v-if="cvFitResult.summary" class="text-sm leading-6 text-foreground border-l-4 border-primary/40 pl-4">
+              {{ cvFitResult.summary }}
+            </blockquote>
+
+            <div v-if="cvFitResultList.strongMatches.length" class="space-y-2">
+              <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground">(+) Strong matches</div>
+              <ul class="list-disc space-y-1 pl-5 text-sm">
+                <li v-for="item in cvFitResultList.strongMatches" :key="item">{{ item }}</li>
+              </ul>
+            </div>
+
+            <div v-if="cvFitResultList.gaps.length" class="space-y-2">
+              <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground">(-) Problems...</div>
+              <div class="grid grid-cols-3 gap-2">
+                <div v-for="item in cvFitResultList.gaps" :key="item" class="rounded-xl bg-card/80 p-3 border border-border/80 text-sm text-foreground">
+                  {{ item }}
+                </div>
+              </div>
+            </div>
+
+            <div v-if="cvFitResultList.keywords.length" class="space-y-2">
+              <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground">ATS keywords to add</div>
+              <div class="flex flex-wrap gap-2">
+                <span v-for="item in cvFitResultList.keywords" :key="item" class="rounded-full border border-border/70 bg-card px-3 py-1 text-xs">
+                  {{ item }}
+                </span>
+              </div>
+            </div>
+
+            <div v-if="cvFitResultList.cvCustomization.length" class="space-y-2">
+              <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground">CV customization</div>
+              <ul class="list-disc space-y-1 pl-5 text-sm">
+                <li v-for="item in cvFitResultList.cvCustomization" :key="item">{{ item }}</li>
+              </ul>
+            </div>
+
+            <details>
+              <summary>Other recommendations</summary>
+            
+              <div class="border p-4 space-y-2 flex flex-col gap-2">
+
+              <div v-if="cvFitResultList.motivation.length" class="space-y-2">
+                <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground">Motivation letter</div>
+                <ul class="list-disc space-y-1 pl-5 text-sm">
+                  <li v-for="item in cvFitResultList.motivation" :key="item">{{ item }}</li>
+                </ul>
+              </div>
+
+              <div v-if="cvFitResultList.interviewTopics.length" class="space-y-2">
+                <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground">Interview topics</div>
+                <ul class="list-disc space-y-1 pl-5 text-sm">
+                  <li v-for="item in cvFitResultList.interviewTopics" :key="item">{{ item }}</li>
+                </ul>
+              </div>
+
+              <div v-if="cvFitResultList.redFlags.length" class="space-y-2">
+                <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground">Unclear points</div>
+                <ul class="list-disc space-y-1 pl-5 text-sm">
+                  <li v-for="item in cvFitResultList.redFlags" :key="item">{{ item }}</li>
+                </ul>
+              </div>
+            </div>
+
+          </details>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card
+        :class="['cursor-default', dragOverTarget === 'interviewPrep' ? 'drag-over-card' : '']"
+        :style="getBlockOrderStyle('interviewPrep')"
+        @dragenter.prevent="handleDragOver('interviewPrep')"
+        @dragover.prevent="handleDragOver('interviewPrep')"
+        @dragleave="handleDragLeave('interviewPrep')"
+        @drop="handleDrop('interviewPrep')"
+      >
+        <CardHeader class="flex flex-row items-center justify-between gap-4">
+          <CardTitle class="flex items-center gap-2"><Target :size="18" /> Interview prep</CardTitle>
+          <button type="button" class="drag-handle" draggable="true" title="Drag to reorder" @dragstart="handleDragStart('interviewPrep', $event)" @dragend="handleDragEnd">
+            <GripVertical :size="16" />
+          </button>
+        </CardHeader>
+        <CardContent>
+          <RichTextEditor
+            v-model="interviewPrepDraftHtml"
+            placeholder="Capture prep notes, likely questions, and talking points..."
+            @blur="flushInlineSave"
+          />
+        </CardContent>
+      </Card>
+
+      <Card
         :class="['cursor-default', dragOverTarget === 'recruiterEmails' ? 'drag-over-card' : '']"
         :style="getBlockOrderStyle('recruiterEmails')"
         @dragenter.prevent="handleDragOver('recruiterEmails')"
@@ -705,78 +966,8 @@ onMounted(() => {
             </div>
             <div class="mt-3 whitespace-pre-wrap text-sm leading-6 text-foreground">{{ email.body }}</div>
           </div>
-
-          <div class="rounded-[1.25rem] border border-dashed border-border/80 bg-secondary/30 p-4 space-y-3">
-            <div>
-              <div class="grid grid-cols-2 justify-center items-center">
-                <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground mb-1">Sender</div>
-                <div ref="recruiterSenderRef" class="editable-inline min-h-10 px-3 py-2 text-sm" contenteditable="true" @keydown.enter.prevent @blur="syncRecruiterEmailDrafts"></div>
-              </div>
-              <div class="grid grid-cols-2 justify-center items-center">
-                <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground mb-1">Subject</div>
-                <div ref="recruiterSubjectRef" class="editable-inline min-h-10 px-3 py-2 text-sm" contenteditable="true" @keydown.enter.prevent @blur="syncRecruiterEmailDrafts"></div>
-              </div>
-            </div>
-            <div>
-              <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground mb-1">Body</div>
-              <div ref="recruiterBodyRef" class="editable-inline min-h-24 px-3 py-2 text-sm whitespace-pre-wrap" contenteditable="true" @blur="syncRecruiterEmailDrafts"></div>
-            </div>
-            <div class="flex items-center gap-3">
-              <Button size="sm" :disabled="recruiterEmailSaveState === 'saving'" @click="createRecruiterEmail">Add email</Button>
-              <div v-if="recruiterEmailSaveState === 'saving'" class="text-xs text-muted-foreground">Saving...</div>
-              <div v-else-if="recruiterEmailSaveState === 'saved'" class="text-xs text-emerald-700">Saved</div>
-              <div v-else-if="recruiterEmailSaveState === 'error'" class="text-xs text-destructive">{{ recruiterEmailError }}</div>
-            </div>
-          </div>
         </CardContent>
       </Card>
-
-      <Card
-        :class="['cursor-default', dragOverTarget === 'notes' ? 'drag-over-card' : '']"
-        :style="getBlockOrderStyle('notes')"
-        @dragenter.prevent="handleDragOver('notes')"
-        @dragover.prevent="handleDragOver('notes')"
-        @dragleave="handleDragLeave('notes')"
-        @drop="handleDrop('notes')"
-      >
-        <CardHeader class="flex flex-row items-center justify-between gap-4">
-          <CardTitle class="flex items-center gap-2"><ScrollText :size="18" /> Notes</CardTitle>
-          <button type="button" class="drag-handle" draggable="true" title="Drag to reorder" @dragstart="handleDragStart('notes', $event)" @dragend="handleDragEnd">
-            <GripVertical :size="16" />
-          </button>
-        </CardHeader>
-        <CardContent>
-          <RichTextEditor
-            v-model="notesDraftHtml"
-            placeholder="Write notes, format text, and highlight key points..."
-            @blur="flushInlineSave"
-          />
-        </CardContent>
-      </Card>
-
-      <Card
-        :class="['cursor-default', dragOverTarget === 'interviewPrep' ? 'drag-over-card' : '']"
-        :style="getBlockOrderStyle('interviewPrep')"
-        @dragenter.prevent="handleDragOver('interviewPrep')"
-        @dragover.prevent="handleDragOver('interviewPrep')"
-        @dragleave="handleDragLeave('interviewPrep')"
-        @drop="handleDrop('interviewPrep')"
-      >
-        <CardHeader class="flex flex-row items-center justify-between gap-4">
-          <CardTitle class="flex items-center gap-2"><Target :size="18" /> Interview prep</CardTitle>
-          <button type="button" class="drag-handle" draggable="true" title="Drag to reorder" @dragstart="handleDragStart('interviewPrep', $event)" @dragend="handleDragEnd">
-            <GripVertical :size="16" />
-          </button>
-        </CardHeader>
-        <CardContent>
-          <RichTextEditor
-            v-model="interviewPrepDraftHtml"
-            placeholder="Capture prep notes, likely questions, and talking points..."
-            @blur="flushInlineSave"
-          />
-        </CardContent>
-      </Card>
-
       <Card
         :class="['cursor-default', dragOverTarget === 'metadata' ? 'drag-over-card' : '']"
         :style="getBlockOrderStyle('metadata')"
@@ -826,6 +1017,23 @@ onMounted(() => {
             <div v-if="interview.locationOrLink" class="mt-2 text-muted-foreground">{{ interview.locationOrLink }}</div>
             <div v-if="interview.notes" class="mt-2 whitespace-pre-wrap text-foreground">{{ interview.notes }}</div>
           </div>
+
+          <div class="rounded-[1.25rem] border border-dashed border-border/80 bg-secondary/30 p-4 space-y-3">
+            <div>
+              <div class="grid grid-cols-2 justify-center items-center">
+                <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground mb-1">Sender</div>
+                <div ref="recruiterSenderRef" class="editable-inline min-h-10 px-3 py-2 text-sm" contenteditable="true" @keydown.enter.prevent @blur="syncRecruiterEmailDrafts"></div>
+              </div>
+              <div class="grid grid-cols-2 justify-center items-center">
+                <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground mb-1">Subject</div>
+                <div ref="recruiterSubjectRef" class="editable-inline min-h-10 px-3 py-2 text-sm" contenteditable="true" @keydown.enter.prevent @blur="syncRecruiterEmailDrafts"></div>
+              </div>
+            </div>
+            <div>
+              <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground mb-1">Body</div>
+              <div ref="recruiterBodyRef" class="editable-inline min-h-24 px-3 py-2 text-sm whitespace-pre-wrap" contenteditable="true" @blur="syncRecruiterEmailDrafts"></div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -849,30 +1057,6 @@ onMounted(() => {
             <div class="font-medium">{{ format(new Date(followUp.scheduledAt), 'PPP p') }}</div>
             <div class="mt-1 text-muted-foreground">{{ followUp.status }}</div>
             <div v-if="followUp.generatedContent" class="mt-2 whitespace-pre-wrap text-foreground">{{ followUp.generatedContent }}</div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card
-        :class="['cursor-default', dragOverTarget === 'history' ? 'drag-over-card' : '']"
-        :style="getBlockOrderStyle('history')"
-        @dragenter.prevent="handleDragOver('history')"
-        @dragover.prevent="handleDragOver('history')"
-        @dragleave="handleDragLeave('history')"
-        @drop="handleDrop('history')"
-      >
-        <CardHeader class="flex flex-row items-center justify-between gap-4">
-          <CardTitle>History</CardTitle>
-          <button type="button" class="drag-handle" draggable="true" title="Drag to reorder" @dragstart="handleDragStart('history', $event)" @dragend="handleDragEnd">
-            <GripVertical :size="16" />
-          </button>
-        </CardHeader>
-        <CardContent class="space-y-3">
-          <div v-if="!currentApplication.history?.length" class="text-sm text-muted-foreground">No history yet.</div>
-          <div v-for="entry in currentApplication.history" :key="entry.id" class="rounded-2xl bg-secondary/50 p-4 text-sm">
-            <div class="font-medium text-foreground">{{ entry.actionType }}</div>
-            <div v-if="entry.description" class="mt-1 text-muted-foreground">{{ entry.description }}</div>
-            <div class="mt-2 text-xs text-muted-foreground">{{ format(new Date(entry.createdAt), 'PP p') }}</div>
           </div>
         </CardContent>
       </Card>

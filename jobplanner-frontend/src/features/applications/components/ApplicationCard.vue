@@ -4,7 +4,7 @@ import { format } from 'date-fns'
 import type { Application } from '@/types/models.types'
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Building2, Calendar, MapPin, DollarSign } from 'lucide-vue-next'
+import { Building2, Calendar, MapPin, DollarSign, Notebook } from 'lucide-vue-next'
 import { stripHtml } from '@/lib/utils/html'
 
 interface ApplicationCardProps {
@@ -73,22 +73,22 @@ const formattedSalary = computed(() => {
     @click="handleClick"
   >
     <CardHeader class="pb-3">
+      <Badge :variant="statusVariant" class="py-0 m-0 mb-2 w-fit!"> 
+        <div class="flex items-center gap-2 text-sm text-muted-foreground">
+          <Building2 :size="16" class="shrink-0" />
+          <span class="text-xs">{{ application.companyName }}</span>
+        </div>
+      </Badge>
       <div class="flex items-start justify-between gap-2">
         <CardTitle class="text-base leading-tight">
           {{ application.jobTitle }}
         </CardTitle>
-        <Badge :variant="statusVariant" class="shrink-0">
-          {{ statusLabel }}
-        </Badge>
       </div>
     </CardHeader>
 
     <CardContent class="space-y-3">
       <!-- Company -->
-      <div class="flex items-center gap-2 text-sm text-muted-foreground">
-        <Building2 :size="16" class="shrink-0" />
-        <span class="truncate">{{ application.companyName }}</span>
-      </div>
+      
 
       <!-- Location -->
       <div v-if="application.location" class="flex items-center gap-2 text-sm text-muted-foreground">
@@ -108,12 +108,6 @@ const formattedSalary = computed(() => {
         <span>{{ formattedDate }}</span>
       </div>
 
-      <!-- Notes Preview -->
-      <div v-if="application.notes" class="mt-3 border-t border-border/70 pt-3">
-        <p class="text-xs text-muted-foreground line-clamp-2">
-          {{ stripHtml(application.notes) }}
-        </p>
-      </div>
     </CardContent>
   </Card>
 </template>

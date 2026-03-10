@@ -85,7 +85,7 @@ onMounted(() => {
 
     <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
       <Card
-        class="cursor-pointer border-l-[6px] border-l-primary transition-colors hover:bg-accent/25 focus-within:ring-2 focus-within:ring-primary/30"
+        class="border-none! bg-transparent! p-4! shadow-[0_16px_30px_rgba(0,0,0,0.2)]! hover:bg-transparent! focus-within:ring-0! focus-within:ring-offset-0! rounded-none! cursor-pointer!"
         role="button"
         tabindex="0"
         @click="openApplications"
@@ -103,8 +103,8 @@ onMounted(() => {
       </Card>
 
       <Card
-        class="cursor-pointer border-l-[6px] border-l-sky-800/70 transition-colors hover:bg-accent/25 focus-within:ring-2 focus-within:ring-primary/30"
-        role="button"
+      class="border-none! bg-transparent! p-4! shadow-[0_16px_30px_rgba(0,0,0,0.2)]! hover:bg-transparent! focus-within:ring-0! focus-within:ring-offset-0! rounded-none! cursor-pointer!"
+      role="button"
         tabindex="0"
         @click="openApplications"
         @keydown.enter="openApplications"
@@ -121,8 +121,8 @@ onMounted(() => {
       </Card>
 
       <Card
-        class="cursor-pointer border-l-[6px] border-l-amber-700/70 transition-colors hover:bg-accent/25 focus-within:ring-2 focus-within:ring-primary/30"
-        role="button"
+      class="border-none! bg-transparent! p-4! shadow-[0_16px_30px_rgba(0,0,0,0.2)]! hover:bg-transparent! focus-within:ring-0! focus-within:ring-offset-0! rounded-none! cursor-pointer!"
+      role="button"
         tabindex="0"
         @click="openInterviews"
         @keydown.enter="openInterviews"
@@ -139,7 +139,7 @@ onMounted(() => {
       </Card>
 
       <Card
-        class="cursor-pointer border-l-[6px] border-l-emerald-800/70 transition-colors hover:bg-accent/25 focus-within:ring-2 focus-within:ring-primary/30"
+      class="border-none! bg-transparent! p-4! shadow-[0_16px_30px_rgba(0,0,0,0.2)]! hover:bg-transparent! focus-within:ring-0! focus-within:ring-offset-0! rounded-none! cursor-pointer!"
         role="button"
         tabindex="0"
         @click="openApplications"
@@ -157,7 +157,7 @@ onMounted(() => {
       </Card>
     </div>
 
-    <Card>
+    <Card class="border-none! bg-transparent! p-0! shadow-none! hover:bg-transparent! focus-within:ring-0! focus-within:ring-offset-0! rounded-none! cursor-pointer!">
       <CardHeader class="flex flex-row items-center justify-between">
         <div>
           <p class="section-kicker mb-2">Recent movement</p>

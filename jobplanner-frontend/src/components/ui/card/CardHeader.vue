@@ -9,7 +9,7 @@ interface CardHeaderProps {
 const props = defineProps<CardHeaderProps>()
 
 const classes = computed(() =>
-  cn('flex flex-col space-y-1.5 p-6', props.class),
+  cn('flex flex-col space-y-1.5 p-2', props.class),
 )
 </script>
 

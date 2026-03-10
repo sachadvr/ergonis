@@ -218,7 +218,7 @@ onMounted(() => {
                 </svg>
             </div>
             <div>
-                <h3 class="text-xl font-semibold">Compte {{ mailboxSettings[0]?.oauthProvider === 'google' ? 'Gmail' : 'Outlook' }} synchronisé</h3>
+                <h3 class="text-xl font-semibold">Compte {{ String(mailboxSettings[0]?.oauthProvider ?? '') === 'google' ? 'Gmail' : 'Outlook' }} synchronisé</h3>
                 <p class="mt-1 text-muted-foreground">Vos emails de candidatures sont automatiquement lus depuis :</p>
                 <div class="mt-2 text-lg font-medium text-blue-600">{{ mailboxSettings[0].imapUser }}</div>
             </div>
@@ -228,7 +228,7 @@ onMounted(() => {
                     {{ isTestingMailbox ? 'Test en cours...' : 'Tester la connexion' }}
                 </Button>
                 <Button variant="ghost" class="text-destructive hover:bg-destructive/10 hover:text-destructive" @click="mailboxForm = { imapHost: '', imapPort: 993, imapEncryption: 'ssl', imapUser: '', imapPassword: '', imapFolder: 'INBOX', isActive: false, smtpHost: '', smtpPort: 587, smtpEncryption: 'tls', smtpUser: '', smtpPassword: '', oauthProvider: null }; handleMailboxSave()">
-                    Déconnecter {{ mailboxSettings[0]?.oauthProvider === 'google' ? 'Gmail' : 'Outlook' }}
+                    Déconnecter {{ String(mailboxSettings[0]?.oauthProvider ?? '') === 'google' ? 'Gmail' : 'Outlook' }}
                 </Button>
             </div>
         </div>
@@ -237,7 +237,7 @@ onMounted(() => {
             <!-- Option 1: Google -->
             <button 
                 class="group relative flex flex-col items-center justify-center rounded-xl border-2 border-border p-8 transition-all hover:border-blue-500 hover:bg-blue-50/50"
-                :class="mailboxSettings[0]?.oauthProvider === 'google' ? 'border-blue-500' : 'border-border'"
+                :class="String(mailboxSettings[0]?.oauthProvider ?? '') === 'google' ? 'border-blue-500' : 'border-border'"
                 :disabled="isConnectingGoogle"
                 @click="handleGoogleConnect"
             >
@@ -259,7 +259,7 @@ onMounted(() => {
             <!-- Option 2: Microsoft -->
             <button 
                 class="group relative flex flex-col items-center justify-center rounded-xl border-2 border-border p-8 transition-all hover:border-blue-700 hover:bg-blue-50/50"
-                :class="mailboxSettings[0]?.oauthProvider === 'microsoft' ? 'border-blue-700' : 'border-border'"
+                :class="String(mailboxSettings[0]?.oauthProvider ?? '') === 'microsoft' ? 'border-blue-700' : 'border-border'"
                 :disabled="isConnectingMicrosoft"
                 @click="handleMicrosoftConnect"
             >
@@ -281,7 +281,7 @@ onMounted(() => {
             <!-- Option 3: Manual -->
             <button 
                 class="group flex flex-col items-center justify-center rounded-xl border-2 border-border p-8 transition-all hover:border-emerald-500 hover:bg-emerald-50/50"
-                :class="!mailboxSettings[0]?.oauthProvider ? 'border-emerald-500' : 'border-border'"
+                :class="!String(mailboxSettings[0]?.oauthProvider ?? '') ? 'border-emerald-500' : 'border-border'"
                 @click="showManualForm = true"
             >
                 <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 transition-transform group-hover:scale-110">

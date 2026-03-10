@@ -23,6 +23,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
 
   let eventSource: EventSource | null = null
   let activeUserId: number | null = null
+  const mercureListeners = new Set<(payload: unknown) => void>()
 
   async function fetchNotifications() {
     try {
@@ -70,10 +71,14 @@ export const useNotificationsStore = defineStore('notifications', () => {
     eventSource = new EventSource(url.toString(), { withCredentials: true })
     eventSource.onmessage = (event) => {
       try {
-        const notification = JSON.parse(event.data) as NotificationItem
-        upsert(notification)
-      } catch (parseError) {
-        console.error('Failed to parse notification event:', parseError)
+        const payload = JSON.parse(event.data) as unknown
+        mercureListeners.forEach((listener) => listener(payload))
+
+        if (isNotificationItem(payload)) {
+          upsert(payload)
+        }
+      } catch {
+        // Ignore malformed payloads.
       }
     }
     eventSource.onerror = () => {
@@ -110,6 +115,18 @@ export const useNotificationsStore = defineStore('notifications', () => {
     activeUserId = null
   }
 
+  function subscribeMercure(listener: (payload: unknown) => void) {
+    mercureListeners.add(listener)
+
+    return () => {
+      mercureListeners.delete(listener)
+    }
+  }
+
+  function isNotificationItem(payload: unknown): payload is NotificationItem {
+    return typeof payload === 'object' && payload !== null && (payload as NotificationItem).type === 'email_received'
+  }
+
   return {
     notifications,
     sortedNotifications,
@@ -118,6 +135,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
     error,
     fetchNotifications,
     start,
+    subscribeMercure,
     dismiss,
     markAsSeen,
     stop,

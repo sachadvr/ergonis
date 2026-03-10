@@ -48,6 +48,10 @@ export function transformApplication(apiApplication: any): Application {
     recruiterEmails: apiApplication.recruiterEmails,
     interviews: apiApplication.interviews,
     scheduledFollowUps: apiApplication.scheduledFollowUps,
+    cvFitAnalysisStatus: apiApplication.cvFitAnalysisStatus,
+    cvFitAnalysisResult: apiApplication.cvFitAnalysisResult,
+    cvFitAnalysisRequestedAt: apiApplication.cvFitAnalysisRequestedAt,
+    cvFitAnalysisCompletedAt: apiApplication.cvFitAnalysisCompletedAt,
     jobOffer: {
       ...apiApplication.jobOffer,
       recruiterContactEmail: apiApplication.jobOffer?.recruiterContactEmail || '',

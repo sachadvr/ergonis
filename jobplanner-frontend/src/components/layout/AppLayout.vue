@@ -36,9 +36,9 @@ const handleLogout = () => {
 </script>
 
 <template>
-  <div class="flex min-h-screen bg-[#FFF] px-3 py-3 sm:px-4 sm:py-4">
+  <div class="flex h-[100dvh] bg-[#FFF]">
     <!-- Sidebar -->
-    <aside class="app-shell paper-panel hidden w-52 flex-col overflow-hidden rounded-[2rem] border border-border/70 lg:flex">
+    <aside class="app-shell paper-panel hidden w-52 flex-col overflow-hidden lg:flex">
       <div class="border-b border-border/70 px-7 py-7">
         <p class="section-kicker mb-3">Career Atelier</p>
         <h1 class="display-title text-3xl font-semibold text-foreground">
@@ -47,7 +47,7 @@ const handleLogout = () => {
         <p class="mt-2 text-sm text-muted-foreground">A calmer command center for your search.</p>
       </div>
       
-      <nav class="space-y-2 px-4 py-5">
+      <nav class="space-y-2 px-4 py-5 h-full overflow-y-auto pb-[90px]">
         <RouterLink
           v-for="item in navItems"
           :key="item.path"
@@ -70,15 +70,15 @@ const handleLogout = () => {
       </nav>
 
       <!-- User section at bottom -->
-      <div class="mt-auto border-t border-border/70 p-4">
-        <div class="rounded-[1.5rem] bg-secondary/70 p-3">
+      <div class="fixed bottom-0 left-0 right-0">
+        <div class="rounded-[1.5rem]">
           <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">Signed in</div>
           <div class="flex items-center gap-3 rounded-xl px-1 py-2 border bg-white cursor-pointer"  @click="handleLogout">
-          <div class="flex h-10 w-10 items-center justify-center  bg-primary/12 text-primary">
+          <div class="flex h-10 w-10 items-center justify-center">
             <User :size="16" />
           </div>
           <div class="flex-1 text-sm">
-            <div class="font-medium text-foreground">{{ authStore.user?.email || 'User' }}</div>
+            <div class="font-medium text-foreground ">{{ authStore.user?.email || 'User' }}</div>
             <div class="text-xs text-muted-foreground">Personal workspace</div>
           </div>
           <Button variant="ghost" size="icon" title="Logout">

@@ -2,7 +2,7 @@
 
 @layer base {
   :root {
-    --background: 38 41% 95%;
+    --background: 255 100% 100%;
     --foreground: 200 24% 16%;
 
     --card: 36 46% 98%;
@@ -35,22 +35,15 @@
 }
 
 @layer base {
-  * {
-    border-color: hsl(var(--border));
-  }
 
   html {
     scroll-behavior: smooth;
   }
 
   body {
-    background-color: hsl(var(--background));
+    background-color: #fff;
     color: hsl(var(--foreground));
-    background-image:
-      radial-gradient(circle at top left, rgba(27, 97, 103, 0.10), transparent 28%),
-      radial-gradient(circle at right 20%, rgba(174, 125, 62, 0.10), transparent 22%),
-      linear-gradient(180deg, rgba(255, 251, 244, 0.9), rgba(245, 238, 226, 0.92));
-    font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+    font-family: Inter, sans-serif!important;
     font-feature-settings: 'rlig' 1, 'calt' 1;
     min-height: 100vh;
   }

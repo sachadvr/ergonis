@@ -68,6 +68,10 @@ export interface Application {
   recruiterEmails?: RecruiterEmail[]
   interviews?: Array<Interview | string>
   scheduledFollowUps?: ScheduledFollowUp[]
+  cvFitAnalysisStatus?: 'queued' | 'processing' | 'completed' | 'failed' | null
+  cvFitAnalysisResult?: ApplicationCvFitAnalysis | null
+  cvFitAnalysisRequestedAt?: string | null
+  cvFitAnalysisCompletedAt?: string | null
 }
 
 export interface CreateApplicationDto {
@@ -150,6 +154,29 @@ export interface ScheduledFollowUp {
   status: 'pending' | 'sent' | 'cancelled'
   cancelledAt?: string
   generatedContent?: string
+}
+
+export interface ApplicationCvFitAnalysis {
+  overall_fit?: {
+    score?: number
+    level?: string | null
+    recommendation?: string | null
+  }
+  summary?: string | null
+  strong_matches?: string[]
+  gaps?: string[]
+  ats_keywords_to_add?: string[]
+  cv_customization_points?: string[]
+  motivation_letter_points?: string[]
+  interview_topics_to_prepare?: string[]
+  red_flags_or_unclear_points?: string[]
+}
+
+export interface ApplicationCvFitStatus {
+  status?: 'queued' | 'processing' | 'completed' | 'failed' | null
+  requestedAt?: string | null
+  completedAt?: string | null
+  result?: ApplicationCvFitAnalysis | null
 }
 
 export interface UserMailboxSettings {

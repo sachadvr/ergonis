@@ -1,4 +1,4 @@
-import type { Application } from '@/types/models.types'
+import type { Application, ApplicationCvFitStatus } from '@/types/models.types'
 import type { PaginatedResponse } from '@/types/api.types'
 import { apiClient } from '@/lib/api/client'
 import { API_ENDPOINTS } from '@/lib/constants/api.constants'
@@ -77,6 +77,19 @@ export const applicationsApi = {
       headers: {
         'Content-Type': 'application/merge-patch+json',
       },
+    })
+  },
+
+  /**
+   * Analyze a PDF CV against an application
+   */
+  async analyzeCvFit(id: string, file: File): Promise<ApplicationCvFitStatus> {
+    const formData = new FormData()
+    formData.append('cv', file)
+
+    return apiClient(`${API_ENDPOINTS.APPLICATIONS.BY_ID(id)}/cv-fit`, {
+      method: 'POST',
+      body: formData,
     })
   },
 

@@ -9,12 +9,17 @@ export const apiClient = ofetch.create({
 
   onRequest({ options }) {
     const token = localStorage.getItem('auth_token')
+    const body = options.body
+    const isFormData = typeof FormData !== 'undefined' && body instanceof FormData
+    const isFilePayload = typeof File !== 'undefined' && body instanceof File
+    const isBlobPayload = typeof Blob !== 'undefined' && body instanceof Blob
+
     if (token) {
       options.headers = new Headers(options.headers)
       options.headers.set('Authorization', `Bearer ${token}`)
       options.headers.set('Accept', 'application/ld+json')
       if (options.method === 'POST' || options.method === 'PUT' || options.method === 'PATCH') {
-        if (!options.headers.get('Content-Type')) {
+        if (!options.headers.get('Content-Type') && !isFormData && !isFilePayload && !isBlobPayload) {
           options.headers.set('Content-Type', 'application/ld+json')
         }
       }
