@@ -227,7 +227,7 @@ onMounted(() => {
                     <PlugZap :size="18" />
                     {{ isTestingMailbox ? 'Test en cours...' : 'Tester la connexion' }}
                 </Button>
-                <Button variant="ghost" class="text-destructive hover:bg-destructive/10 hover:text-destructive" @click="mailboxForm = { imapUser: '', imapHost: '', oauthProvider: '' }; handleMailboxSave()">
+                <Button variant="ghost" class="text-destructive hover:bg-destructive/10 hover:text-destructive" @click="mailboxForm = { imapHost: '', imapPort: 993, imapEncryption: 'ssl', imapUser: '', imapPassword: '', imapFolder: 'INBOX', isActive: false, smtpHost: '', smtpPort: 587, smtpEncryption: 'tls', smtpUser: '', smtpPassword: '', oauthProvider: null }; handleMailboxSave()">
                     Déconnecter {{ mailboxSettings[0]?.oauthProvider === 'google' ? 'Gmail' : 'Outlook' }}
                 </Button>
             </div>
@@ -237,6 +237,7 @@ onMounted(() => {
             <!-- Option 1: Google -->
             <button 
                 class="group relative flex flex-col items-center justify-center rounded-xl border-2 border-border p-8 transition-all hover:border-blue-500 hover:bg-blue-50/50"
+                :class="mailboxSettings[0]?.oauthProvider === 'google' ? 'border-blue-500' : 'border-border'"
                 :disabled="isConnectingGoogle"
                 @click="handleGoogleConnect"
             >
@@ -258,6 +259,7 @@ onMounted(() => {
             <!-- Option 2: Microsoft -->
             <button 
                 class="group relative flex flex-col items-center justify-center rounded-xl border-2 border-border p-8 transition-all hover:border-blue-700 hover:bg-blue-50/50"
+                :class="mailboxSettings[0]?.oauthProvider === 'microsoft' ? 'border-blue-700' : 'border-border'"
                 :disabled="isConnectingMicrosoft"
                 @click="handleMicrosoftConnect"
             >
@@ -279,6 +281,7 @@ onMounted(() => {
             <!-- Option 3: Manual -->
             <button 
                 class="group flex flex-col items-center justify-center rounded-xl border-2 border-border p-8 transition-all hover:border-emerald-500 hover:bg-emerald-50/50"
+                :class="!mailboxSettings[0]?.oauthProvider ? 'border-emerald-500' : 'border-border'"
                 @click="showManualForm = true"
             >
                 <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 transition-transform group-hover:scale-110">
@@ -291,31 +294,39 @@ onMounted(() => {
 
         <form v-else @submit.prevent>
           <CardContent class="space-y-5 text-sm">
+            <h1 class="text-2xl font-bold font-heading mb-2">Manual configuration</h1>
+            <div class="border p-4">
+              <h2 class="text-lg font-bold font-heading mb-2">Retrieve emails (IMAP)</h2>
+              <div class="grid gap-4 md:grid-cols-2">
+                <div class="space-y-2">
+                  <label class="text-sm font-medium">IMAP host</label>
+                  <Input v-model="mailboxForm.imapHost" />
+                </div>
+                <div class="space-y-2">
+                  <label class="text-sm font-medium">IMAP user</label>
+                  <Input v-model="mailboxForm.imapUser" />
+                </div>
+                <div class="space-y-2">
+                  <label class="text-sm font-medium">IMAP password</label>
+                  <Input v-model="mailboxForm.imapPassword" type="password" />
+                </div>
+                <div class="space-y-2">
+                  <label class="text-sm font-medium">IMAP folder</label>
+                  <Input v-model="mailboxForm.imapFolder" />
+                </div>
+                <div class="space-y-2">
+                  <label class="text-sm font-medium">IMAP port</label>
+                  <Input v-model.number="mailboxForm.imapPort" type="number" />
+                </div>
+                <div class="space-y-2">
+                  <label class="text-sm font-medium">IMAP encryption</label>
+                  <Select v-model="mailboxForm.imapEncryption" :options="encryptionOptions" />
+                </div>
+              </div>
+            </div>
+            <div class="border p-4">
+            <h2 class="text-lg font-bold font-heading mb-2">Retrieve emails (IMAP)</h2>
             <div class="grid gap-4 md:grid-cols-2">
-              <div class="space-y-2">
-                <label class="text-sm font-medium">IMAP host</label>
-                <Input v-model="mailboxForm.imapHost" />
-              </div>
-              <div class="space-y-2">
-                <label class="text-sm font-medium">IMAP user</label>
-                <Input v-model="mailboxForm.imapUser" />
-              </div>
-              <div class="space-y-2">
-                <label class="text-sm font-medium">IMAP password</label>
-                <Input v-model="mailboxForm.imapPassword" type="password" />
-              </div>
-              <div class="space-y-2">
-                <label class="text-sm font-medium">IMAP folder</label>
-                <Input v-model="mailboxForm.imapFolder" />
-              </div>
-              <div class="space-y-2">
-                <label class="text-sm font-medium">IMAP port</label>
-                <Input v-model.number="mailboxForm.imapPort" type="number" />
-              </div>
-              <div class="space-y-2">
-                <label class="text-sm font-medium">IMAP encryption</label>
-                <Select v-model="mailboxForm.imapEncryption" :options="encryptionOptions" />
-              </div>
               <div class="space-y-2">
                 <label class="text-sm font-medium">SMTP host</label>
                 <Input v-model="mailboxForm.smtpHost" />
@@ -337,7 +348,7 @@ onMounted(() => {
                 <Select v-model="mailboxForm.smtpEncryption" :options="encryptionOptions" />
               </div>
             </div>
-
+          </div>
             <div class="flex gap-2 justify-end">
               <Button 
                 :disabled="isTestingMailbox" 

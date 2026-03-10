@@ -32,7 +32,7 @@ export const settingsApi = {
       method: 'POST',
       body: data,
       headers: {
-        'Content-Type': 'application/merge-patch+json',
+        'Content-Type': 'application/ld+json',
       },
     })
   },
