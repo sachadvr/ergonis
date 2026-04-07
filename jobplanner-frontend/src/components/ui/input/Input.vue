@@ -20,7 +20,7 @@ const emit = defineEmits<{
 
 const classes = computed(() =>
   cn(
-    'flex h-11 w-full rounded-2xl border border-input/80 bg-card/85 px-4 py-2 text-sm shadow-sm transition-all duration-200',
+    'flex h-11 w-full rounded-xl border border-input/80 bg-card/85 px-4 py-2 text-sm shadow-sm transition-all duration-200',
     'file:border-0 file:bg-transparent file:text-sm file:font-medium',
     'placeholder:text-muted-foreground',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-primary',

@@ -10,7 +10,7 @@ const props = defineProps<CardProps>()
 
 const classes = computed(() =>
   cn(
-    'paper-panel rounded-[1.5rem] border border-border/80 bg-card text-card-foreground shadow-sm',
+    'paper-panel rounded-xl border border-border/80 bg-card text-card-foreground shadow-sm',
     props.class,
   ),
 )

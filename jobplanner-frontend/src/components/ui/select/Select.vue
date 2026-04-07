@@ -51,7 +51,7 @@ const handleValueChange = (value: string): void => {
   >
     <SelectTrigger
       :class="cn(
-        'flex h-11 w-full items-center justify-between rounded-2xl border border-input/80 bg-card/85 px-4 py-2 text-sm text-foreground shadow-sm',
+        'flex h-11 w-full items-center justify-between rounded-xl border border-input/80 bg-card/85 px-4 py-2 text-sm text-foreground shadow-sm',
         'focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring',
         'disabled:cursor-not-allowed disabled:opacity-50',
         'transition-colors duration-200',
@@ -67,7 +67,7 @@ const handleValueChange = (value: string): void => {
     <SelectPortal>
       <SelectContent
         :class="cn(
-          'relative z-50 min-w-[12rem] overflow-hidden rounded-2xl border border-border bg-card text-foreground shadow-xl',
+          'relative z-50 min-w-[12rem] overflow-hidden rounded-xl border border-border bg-card text-foreground shadow-lg',
           'data-[state=open]:animate-in data-[state=closed]:animate-out',
           'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
           'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95'
@@ -81,8 +81,8 @@ const handleValueChange = (value: string): void => {
             :key="option.value"
             :value="option.value"
             :class="cn(
-              'relative flex w-full cursor-pointer select-none items-center rounded-xl py-2 pl-9 pr-3 text-sm outline-none',
-              'focus:bg-accent/70 focus:text-accent-foreground',
+              'relative flex w-full cursor-pointer select-none items-center rounded-lg py-2 pl-9 pr-3 text-sm outline-none',
+              'focus:bg-primary-light focus:text-foreground',
               'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
               'transition-colors duration-150'
             )"

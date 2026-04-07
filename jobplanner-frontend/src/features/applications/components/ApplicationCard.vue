@@ -4,8 +4,7 @@ import { format } from 'date-fns'
 import type { Application } from '@/types/models.types'
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Building2, Calendar, MapPin, DollarSign, Notebook } from 'lucide-vue-next'
-import { stripHtml } from '@/lib/utils/html'
+import { Building2, Calendar, MapPin, DollarSign } from 'lucide-vue-next'
 
 interface ApplicationCardProps {
   application: Application
@@ -34,19 +33,6 @@ const statusVariant = computed(() => {
   return variants[props.application.status]
 })
 
-// Format status for display
-const statusLabel = computed(() => {
-  const labels: Record<Application['status'], string> = {
-    wishlist: 'Wishlist',
-    applied: 'Applied',
-    interview: 'Interview',
-    offer: 'Offer',
-    rejected: 'Rejected',
-    accepted: 'Accepted',
-  }
-  return labels[props.application.status]
-})
-
 // Format date
 const formattedDate = computed(() => {
   if (!props.application.appliedAt) return null
@@ -69,7 +55,7 @@ const formattedSalary = computed(() => {
 
 <template>
   <Card 
-    class="group cursor-pointer border-border/70 bg-card/85 transition-all duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_18px_28px_rgba(64,56,45,0.10)]" 
+    class="group cursor-pointer border-border/70 bg-card/85 transition-all duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_18px_28px_rgba(15,23,42,0.08)]" 
     @click="handleClick"
   >
     <CardHeader class="pb-3">

@@ -55,7 +55,7 @@ const handleMicrosoftLogin = async () => {
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-[#FFF] p-4">
+  <div class="flex min-h-screen items-center justify-center bg-background p-4">
     <div class="grid w-full max-w-6xl gap-6 lg:grid-cols-[1.05fr_0.95fr]">
       <Card class="hidden min-h-[640px] overflow-hidden lg:block">
         <CardContent class="flex h-full flex-col justify-between p-10">
@@ -67,9 +67,9 @@ const handleMicrosoftLogin = async () => {
             </p>
           </div>
           <div class="grid gap-3 md:grid-cols-3">
-            <div class="rounded-[1.5rem] bg-secondary/70 p-4 text-sm text-muted-foreground">Pipeline automation</div>
+            <div class="rounded-[1.5rem] bg-primary-light p-4 text-sm text-muted-foreground">Pipeline automation</div>
             <div class="rounded-[1.5rem] bg-secondary/70 p-4 text-sm text-muted-foreground">AI Email Insights</div>
-            <div class="rounded-[1.5rem] bg-secondary/70 p-4 text-sm text-muted-foreground">Smart reminders</div>
+            <div class="rounded-[1.5rem] bg-accent/70 p-4 text-sm text-muted-foreground">Smart reminders</div>
           </div>
         </CardContent>
       </Card>

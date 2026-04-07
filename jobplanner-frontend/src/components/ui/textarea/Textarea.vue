@@ -34,7 +34,7 @@ const handleInput = (event: Event): void => {
     :disabled="props.disabled"
     :rows="props.rows"
     :class="cn(
-      'flex min-h-[120px] w-full rounded-2xl border border-input/80 bg-card/85 px-4 py-3 text-sm text-foreground shadow-sm',
+      'flex min-h-[120px] w-full rounded-xl border border-input/80 bg-card/85 px-4 py-3 text-sm text-foreground shadow-sm',
       'focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring',
       'placeholder:text-muted-foreground',
       'disabled:cursor-not-allowed disabled:opacity-50',

@@ -6,17 +6,17 @@ export const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          'border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80',
+          'border-transparent bg-primary text-primary-foreground shadow-sm hover:bg-primary-hover',
         secondary:
           'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80',
         destructive:
           'border-transparent bg-destructive/12 text-destructive shadow-none hover:bg-destructive/18',
         outline: 'border-border/80 bg-card/70 text-foreground',
         success:
-          'border-transparent bg-emerald-700/12 text-emerald-800 hover:bg-emerald-700/18',
+          'border-transparent bg-emerald-500/12 text-emerald-700 hover:bg-emerald-500/18',
         warning:
-          'border-transparent bg-amber-700/14 text-amber-800 hover:bg-amber-700/18',
-        info: 'border-transparent bg-sky-800/12 text-sky-800 hover:bg-sky-800/18',
+          'border-transparent bg-amber-500/12 text-amber-700 hover:bg-amber-500/18',
+        info: 'border-transparent bg-primary-light text-primary hover:bg-primary-light/80',
       },
     },
     defaultVariants: {

@@ -36,7 +36,7 @@ const handleLogout = () => {
 </script>
 
 <template>
-  <div class="flex h-[100dvh] bg-[#FFF]">
+  <div class="flex h-[100dvh] bg-background text-foreground">
     <!-- Sidebar -->
     <aside class="app-shell paper-panel hidden w-52 flex-col overflow-hidden lg:flex">
       <div class="border-b border-border/70 px-7 py-7">
@@ -52,16 +52,16 @@ const handleLogout = () => {
           v-for="item in navItems"
           :key="item.path"
           :to="item.path"
-          class="relative flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200 hover:bg-accent/60"
+          class="relative flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 hover:bg-primary-light"
           :class="{
-            'bg-[#161632] text-[#FFF] shadow-[0_16px_30px_rgba(27,97,103,0.16)]': route.path === item.path || (item.path !== '/' && route.path.startsWith(item.path)),
+            'bg-primary-light text-primary shadow-sm': route.path === item.path || (item.path !== '/' && route.path.startsWith(item.path)),
             'text-muted-foreground hover:text-foreground': route.path !== item.path && !(item.path !== '/' && route.path.startsWith(item.path)),
           }"
         >
           <span
             class="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full transition-all duration-200"
             :class="route.path === item.path || (item.path !== '/' && route.path.startsWith(item.path))
-              ? 'bg-primary-foreground/90 opacity-100'
+              ? 'bg-primary opacity-100'
               : 'bg-transparent opacity-0'"
           />
           <component :is="item.icon" :size="18" />
@@ -73,7 +73,7 @@ const handleLogout = () => {
       <div class="fixed bottom-0 left-0 right-0">
         <div class="rounded-[1.5rem]">
           <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">Signed in</div>
-          <div class="flex items-center gap-3 rounded-xl px-1 py-2 border bg-white cursor-pointer"  @click="handleLogout">
+          <div class="flex items-center gap-3 rounded-xl border border-border/80 bg-card/90 px-1 py-2 cursor-pointer"  @click="handleLogout">
           <div class="flex h-10 w-10 items-center justify-center">
             <User :size="16" />
           </div>

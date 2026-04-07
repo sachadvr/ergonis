@@ -97,7 +97,7 @@ function refreshNotifications() {
             :key="notification.id"
             role="button"
             tabindex="0"
-            class="flex w-full items-start gap-3 border-b border-border/60 px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-accent/40"
+            class="flex w-full items-start gap-3 border-b border-border/60 px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-primary-light"
             :class="notification.isSeen ? 'opacity-65' : 'bg-primary/5'"
             @click="openNotification(notification.href, notification.id)"
             @keydown.enter.prevent="openNotification(notification.href, notification.id)"

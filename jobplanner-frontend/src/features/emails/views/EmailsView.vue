@@ -243,8 +243,8 @@ onMounted(() => {
             v-for="group in filteredGroups"
             :key="group.key"
             type="button"
-            class="relative flex w-full flex-col gap-2 border-b border-border border-l-[8px] border-l-transparent px-5 py-4 text-left transition-colors hover:bg-accent/40"
-            :class="selectedGroupKey === group.key ? 'border-l-emerald-700 bg-emerald-700/12' : ''"
+            class="relative flex w-full flex-col gap-2 border-b border-border border-l-[8px] border-l-transparent px-5 py-4 text-left transition-colors hover:bg-primary-light/70"
+            :class="selectedGroupKey === group.key ? 'border-l-primary bg-primary-light/60' : ''"
             @click="selectedGroupKey = group.key"
           >
             <div class="flex items-start justify-between gap-3">
@@ -291,7 +291,7 @@ onMounted(() => {
                   </div>
 
                   <RouterLink :to="`/applications/${linkedApplication.id}`" class="text-xs text-muted-foreground flex items-center gap-2">
-                    <div class="inline-flex items-center gap-2 rounded-full bg-[#e0f7fa] px-3 py-1.5 text-primary">
+                    <div class="inline-flex items-center gap-2 rounded-full bg-primary-light px-3 py-1.5 text-primary">
                       <ExternalLink :size="14" />
                       <span>View application in Job Planner</span>
                     </div>
@@ -309,10 +309,10 @@ onMounted(() => {
           </CardHeader>
 
           <CardContent class="flex-1 overflow-y-auto space-y-6 p-6">
-            <div v-if="selectedEmail.aiSummary && selectedEmail.body.length > 200" class="flex items-start gap-3 rounded-xl border border-border bg-accent/40 p-4 text-sm text-muted-foreground bg-[#161632] text-white">
+            <div v-if="selectedEmail.aiSummary && selectedEmail.body.length > 200" class="flex items-start gap-3 rounded-xl border border-border/80 bg-primary-light p-4 text-sm text-foreground">
               
               <div>
-                <div class="mb-1 font-medium text-[#01B79D] flex gap-2"> <Sparkles :size="16" class="mt-0.5 shrink-0" />AI summary</div>
+                <div class="mb-1 flex gap-2 font-medium text-primary"> <Sparkles :size="16" class="mt-0.5 shrink-0" />AI summary</div>
                 <div>{{ selectedEmail.aiSummary }}</div>
               </div>
             </div>
@@ -321,7 +321,7 @@ onMounted(() => {
               {{ selectedEmail.body }}
             </div>
 
-            <div v-if="emailsInSelectedGroup.length > 1" class="space-y-3 rounded-[1.25rem] bg-secondary/45 border rounded-none p-2">
+            <div v-if="emailsInSelectedGroup.length > 1" class="space-y-3 rounded-xl border border-border/80 bg-secondary/30 p-3">
               <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground">Thread timeline</div>
               <div
                 v-for="threadEmail in emailsInSelectedGroup"

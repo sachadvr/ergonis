@@ -679,7 +679,7 @@ onMounted(() => {
         @drop="handleDrop('overview')"
       >
         <CardHeader class="flex flex-row items-center justify-between gap-4">
-          <CardTitle class="flex items-center gap-2 bg-[#161632] text-white p-2 rounded-sm -mb-2"><Building2 :size="18" /> Overview</CardTitle>
+          <CardTitle class="flex items-center gap-2 rounded-full bg-primary-light px-3 py-1 text-sm font-medium text-primary -mb-2"><Building2 :size="18" /> Overview</CardTitle>
           <button type="button" class="drag-handle" draggable="true" title="Drag to reorder" @dragstart="handleDragStart('overview', $event)" @dragend="handleDragEnd">
             <GripVertical :size="16" />
           </button>
@@ -815,7 +815,7 @@ onMounted(() => {
               <span>{{ cvFile.name }}</span>
             </div>
             <div class="flex items-center gap-3 w-full">
-              <label for="cvFileInput" class="cursor-pointer flex items-center gap-2 text-sm w-fit border p-2 rounded-md bg-[#161632] text-white text-nowrap">
+              <label for="cvFileInput" class="cursor-pointer flex items-center gap-2 rounded-md border border-border/80 bg-primary px-3 py-2 text-sm text-primary-foreground text-nowrap shadow-sm">
                 <Upload :size="14" />Upload a PDF</label>
                 
               <Button :disabled="cvFitState === 'uploading' || !cvFile" @click="analyzeCvFit" class="w-full rounded-md">
@@ -830,9 +830,9 @@ onMounted(() => {
 
           <div v-if="cvFitResult" class="space-y-4 rounded-2xl bg-secondary/40 p-4">
             <div class="flex flex-wrap items-center gap-3">
-              <Badge variant="secondary" class="bg-[#161632] text-white">Score: <span class="font-bold text-[#01B79D] ml-2">{{ cvFitScore ?? 'n/a' }}/100</span></Badge>
-              <Badge v-if="cvFitLevel" variant="outline" class="bg-[#01B79D] text-white">Level: {{ cvFitLevel }}</Badge>
-              <Badge v-if="cvFitRecommendation" variant="outline" class="bg-[#161632] text-white">{{ cvFitRecommendation }}</Badge>
+              <Badge variant="secondary" class="bg-primary-light text-primary">Score: <span class="ml-2 font-bold">{{ cvFitScore ?? 'n/a' }}/100</span></Badge>
+              <Badge v-if="cvFitLevel" variant="outline" class="border-emerald-200 bg-emerald-500/12 text-emerald-700">Level: {{ cvFitLevel }}</Badge>
+              <Badge v-if="cvFitRecommendation" variant="outline" class="bg-secondary text-foreground">{{ cvFitRecommendation }}</Badge>
             </div>
             <blockquote v-if="cvFitResult.summary" class="text-sm leading-6 text-foreground border-l-4 border-primary/40 pl-4">
               {{ cvFitResult.summary }}
@@ -873,7 +873,7 @@ onMounted(() => {
             <details>
               <summary>Other recommendations</summary>
             
-              <div class="border p-4 space-y-2 flex flex-col gap-2">
+              <div class="space-y-2 border border-border/80 bg-card/70 p-4">
 
               <div v-if="cvFitResultList.motivation.length" class="space-y-2">
                 <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground">Motivation letter</div>
@@ -960,8 +960,8 @@ onMounted(() => {
               </div>
               <div class="text-xs text-muted-foreground">{{ format(new Date(email.receivedAt), 'PP p') }}</div>
             </div>
-            <div v-if="email.aiSummary" class="mt-3 rounded-xl bg-accent/40 p-3 text-sm text-muted-foreground bg-[#161632] text-white">
-              <div class="mb-1 flex items-center gap-2 font-medium text-[#01B79D]"><Sparkles :size="14" /> AI Summary</div>
+            <div v-if="email.aiSummary" class="mt-3 rounded-xl border border-border/80 bg-primary-light p-3 text-sm text-foreground">
+              <div class="mb-1 flex items-center gap-2 font-medium text-primary"><Sparkles :size="14" /> AI Summary</div>
               {{ email.aiSummary }}
             </div>
             <div class="mt-3 whitespace-pre-wrap text-sm leading-6 text-foreground">{{ email.body }}</div>
