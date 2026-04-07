@@ -174,6 +174,8 @@ const statusVariant = (status: Application['status']) => {
   return 'info'
 }
 
+const statusLabel = (status: Application['status']) => status.replace(/_/g, ' ').replace(/\b\w/g, (char: string) => char.toUpperCase())
+
 watch(filteredGroups, (groups) => {
   if (!groups.length) {
     selectedGroupKey.value = null
@@ -223,7 +225,7 @@ onMounted(() => {
     </div>
 
     <div class="grid flex-1 gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
-      <Card class="flex min-h-0 flex-col overflow-hidden">
+      <Card class="flex min-h-0 flex-col overflow-hidden border-none! bg-transparent! p-0! shadow-none! hover:bg-transparent! focus-within:ring-0! focus-within:ring-offset-0! rounded-none! cursor-pointer!">
         <CardHeader class="border-b border-border pb-4">
           <CardTitle class="text-lg">Company Inbox</CardTitle>
           <div class="relative mt-3">
@@ -285,7 +287,7 @@ onMounted(() => {
                     <span>{{ linkedApplication.jobTitle }}</span>
                     <span class="text-muted-foreground">@ {{ linkedApplication.companyName }}</span>
                   </div>
-                  <Badge :variant="statusVariant(linkedApplication.status)">{{ linkedApplication.status }}</Badge>
+                  <Badge :variant="statusVariant(linkedApplication.status)">{{ statusLabel(linkedApplication.status) }}</Badge>
                   <div v-if="linkedApplication.jobOffer?.recruiterContactEmail" class="text-xs text-muted-foreground">
                     recruiter: {{ linkedApplication.jobOffer.recruiterContactEmail }}
                   </div>

@@ -61,6 +61,13 @@ export default {
         sans: ['Inter Variable', 'system-ui', 'sans-serif'],
         mono: ['Geist Mono', 'Consolas', 'monospace'],
       },
+      fontSize: {
+        xs: ['0.45rem', { lineHeight: '0.9rem' }],
+        sm: ['0.55rem', { lineHeight: '1rem' }],
+        base: ['0.575rem', { lineHeight: '1.25rem' }],
+        lg: ['.8rem', { lineHeight: '1.5rem' }],
+        xl: ['1rem', { lineHeight: '1.75rem' }],
+      },
       keyframes: {
         'accordion-down': {
           from: { height: '0' },

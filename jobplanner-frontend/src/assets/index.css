@@ -11,8 +11,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 18% 17%;
 
-    --primary: 252 100% 68%;
-    --primary-hover: 252 100% 63%;
+    --primary: 199 89% 48% / 0.7;
+    --primary-hover: 199 89% 42% / 0.7;
     --primary-light: 252 100% 95%;
     --primary-foreground: 0 0% 100%;
 

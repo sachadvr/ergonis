@@ -36,7 +36,7 @@ onMounted(() => {
 
     <div v-else class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       <Card v-for="offer in sortedJobOffers" :key="offer.id" class="border-border/70 bg-card/85">
-        <CardHeader>
+        <CardHeader class="border-b border-border/70 mb-4 p-4!">
           <CardTitle class="flex items-start justify-between gap-3 text-lg">
             <span>{{ offer.title }}</span>
             <a v-if="offer.url" :href="offer.url" target="_blank" rel="noreferrer" class="text-muted-foreground hover:text-foreground">
@@ -44,7 +44,7 @@ onMounted(() => {
             </a>
           </CardTitle>
         </CardHeader>
-        <CardContent class="space-y-3 text-sm">
+        <CardContent class="space-y-3 text-sm px-4!">
           <div class="flex items-center gap-2"><Building2 :size="16" /> {{ offer.company }}</div>
           <div v-if="offer.location" class="flex items-center gap-2 text-muted-foreground"><MapPin :size="16" /> {{ offer.location }}</div>
           <div v-if="offer.recruiterContactEmail" class="flex items-center gap-2 text-muted-foreground"><Mail :size="16" /> {{ offer.recruiterContactEmail }}</div>

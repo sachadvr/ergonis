@@ -42,8 +42,8 @@ const { mailboxSettings } = storeToRefs(settingsStore)
 type BlockId =
   | 'overview'
   | 'recruiterEmails'
-  | 'notes'
   | 'cvFit'
+  | 'notes'
   | 'interviewPrep'
   | 'metadata'
   | 'interviews'
@@ -67,8 +67,8 @@ const recruiterSubjectRef = ref<HTMLElement | null>(null)
 const recruiterBodyRef = ref<HTMLElement | null>(null)
 const blockOrder = ref<BlockId[]>([
   'overview',
-  'notes',
   'cvFit',
+  'notes',
   'interviewPrep',
   'recruiterEmails',
   'interviews',
@@ -103,7 +103,7 @@ const statusVariant = (status: Application['status']) => {
   return 'info'
 }
 
-const statusLabel = (status: Application['status']) => status.replace('_', ' ')
+const statusLabel = (status: Application['status']) => status.replace(/_/g, ' ').replace(/\b\w/g, (char: string) => char.toUpperCase())
 
 const formatDateTime = (value?: string) => {
   if (!value) return 'Not available'
@@ -537,11 +537,25 @@ const handleDrop = (targetBlock: BlockId) => {
   dragOverTarget.value = null
 }
 
-const handleSaveShortcut = (event: KeyboardEvent) => {
-  const isSaveShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's'
-  if (!isSaveShortcut) return
-  event.preventDefault()
-  saveInlineChanges()
+const keyActions: Record<string, (event: KeyboardEvent) => void> = {
+  Escape: (event) => {
+    event.preventDefault()
+    router.back()
+  },
+  s: (event) => {
+    if (!(event.metaKey || event.ctrlKey)) return
+    event.preventDefault()
+    saveInlineChanges()
+  }
+}
+
+
+const handleKeyDown = (event: KeyboardEvent) => {
+  const key = event.key.length === 1 ? event.key.toLowerCase() : event.key
+  const action = keyActions[key]
+
+  if (!action) return
+  action(event)
 }
 
 watch(currentApplication, (application) => {
@@ -599,7 +613,7 @@ watch(currentMailboxImapUser, (imapUser) => {
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('keydown', handleSaveShortcut)
+  window.removeEventListener('keydown', handleKeyDown)
   if (saveDebounceTimer) clearTimeout(saveDebounceTimer)
   if (saveStateTimer) clearTimeout(saveStateTimer)
   disconnectCvFitMercure()
@@ -610,7 +624,7 @@ onMounted(() => {
     settingsStore.fetchSettings()
   }
 
-  window.addEventListener('keydown', handleSaveShortcut)
+  window.addEventListener('keydown', handleKeyDown)
 })
 </script>
 
@@ -618,7 +632,7 @@ onMounted(() => {
   <div class="space-y-6" v-if="currentApplication">
     <div class="flex items-center justify-between gap-4">
       <div class="flex items-center gap-3">
-        <Button variant="ghost" size="icon" @click="router.push({ name: 'Applications' })">
+        <Button variant="ghost" size="icon" @click="router.back()">
           <ArrowLeft :size="18" />
         </Button>
         <div>

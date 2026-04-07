@@ -64,7 +64,7 @@ const activityAgeLabel = (value?: string) => {
 
 const urgencyTone = (score: number): BadgeVariants['variant'] => {
   if (score >= 14) return 'destructive'
-  if (score >= 8) return 'warning'
+  if (score >= 8) return 'info'
   return 'secondary'
 }
 
@@ -73,9 +73,9 @@ const pipelineHealth = computed(() => {
 
   return [
     { label: 'Wishlist', value: stats.value.wishlist, tone: 'bg-secondary' },
-    { label: 'Applied', value: stats.value.applied, tone: 'bg-primary' },
-    { label: 'Interview', value: stats.value.interview, tone: 'bg-accent' },
-    { label: 'Offer', value: stats.value.offer, tone: 'bg-foreground/70' },
+    { label: 'Applied', value: stats.value.applied, tone: 'bg-sky-500/70' },
+    { label: 'Interview', value: stats.value.interview, tone: 'bg-sky-600/70' },
+    { label: 'Offer', value: stats.value.offer, tone: 'bg-emerald-500/70' },
   ].map((item) => ({
     ...item,
     width: `${Math.max((item.value / total) * 100, item.value > 0 ? 10 : 0)}%`,
@@ -144,13 +144,15 @@ const statusTone = (status: string): BadgeVariants['variant'] => {
     case 'offer':
       return 'success'
     case 'interview':
-      return 'warning'
+      return 'info'
     case 'applied':
-      return 'default'
+      return 'info'
     default:
       return 'secondary'
   }
 }
+
+const statusLabel = (status: string) => status.replace(/_/g, ' ').replace(/\b\w/g, (char: string) => char.toUpperCase())
 
 const formatShortDate = (value?: string) => {
   if (!value) return 'No date'
@@ -182,11 +184,11 @@ onMounted(() => {
 
 <template>
   <div class="space-y-6 lg:space-y-8">
-    <Card class="surface-glow overflow-hidden border-border/70">
+    <Card class="overflow-hidden border-border/70">
       <CardContent class="grid gap-8 p-6 sm:p-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)] lg:p-10">
         <div class="space-y-5">
           <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-            <Sparkles :size="14" class="text-accent" />
+            <Sparkles :size="14" class="text-sky-600" />
             Dashboard
           </div>
           <h1 class="display-title max-w-3xl text-4xl font-semibold leading-[0.95] sm:text-5xl lg:text-6xl">
@@ -212,33 +214,33 @@ onMounted(() => {
               <div class="text-xs uppercase tracking-[0.18em] text-muted-foreground">Stale</div>
               <div class="mt-2 flex items-end justify-between">
                 <div class="text-2xl font-semibold text-foreground">{{ staleCount }}</div>
-                <Clock3 :size="16" class="text-accent" />
+                <Clock3 :size="16" class="text-sky-600" />
               </div>
             </div>
             <div class="rounded-[1.25rem] border border-border/70 bg-background/80 px-4 py-3">
               <div class="text-xs uppercase tracking-[0.18em] text-muted-foreground">Avg age</div>
               <div class="mt-2 flex items-end justify-between">
                 <div class="text-2xl font-semibold text-foreground">{{ averageAge }}d</div>
-                <BarChart3 :size="16" class="text-accent" />
+                <BarChart3 :size="16" class="text-sky-600" />
               </div>
             </div>
             <div class="rounded-[1.25rem] border border-border/70 bg-background/80 px-4 py-3">
               <div class="text-xs uppercase tracking-[0.18em] text-muted-foreground">Active</div>
               <div class="mt-2 flex items-end justify-between">
                 <div class="text-2xl font-semibold text-foreground">{{ isLoading ? '...' : activeCount }}</div>
-                <Target :size="16" class="text-accent" />
+                <Target :size="16" class="text-sky-600" />
               </div>
             </div>
           </div>
         </div>
 
-        <div class="rounded-[1.75rem] border border-border/70 bg-card/85 p-5 shadow-[0_18px_42px_rgba(15,23,42,0.08)] backdrop-blur-sm">
+        <div class="rounded-[1.75rem] border border-border/70 bg-card/85 p-5 shadow-sm backdrop-blur-sm">
           <div class="flex items-center justify-between gap-4">
             <div>
               <div class="text-xs uppercase tracking-[0.18em] text-muted-foreground">Funnel</div>
               <div class="mt-2 text-lg font-semibold text-foreground">Conversion flow</div>
             </div>
-            <BarChart3 :size="20" class="text-accent" />
+            <BarChart3 :size="20" class="text-sky-600" />
           </div>
 
           <div class="mt-5 h-3 overflow-hidden rounded-full bg-secondary/70">
@@ -274,33 +276,33 @@ onMounted(() => {
     </Card>
 
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      <Card class="surface-glow border-border/70">
+      <Card class="border-border/70">
         <CardContent class="p-5">
           <div class="flex items-center justify-between text-sm text-muted-foreground">
             <span>Total tracked</span>
-            <Briefcase :size="18" class="text-accent" />
+            <Briefcase :size="18" class="text-sky-600" />
           </div>
           <div class="mt-4 text-3xl font-semibold tracking-tight">{{ isLoading ? '...' : stats.total }}</div>
           <div class="mt-2 text-sm text-muted-foreground">All tracked opportunities</div>
         </CardContent>
       </Card>
 
-      <Card class="surface-glow border-border/70">
+      <Card class="border-border/70">
         <CardContent class="p-5">
           <div class="flex items-center justify-between text-sm text-muted-foreground">
             <span>Interview-ready</span>
-            <Calendar :size="18" class="text-accent" />
+            <Calendar :size="18" class="text-sky-600" />
           </div>
           <div class="mt-4 text-3xl font-semibold tracking-tight text-foreground">{{ isLoading ? '...' : stats.interview }}</div>
           <div class="mt-2 text-sm text-muted-foreground">Upcoming conversations</div>
         </CardContent>
       </Card>
 
-      <Card class="surface-glow border-border/70 sm:col-span-2 xl:col-span-1">
+      <Card class="border-border/70 sm:col-span-2 xl:col-span-1">
         <CardContent class="p-5">
           <div class="flex items-center justify-between text-sm text-muted-foreground">
             <span>Offers</span>
-            <Flame :size="18" class="text-accent" />
+            <Flame :size="18" class="text-sky-600" />
           </div>
           <div class="mt-4 text-3xl font-semibold tracking-tight text-foreground">{{ isLoading ? '...' : stats.offer }}</div>
           <div class="mt-2 text-sm text-muted-foreground">Converted opportunities</div>
@@ -309,7 +311,7 @@ onMounted(() => {
     </div>
 
     <div class="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(340px,0.95fr)]">
-      <Card class="surface-glow border-border/70">
+      <Card class="border-border/70">
         <CardHeader class="flex flex-row items-center justify-between gap-4 pb-4">
           <div>
             <p class="section-kicker mb-2">Activity</p>
@@ -331,11 +333,11 @@ onMounted(() => {
             <div
               v-for="item in activityTimeline"
               :key="item.id"
-              class="group flex cursor-pointer gap-4 rounded-[1.35rem] border border-border/70 bg-background/80 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:bg-primary-light/70 hover:shadow-[0_14px_28px_rgba(15,23,42,0.08)]"
+              class="group flex cursor-pointer gap-4 rounded-[1.35rem] border border-border/70 bg-background/80 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:bg-primary-light/70 hover:shadow-sm"
               @click="router.push({ name: 'ApplicationDetail', params: { id: item.id } })"
             >
               <div class="relative flex flex-col items-center pt-1">
-                <span class="h-3 w-3 rounded-full" :class="item.tone === 'destructive' ? 'bg-destructive' : item.tone === 'warning' ? 'bg-accent' : 'bg-primary'" />
+                <span class="h-3 w-3 rounded-full" :class="item.tone === 'destructive' ? 'bg-destructive' : item.tone === 'info' ? 'bg-sky-500' : item.tone === 'success' ? 'bg-emerald-500' : 'bg-secondary-foreground/50'" />
                 <span class="mt-2 h-full w-px bg-border/80" />
               </div>
 
@@ -345,7 +347,7 @@ onMounted(() => {
                     <div class="truncate font-medium text-foreground">{{ item.title }}</div>
                     <div class="truncate text-sm text-muted-foreground">{{ item.company }}</div>
                   </div>
-                  <Badge :variant="item.tone">{{ item.status }}</Badge>
+                  <Badge :variant="item.tone">{{ statusLabel(item.status) }}</Badge>
                 </div>
 
                 <div class="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
@@ -353,7 +355,7 @@ onMounted(() => {
                     <Clock3 :size="14" />
                     {{ item.date }}
                   </span>
-                  <span class="rounded-full bg-secondary/70 px-2.5 py-1 font-medium uppercase tracking-[0.14em]">
+                  <span class="rounded-full bg-sky-500/10 px-2.5 py-1 font-medium uppercase tracking-[0.14em] text-sky-700">
                     {{ item.urgencyLabel }}
                   </span>
                   <span class="text-[11px] uppercase tracking-[0.16em]">{{ item.urgencyScore }} urgency</span>
@@ -366,13 +368,13 @@ onMounted(() => {
         </CardContent>
       </Card>
 
-      <Card class="surface-glow border-border/70">
+      <Card class="border-border/70">
         <CardHeader class="flex flex-row items-center justify-between gap-4 pb-4">
           <div>
             <p class="section-kicker mb-2">Priority queue</p>
             <CardTitle class="display-title text-2xl font-semibold">Next to handle</CardTitle>
           </div>
-          <Flame :size="18" class="text-accent" />
+           <Flame :size="18" class="text-sky-600" />
         </CardHeader>
         <CardContent>
           <div v-if="isLoading" class="text-sm text-muted-foreground">
@@ -385,7 +387,7 @@ onMounted(() => {
             <div
               v-for="application in urgencyQueue"
               :key="application.id"
-              class="rounded-[1.35rem] border border-border/70 bg-background/80 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/25 hover:bg-accent/5"
+              class="rounded-[1.35rem] border border-border/70 bg-background/80 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-500/20 hover:bg-sky-500/5"
             >
               <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">

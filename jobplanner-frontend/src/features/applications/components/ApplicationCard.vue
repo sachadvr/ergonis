@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { format } from 'date-fns'
+import { format, isWithinInterval, subDays } from 'date-fns'
 import type { Application } from '@/types/models.types'
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Building2, Calendar, MapPin, DollarSign } from 'lucide-vue-next'
+import { Building2, Calendar, MapPin, DollarSign, Sparkles } from 'lucide-vue-next'
 
 interface ApplicationCardProps {
   application: Application
@@ -21,16 +21,17 @@ const handleClick = (): void => {
 }
 
 // Get badge variant based on status
-const statusVariant = computed(() => {
-  const variants: Record<Application['status'], 'default' | 'secondary' | 'success' | 'warning' | 'info' | 'destructive'> = {
-    wishlist: 'secondary',
-    applied: 'info',
-    interview: 'warning',
-    offer: 'success',
-    rejected: 'destructive',
-    accepted: 'success',
+const companyToneClass = computed(() => {
+  const tones: Record<Application['status'], string> = {
+    wishlist: 'bg-secondary text-secondary-foreground',
+    applied: 'bg-sky-500/12 text-sky-700',
+    interview: 'bg-violet-500/12 text-violet-700',
+    offer: 'bg-emerald-500/12 text-emerald-700',
+    rejected: 'bg-rose-500/12 text-rose-700',
+    accepted: 'bg-emerald-500/12 text-emerald-700',
   }
-  return variants[props.application.status]
+
+  return tones[props.application.status]
 })
 
 // Format date
@@ -51,6 +52,10 @@ const formattedSalary = computed(() => {
   if (max) return `Up to $${max}`
   return null
 })
+const isNew = computed(() => {
+  if (!props.application.createdAt) return false
+  return isWithinInterval(new Date(props.application.createdAt), { start: subDays(new Date(), 1), end: new Date() })
+})
 </script>
 
 <template>
@@ -59,41 +64,43 @@ const formattedSalary = computed(() => {
     @click="handleClick"
   >
     <CardHeader class="pb-3">
-      <Badge :variant="statusVariant" class="py-0 m-0 mb-2 w-fit!"> 
-        <div class="flex items-center gap-2 text-sm text-muted-foreground">
-          <Building2 :size="16" class="shrink-0" />
-          <span class="text-xs">{{ application.companyName }}</span>
+      <div class="flex flex-col gap-2 relative">
+        <div class="flex items-start justify-between gap-2 relative">
+          <Badge variant="outline" :class="['min-w-0 px-2.5 py-1 text-[11px]', companyToneClass]">
+            <Building2 :size="14" class="shrink-0" />
+            <span class="whitespace-normal break-words">{{ application.companyName }}</span>
+          </Badge>
+          
         </div>
-      </Badge>
-      <div class="flex items-start justify-between gap-2">
         <CardTitle class="text-base leading-tight">
           {{ application.jobTitle }}
         </CardTitle>
       </div>
     </CardHeader>
-
+    
     <CardContent class="space-y-3">
       <!-- Company -->
       
-
+      
       <!-- Location -->
       <div v-if="application.location" class="flex items-center gap-2 text-sm text-muted-foreground">
         <MapPin :size="16" class="shrink-0" />
         <span class="truncate">{{ application.location }}</span>
       </div>
-
+      
       <!-- Salary -->
       <div v-if="formattedSalary" class="flex items-center gap-2 text-sm text-muted-foreground">
         <DollarSign :size="16" class="shrink-0" />
         <span>{{ formattedSalary }}</span>
       </div>
-
+      
       <!-- Applied Date -->
       <div v-if="formattedDate" class="flex items-center gap-2 text-sm text-muted-foreground">
         <Calendar :size="16" class="shrink-0" />
         <span>{{ formattedDate }}</span>
       </div>
-
+      
+      <span v-if="isNew" class="text-red-500 bg-red-500/30 text-white text-xs px-2 py-1 rounded-full flex gap-2 w-fit"><Sparkles :size="16" class="shrink-0" /> New</span>
     </CardContent>
   </Card>
 </template>

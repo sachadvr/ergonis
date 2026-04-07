@@ -32,6 +32,7 @@ const handleApplicationClick = (application: Application): void => {
   router.push({ name: 'ApplicationDetail', params: { id: application.id } })
 }
 
+
 // Column definitions
 const columns: Array<{
   title: string
