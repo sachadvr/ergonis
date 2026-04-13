@@ -2,6 +2,8 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/features/auth/stores/auth.store'
+import { useApplicationsStore } from '@/features/applications/stores/applications.store'
+import { useNotificationsStore } from '@/features/notifications/stores/notifications.store'
 import { Button } from '@/components/ui/button'
 import NotificationPopover from '@/features/notifications/components/NotificationPopover.vue'
 import { 
@@ -19,11 +21,32 @@ import logo_icon from '/logo_icon.png'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const applicationsStore = useApplicationsStore()
+const notificationsStore = useNotificationsStore()
 const mainRef = ref<HTMLElement | null>(null)
 const showMobileNav = ref(true)
 
 let lastScrollTop = 0
 let scrollTimeout: number | undefined
+let unsubscribeMercure: (() => void) | null = null
+
+type MercurePayload = {
+  type?: string
+  data?: {
+    applicationId?: number
+  }
+}
+
+const getCurrentRouteApplicationId = (): number | null => {
+  const routeApplicationParam = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
+
+  if (route.name !== 'ApplicationDetail' || typeof routeApplicationParam !== 'string') {
+    return null
+  }
+
+  const routeApplicationId = Number(routeApplicationParam)
+  return Number.isNaN(routeApplicationId) ? null : routeApplicationId
+}
 
 // Logo path is /logo.png (served from public folder)
 
@@ -50,8 +73,35 @@ const toggleNavMode = () => {
 }
 
 const handleLogout = () => {
+  notificationsStore.stop()
   authStore.logout()
   router.push({ name: 'Login' })
+}
+
+const refetchApplicationsForPayload = async (payload: MercurePayload) => {
+  const currentRouteApplicationId = getCurrentRouteApplicationId()
+  const matchesOpenApplication = currentRouteApplicationId !== null && currentRouteApplicationId === payload.data?.applicationId
+
+  if ('email_received' === payload.type || 'imported_from_extension' === payload.type) {
+    await notificationsStore.fetchNotifications()
+
+    if (matchesOpenApplication && typeof route.params.id === 'string') {
+      await applicationsStore.fetchApplicationById(route.params.id)
+      return
+    }
+
+    await applicationsStore.fetchApplications()
+    return
+  }
+
+  if ('application.cv_fit.updated' === payload.type) {
+    if (matchesOpenApplication && typeof route.params.id === 'string') {
+      await applicationsStore.fetchApplicationById(route.params.id)
+      return
+    }
+
+    await applicationsStore.fetchApplications()
+  }
 }
 
 const updateMobileNavVisibility = () => {
@@ -90,10 +140,16 @@ onMounted(() => {
 
   lastScrollTop = mainElement.scrollTop
   mainElement.addEventListener('scroll', updateMobileNavVisibility, { passive: true })
+
+  unsubscribeMercure = notificationsStore.subscribeMercure((payload) => {
+    void refetchApplicationsForPayload(payload as MercurePayload)
+  })
 })
 
 onBeforeUnmount(() => {
   mainRef.value?.removeEventListener('scroll', updateMobileNavVisibility)
+  unsubscribeMercure?.()
+  unsubscribeMercure = null
 
   window.clearTimeout(scrollTimeout)
 })

@@ -24,6 +24,10 @@ export const API_ENDPOINTS = {
     BASE: '/api/recruiter_emails',
     BY_ID: (id: string) => `/api/recruiter_emails/${id}`,
   },
+  APPLICATION_HISTORIES: {
+    BASE: '/api/application_histories',
+    BY_ID: (id: string) => `/api/application_histories/${id}`,
+  },
   MERCURE: {
     TOKEN: '/api/mercure/token',
   },

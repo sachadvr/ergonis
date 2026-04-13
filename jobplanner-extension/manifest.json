@@ -10,7 +10,14 @@
     "128": "logo_icon.png"
   },
   "permissions": ["storage", "activeTab", "tabs"],
-  "host_permissions": ["http://localhost:8000/*", "http://localhost:5173/*", "http://localhost/*", "https://*/*"],
+  "host_permissions": [
+    "http://localhost:8000/*",
+    "http://localhost:5173/*",
+    "http://localhost/*",
+    "https://api.ergonis.app/*",
+    "https://ergonis.app/*",
+    "https://*/*"
+  ],
   "content_scripts": [
     {
       "matches": ["<all_urls>"],

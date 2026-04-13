@@ -13,6 +13,7 @@ services:
     environment:
       APP_ENV: dev
       APP_DEBUG: 1
+      RUN_MIGRATIONS: "1"
       AI_PROVIDER: ollama
       CORS_ALLOW_ORIGIN: '^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'
       SIMULATION_MODE: "true"
@@ -67,6 +68,7 @@ services:
     environment:
       APP_ENV: dev
       APP_DEBUG: 1
+      RUN_MIGRATIONS: "0"
       DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-!ChangeMe!}@database:5432/${POSTGRES_DB:-app}?serverVersion=16&charset=utf8
       AI_PROVIDER: ollama
       OLLAMA_URL: http://host.docker.internal:11434
@@ -92,6 +94,7 @@ services:
     environment:
       APP_ENV: dev
       APP_DEBUG: 1
+      RUN_MIGRATIONS: "0"
       DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-!ChangeMe!}@database:5432/${POSTGRES_DB:-app}?serverVersion=16&charset=utf8
       MAILER_DSN: smtp://mailpit:1025
       MERCURE_PUBLIC_URL: http://mercure:3000/.well-known/mercure

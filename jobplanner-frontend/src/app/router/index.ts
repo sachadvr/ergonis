@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/features/auth/stores/auth.store'
+import { useNotificationsStore } from '@/features/notifications/stores/notifications.store'
 
 const APP_TITLE_PREFIX = 'JP'
 const DEFAULT_TITLE = 'Career Atelier'
@@ -130,6 +131,9 @@ router.afterEach((to) => {
 // Handle unauthorized event from apiClient without full page reload
 window.addEventListener('auth:unauthorized', () => {
   const authStore = useAuthStore()
+  const notificationsStore = useNotificationsStore()
+
+  notificationsStore.stop()
   authStore.logout()
   router.push({ name: 'Login' })
 })

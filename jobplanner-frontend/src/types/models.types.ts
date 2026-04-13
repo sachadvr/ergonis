@@ -117,7 +117,7 @@ export interface RecruiterEmail {
 
 export interface NotificationItem {
   id: number
-  type: 'email_received'
+  type: 'email_received' | 'imported_from_extension'
   title: string
   message: string
   createdAt: string
@@ -127,6 +127,21 @@ export interface NotificationItem {
   subject: string
   isSeen: boolean
   href: string
+}
+
+export type MercureNotificationType = 'email_received' | 'application.cv_fit.updated'
+
+export interface MercureNotificationEnvelope<T = unknown> {
+  type: MercureNotificationType
+  data: T
+}
+
+export interface ApplicationCvFitMercureData {
+  applicationId: number
+  status?: ApplicationCvFitStatus['status']
+  result?: ApplicationCvFitAnalysis | null
+  requestedAt?: string | null
+  completedAt?: string | null
 }
 
 export interface Interview {

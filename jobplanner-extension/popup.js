@@ -1,5 +1,5 @@
-const DEFAULT_API_URL = 'http://localhost:8000';
-const DEFAULT_FRONTEND_URL = 'http://localhost:5173';
+const DEFAULT_API_URL = 'https://api.ergonis.app/';
+const DEFAULT_FRONTEND_URL = 'https://ergonis.app/';
 
 async function getToken() {
     const { token } = await chrome.storage.local.get('token');

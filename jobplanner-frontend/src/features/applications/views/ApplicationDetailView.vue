@@ -18,8 +18,6 @@ import {
   Target,
 } from 'lucide-vue-next'
 import { useApplicationsStore } from '../stores/applications.store'
-import { useAuthStore } from '@/features/auth/stores/auth.store'
-import { useNotificationsStore } from '@/features/notifications/stores/notifications.store'
 import { useSettingsStore } from '@/features/settings/stores/settings.store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -27,16 +25,18 @@ import { Button } from '@/components/ui/button'
 import RichTextEditor from '@/components/ui/rich-text-editor/RichTextEditor.vue'
 import { interviewsApi } from '@/features/interviews/api/interviews.api'
 import { extractIdFromIri } from '@/lib/api/transforms'
-import type { Application, ApplicationCvFitAnalysis, ApplicationFormValues, Interview } from '@/types/models.types'
+import type {
+  Application,
+  ApplicationCvFitAnalysis,
+  ApplicationFormValues,
+  Interview,
+} from '@/types/models.types'
 
 const route = useRoute()
 const router = useRouter()
 const applicationsStore = useApplicationsStore()
-const authStore = useAuthStore()
-const notificationsStore = useNotificationsStore()
 const settingsStore = useSettingsStore()
 const { currentApplication, isLoading } = storeToRefs(applicationsStore)
-const { user } = storeToRefs(authStore)
 const { mailboxSettings } = storeToRefs(settingsStore)
 
 type BlockId =
@@ -90,7 +90,6 @@ let recruiterSubjectDraft = ''
 let recruiterBodyDraft = ''
 let saveDebounceTimer: ReturnType<typeof setTimeout> | null = null
 let saveStateTimer: ReturnType<typeof setTimeout> | null = null
-let unsubscribeCvFitMercure: (() => void) | null = null
 
 const applicationId = computed(() => String(route.params.id))
 const currentMailboxImapUser = computed(() => mailboxSettings.value[0]?.imapUser || '')
@@ -396,65 +395,6 @@ const deleteApplicationAndJobOffer = async () => {
   }
 }
 
-const disconnectCvFitMercure = () => {
-  if (unsubscribeCvFitMercure) {
-    unsubscribeCvFitMercure()
-    unsubscribeCvFitMercure = null
-  }
-}
-
-const connectCvFitMercure = () => {
-  if (!user.value?.id || unsubscribeCvFitMercure) return
-
-  notificationsStore.start(user.value.id)
-
-  unsubscribeCvFitMercure = notificationsStore.subscribeMercure((payload) => {
-    try {
-      const event = payload as {
-        type?: string
-        applicationId?: number
-        status?: Application['cvFitAnalysisStatus']
-        result?: ApplicationCvFitAnalysis | null
-        requestedAt?: string | null
-        completedAt?: string | null
-      }
-
-      if (
-        event.type !== 'application.cv_fit.updated' ||
-        typeof event.applicationId !== 'number' ||
-        event.applicationId !== currentApplication.value?.id
-      ) {
-        return
-      }
-
-      applicationsStore.patchApplicationCvFit(event.applicationId, {
-        status: event.status,
-        result: event.result ?? null,
-        requestedAt: event.requestedAt ?? null,
-        completedAt: event.completedAt ?? null,
-      })
-
-      if (event.status === 'completed') {
-        cvFitState.value = 'done'
-        cvFitError.value = ''
-        disconnectCvFitMercure()
-      }
-
-      if (event.status === 'failed') {
-        cvFitState.value = 'error'
-        cvFitError.value = 'Could not analyze the CV.'
-        disconnectCvFitMercure()
-      }
-
-      if (event.status === 'queued' || event.status === 'processing') {
-        cvFitState.value = 'queued'
-      }
-    } catch (error) {
-      console.error('Invalid CV fit Mercure payload:', error)
-    }
-  })
-}
-
 const resetCvFitState = () => {
   cvFile.value = null
   cvFitState.value = 'idle'
@@ -486,7 +426,6 @@ const analyzeCvFit = async () => {
   try {
     await applicationsStore.analyzeApplicationCvFit(currentApplication.value.id, cvFile.value)
     cvFitState.value = 'queued'
-    await connectCvFitMercure()
   } catch {
     cvFitState.value = 'error'
     cvFitError.value = 'Could not analyze the CV.'
@@ -586,7 +525,6 @@ watch(applicationId, () => {
   notesDraftHtml.value = ''
   interviewPrepDraftHtml.value = ''
   resetCvFitState()
-  disconnectCvFitMercure()
   loadApplication()
 }, { immediate: true })
 
@@ -597,12 +535,10 @@ watch(cvFitStatus, (status) => {
 
   if (status === 'completed') {
     cvFitState.value = 'done'
-    disconnectCvFitMercure()
   }
 
   if (status === 'failed') {
     cvFitState.value = 'error'
-    disconnectCvFitMercure()
   }
 })
 
@@ -616,7 +552,6 @@ onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeyDown)
   if (saveDebounceTimer) clearTimeout(saveDebounceTimer)
   if (saveStateTimer) clearTimeout(saveStateTimer)
-  disconnectCvFitMercure()
 })
 
 onMounted(() => {

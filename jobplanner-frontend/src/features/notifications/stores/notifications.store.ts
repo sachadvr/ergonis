@@ -55,9 +55,14 @@ export const useNotificationsStore = defineStore('notifications', () => {
     stop()
     activeUserId = userId
     void fetchNotifications()
-    void ensureMercureCookie().finally(() => {
-      connect(userId)
-    })
+    void ensureMercureCookie()
+      .then(() => {
+        connect(userId)
+      })
+      .catch((e) => {
+        error.value = 'Unable to authorize live notifications'
+        console.error('Error initializing Mercure subscription:', e)
+      })
   }
 
   function connect(userId: number) {
@@ -73,10 +78,6 @@ export const useNotificationsStore = defineStore('notifications', () => {
       try {
         const payload = JSON.parse(event.data) as unknown
         mercureListeners.forEach((listener) => listener(payload))
-
-        if (isNotificationItem(payload)) {
-          upsert(payload)
-        }
       } catch {
         // Ignore malformed payloads.
       }
@@ -86,23 +87,14 @@ export const useNotificationsStore = defineStore('notifications', () => {
     }
   }
 
-  function upsert(notification: NotificationItem) {
-    notifications.value = [
-      notification,
-      ...notifications.value.filter((item) => item.id !== notification.id),
-    ].slice(0, MAX_NOTIFICATIONS)
-  }
-
   async function markAsSeen(id: number) {
     const current = notifications.value.find((notification) => notification.id === id)
     if (!current || current.isSeen) {
       return
     }
 
-    const updated = await notificationsApi.markAsSeen(id)
-    notifications.value = notifications.value.map((notification) =>
-      notification.id === id ? { ...notification, ...updated } : notification,
-    )
+    await notificationsApi.markAsSeen(current)
+    await fetchNotifications()
   }
 
   function dismiss(id: number) {
@@ -121,10 +113,6 @@ export const useNotificationsStore = defineStore('notifications', () => {
     return () => {
       mercureListeners.delete(listener)
     }
-  }
-
-  function isNotificationItem(payload: unknown): payload is NotificationItem {
-    return typeof payload === 'object' && payload !== null && (payload as NotificationItem).type === 'email_received'
   }
 
   return {

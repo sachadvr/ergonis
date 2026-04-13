@@ -8,8 +8,13 @@ export const notificationsApi = {
     return apiClient(API_ENDPOINTS.NOTIFICATIONS.BASE)
   },
 
-  async markAsSeen(id: number): Promise<NotificationItem> {
-    return apiClient(API_ENDPOINTS.EMAILS.BY_ID(String(id)), {
+  async markAsSeen(notification: NotificationItem): Promise<void> {
+    const endpoint =
+      'imported_from_extension' === notification.type
+        ? API_ENDPOINTS.APPLICATION_HISTORIES.BY_ID(String(notification.id))
+        : API_ENDPOINTS.EMAILS.BY_ID(String(notification.id))
+
+    return apiClient(endpoint, {
       method: 'PATCH',
       body: { isSeen: true },
       headers: {
