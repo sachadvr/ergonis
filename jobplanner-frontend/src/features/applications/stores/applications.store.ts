@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Application, ApplicationCvFitAnalysis, ApplicationFormValues } from '@/types/models.types'
 import { applicationsApi } from '../api/applications.api'
+import { interviewsApi } from '@/features/interviews/api/interviews.api'
 import { jobOffersApi } from '@/features/job-offers/api/job-offers.api'
 import {
   transformApplication,
@@ -217,28 +218,57 @@ export const useApplicationsStore = defineStore('applications', () => {
   }
 
   /**
-   * Update application status (optimistic update)
+   * Update application status
    */
-  async function updateApplicationStatus(id: number, status: Application['status']) {
-    // Find the application
-    const application = applications.value.find((a) => a.id === id)
-    if (!application) return
-
-    // Store old status for rollback
-    const oldStatus = application.status
-
+  async function updateApplicationStatus(
+    id: number,
+    status: Application['status'],
+  ): Promise<Application | undefined> {
     try {
-      // Optimistic update
-      application.status = status
+      error.value = null
+      const rawApplication = await applicationsApi.updateStatus(String(id), status)
+      const updatedApplication = transformApplication(rawApplication)
 
-      // API call
-      await applicationsApi.updateStatus(String(id), status)
+      const index = applications.value.findIndex((a) => a.id === id)
+      if (index !== -1) {
+        applications.value[index] = updatedApplication
+      }
+
+      if (currentApplication.value?.id === id) {
+        currentApplication.value = updatedApplication
+      }
+
+      return updatedApplication
     } catch (e) {
-      // Rollback on error
-      application.status = oldStatus
       error.value = 'Failed to update status'
       console.error('Error updating status:', e)
       throw e
+    }
+  }
+
+  /**
+   * Move an application to interview and create the interview entry
+   */
+  async function moveApplicationToInterview(
+    id: number,
+    scheduledAt: string,
+  ): Promise<Application | undefined> {
+    try {
+      isLoading.value = true
+      error.value = null
+
+      await interviewsApi.create({
+        application: `/api/applications/${id}`,
+        scheduledAt,
+      })
+
+      return await updateApplicationStatus(id, 'interview')
+    } catch (e) {
+      error.value = 'Failed to schedule interview'
+      console.error('Error moving application to interview:', e)
+      throw e
+    } finally {
+      isLoading.value = false
     }
   }
 
@@ -302,6 +332,10 @@ export const useApplicationsStore = defineStore('applications', () => {
     error.value = null
   }
 
+  function setApplications(nextApplications: Application[]) {
+    applications.value = nextApplications
+  }
+
   return {
     // State
     applications,
@@ -321,8 +355,10 @@ export const useApplicationsStore = defineStore('applications', () => {
     deleteApplication,
     deleteApplicationWithJobOffer,
     updateApplicationStatus,
+    moveApplicationToInterview,
     analyzeApplicationCvFit,
     patchApplicationCvFit,
+    setApplications,
     $reset,
   }
 })

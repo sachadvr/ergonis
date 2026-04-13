@@ -1,0 +1,59 @@
+name: Extension Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Extension version to release
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish extension release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set version variables
+        run: |
+          VERSION='${{ inputs.version }}'
+          TAG="extension-v${VERSION}"
+          echo "EXTENSION_VERSION=${VERSION}" >> "$GITHUB_ENV"
+          echo "EXTENSION_TAG=${TAG}" >> "$GITHUB_ENV"
+
+      - name: Update extension manifest version
+        run: |
+          node -e "const fs=require('fs'); const path='jobplanner-extension/manifest.json'; const data=JSON.parse(fs.readFileSync(path, 'utf8')); data.version=process.env.EXTENSION_VERSION; fs.writeFileSync(path, JSON.stringify(data, null, 2) + '\n');"
+
+      - name: Create extension zip
+        working-directory: ./jobplanner-extension
+        run: |
+          zip -r "../jobplanner-extension-${EXTENSION_VERSION}.zip" .
+
+      - name: Configure git author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create and push git tag
+        if: ${{ !env.ACT }}
+        run: |
+          git tag -a "${EXTENSION_TAG}" -m "Release ${EXTENSION_TAG}"
+          git push origin "${EXTENSION_TAG}"
+
+      - name: Publish GitHub release
+        if: ${{ !env.ACT }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.EXTENSION_TAG }}
+          name: JobPlanner Extension ${{ env.EXTENSION_VERSION }}
+          files: jobplanner-extension-${{ env.EXTENSION_VERSION }}.zip
+          generate_release_notes: true

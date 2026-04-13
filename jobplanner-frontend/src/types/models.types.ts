@@ -140,6 +140,15 @@ export interface Interview {
   reminderSentAt?: string
 }
 
+export interface CreateInterviewDto {
+  application: string
+  scheduledAt: string
+  type?: InterviewType
+  notes?: string
+  locationOrLink?: string
+  contactName?: string
+}
+
 export interface FollowUpRule {
   id: number
   daysWithoutReply: number

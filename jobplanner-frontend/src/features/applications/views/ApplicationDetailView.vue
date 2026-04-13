@@ -845,7 +845,7 @@ onMounted(() => {
           <div v-if="cvFitResult" class="space-y-4 rounded-2xl bg-secondary/40 p-4">
             <div class="flex flex-wrap items-center gap-3">
               <Badge variant="secondary" class="bg-primary-light text-primary">Score: <span class="ml-2 font-bold">{{ cvFitScore ?? 'n/a' }}/100</span></Badge>
-              <Badge v-if="cvFitLevel" variant="outline" class="border-emerald-200 bg-emerald-500/12 text-emerald-700">Level: {{ cvFitLevel }}</Badge>
+              <Badge v-if="cvFitLevel" variant="outline" class="" :class="cvFitLevel === 'strong' ? 'bg-emerald-500/12 text-emerald-700' : cvFitLevel === 'medium' ? 'bg-yellow-500/12 text-yellow-700' : 'bg-red-500/12 text-red-700'">Level: {{ cvFitLevel }}</Badge>
               <Badge v-if="cvFitRecommendation" variant="outline" class="bg-secondary text-foreground">{{ cvFitRecommendation }}</Badge>
             </div>
             <blockquote v-if="cvFitResult.summary" class="text-sm leading-6 text-foreground border-l-4 border-primary/40 pl-4">

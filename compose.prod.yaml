@@ -1,0 +1,206 @@
+services:
+  traefik:
+    image: traefik:latest
+    restart: unless-stopped
+    command:
+      - --api.dashboard=true
+      - --api.insecure=false
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --certificatesresolvers.letsencrypt.acme.email=sachadvr@icloud.com
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_data:/letsencrypt
+
+  database:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - database_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'PGDATABASE="$${POSTGRES_DB}" PGUSER="$${POSTGRES_USER}" pg_isready -h 127.0.0.1 -p 5432',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  mercure:
+    image: dunglas/mercure:latest
+    restart: unless-stopped
+    environment:
+      SERVER_NAME: ":3000"
+      MERCURE_PUBLISHER_JWT_KEY: ${MERCURE_JWT_SECRET:?set MERCURE_JWT_SECRET}
+      MERCURE_SUBSCRIBER_JWT_KEY: ${MERCURE_JWT_SECRET:?set MERCURE_JWT_SECRET}
+      MERCURE_EXTRA_DIRECTIVES: |
+        cors_origins https://ergonis.app https://api.ergonis.app http://localhost http://localhost:5173 http://localhost:4200
+    command: /usr/bin/caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.mercure.rule=Host(`mercure.ergonis.app`)
+      - traefik.http.routers.mercure.entrypoints=websecure
+      - traefik.http.routers.mercure.tls.certresolver=letsencrypt
+      - traefik.http.services.mercure.loadbalancer.server.port=3000
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+
+  api:
+    image: sachadvr/jobplanner
+    restart: unless-stopped
+    environment:
+      APP_ENV: prod
+      APP_DEBUG: "0"
+      RUN_MIGRATIONS: "1"
+      APP_SECRET: ${APP_SECRET:?set APP_SECRET}
+      AI_PROVIDER: ollama
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-}
+      AZURE_CLIENT_ID: ${AZURE_CLIENT_ID:-}
+      AZURE_CLIENT_SECRET: ${AZURE_CLIENT_SECRET:-}
+      AZURE_REDIRECT_URI: ${AZURE_REDIRECT_URI:-}
+      IMAP_HOST: ${IMAP_HOST:-}
+      IMAP_PORT: ${IMAP_PORT:-993}
+      IMAP_USER: ${IMAP_USER:-}
+      IMAP_PASSWORD: ${IMAP_PASSWORD:-}
+      IMAP_ENCRYPTION: ${IMAP_ENCRYPTION:-ssl}
+      DATABASE_URL: postgresql://${POSTGRES_USER:?set POSTGRES_USER}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB:?set POSTGRES_DB}?serverVersion=16&charset=utf8
+      CORS_ALLOW_ORIGIN: ^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$|^https://(ergonis\.app|api\.ergonis\.app)$
+      SIMULATION_MODE: "false"
+      MERCURE_PUBLIC_URL: https://mercure.ergonis.app/.well-known/mercure
+      MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET:?set MERCURE_JWT_SECRET}
+      OLLAMA_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-bjoernb/gemma4-31b-think:latest}
+      JWT_SECRET_KEY: /srv/app/config/jwt/private.pem
+      JWT_PUBLIC_KEY: /srv/app/config/jwt/public.pem
+      JWT_PASSPHRASE: ${JWT_PASSPHRASE:-}
+    depends_on:
+      database:
+        condition: service_healthy
+      mercure:
+        condition: service_started
+      ollama:
+        condition: service_started
+    volumes:
+      - cv_fit_data:/srv/app/var/cv-fit
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.api.rule=Host(`api.ergonis.app`)
+      - traefik.http.routers.api.entrypoints=websecure
+      - traefik.http.routers.api.tls.certresolver=letsencrypt
+      - traefik.http.services.api.loadbalancer.server.port=8000
+
+  worker:
+    image: sachadvr/jobplanner
+    restart: unless-stopped
+    environment:
+      APP_ENV: prod
+      APP_DEBUG: "0"
+      RUN_MIGRATIONS: "0"
+      APP_SECRET: ${APP_SECRET:?set APP_SECRET}
+      AI_PROVIDER: ollama
+      IMAP_HOST: ${IMAP_HOST:-}
+      IMAP_PORT: ${IMAP_PORT:-993}
+      IMAP_USER: ${IMAP_USER:-}
+      IMAP_PASSWORD: ${IMAP_PASSWORD:-}
+      IMAP_ENCRYPTION: ${IMAP_ENCRYPTION:-ssl}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}?serverVersion=16&charset=utf8
+      MERCURE_PUBLIC_URL: https://mercure.ergonis.app/.well-known/mercure
+      MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET:?set MERCURE_JWT_SECRET}
+      OLLAMA_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-bjoernb/gemma4-31b-think:latest}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-}
+      AZURE_CLIENT_ID: ${AZURE_CLIENT_ID:-}
+      AZURE_CLIENT_SECRET: ${AZURE_CLIENT_SECRET:-}
+      AZURE_REDIRECT_URI: ${AZURE_REDIRECT_URI:-}
+    command: php bin/console messenger:consume async --time-limit=3600 --memory-limit=256M --no-interaction -vv
+    depends_on:
+      database:
+        condition: service_healthy
+    volumes:
+      - cv_fit_data:/srv/app/var/cv-fit
+
+  scheduler:
+    image: sachadvr/jobplanner
+    restart: unless-stopped
+    environment:
+      APP_ENV: prod
+      APP_DEBUG: "0"
+      RUN_MIGRATIONS: "0"
+      APP_SECRET: ${APP_SECRET:?set APP_SECRET}
+      AI_PROVIDER: ollama
+      IMAP_HOST: ${IMAP_HOST:-}
+      IMAP_PORT: ${IMAP_PORT:-993}
+      IMAP_USER: ${IMAP_USER:-}
+      IMAP_PASSWORD: ${IMAP_PASSWORD:-}
+      IMAP_ENCRYPTION: ${IMAP_ENCRYPTION:-ssl}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}?serverVersion=16&charset=utf8
+      MERCURE_PUBLIC_URL: https://mercure.ergonis.app/.well-known/mercure
+      MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET:?set MERCURE_JWT_SECRET}
+      OLLAMA_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-bjoernb/gemma4-31b-think:latest}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-}
+      AZURE_CLIENT_ID: ${AZURE_CLIENT_ID:-}
+      AZURE_CLIENT_SECRET: ${AZURE_CLIENT_SECRET:-}
+      AZURE_REDIRECT_URI: ${AZURE_REDIRECT_URI:-}
+    command: php bin/console messenger:consume scheduler_default --time-limit=3600 --memory-limit=256M --no-interaction -vv
+    depends_on:
+      database:
+        condition: service_healthy
+
+  frontend:
+    image: sachadvr/jobplanner-front
+    restart: unless-stopped
+    depends_on:
+      - api
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.front.rule=Host(`ergonis.app`)
+      - traefik.http.routers.front.entrypoints=websecure
+      - traefik.http.routers.front.tls.certresolver=letsencrypt
+      - traefik.http.services.front.loadbalancer.server.port=80
+
+  logs:
+    image: amir20/dozzle:latest
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      DOZZLE_NO_ANALYTICS: "true"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.logs.rule=Host(`logs.ergonis.app`)
+      - traefik.http.routers.logs.entrypoints=websecure
+      - traefik.http.routers.logs.tls.certresolver=letsencrypt
+      - traefik.http.services.logs.loadbalancer.server.port=8080
+
+volumes:
+  database_data:
+  cv_fit_data:
+  ollama_data:
+  traefik_data:

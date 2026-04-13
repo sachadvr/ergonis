@@ -1,0 +1,31 @@
+name: Docker Build
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.service }} image
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: api
+            context: ./jobplanner-api
+            dockerfile: ./jobplanner-api/Dockerfile
+          - service: frontend
+            context: ./jobplanner-frontend
+            dockerfile: ./jobplanner-frontend/Dockerfile
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build ${{ matrix.service }} image for amd64
+        run: docker build --platform linux/amd64 -f "${{ matrix.dockerfile }}" -t "jobplanner-${{ matrix.service }}:ci" "${{ matrix.context }}"

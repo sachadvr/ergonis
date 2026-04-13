@@ -16,7 +16,7 @@ const props = withDefaults(defineProps<LabelProps>(), {
   <RadixLabel
     :for="props.for"
     :class="cn(
-      'text-sm font-medium leading-none text-zinc-200',
+      'text-sm font-medium leading-none text-foreground',
       'peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
       props.class
     )"

@@ -61,7 +61,7 @@ function refreshNotifications() {
 </script>
 
 <template>
-  <div ref="containerRef" class="relative">
+  <div ref="containerRef" class="relative select-none">
     <Button variant="ghost" size="icon" class="relative" title="Notifications" @click="togglePopover">
       <Bell :size="18" />
       <Badge
