@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://symfony.com/schema/dic/serializer-mapping/serializer-mapping-1.0.json
+App\Entity\UserMailboxSettings:
+    attributes:
+        id:
+            groups: ['mailbox_settings:read']
+        imapHost:
+            groups: ['mailbox_settings:read', 'mailbox_settings:write']
+        imapPort:
+            groups: ['mailbox_settings:read', 'mailbox_settings:write']
+        imapEncryption:
+            groups: ['mailbox_settings:read', 'mailbox_settings:write']
+        imapUser:
+            groups: ['mailbox_settings:read', 'mailbox_settings:write']
+        imapPassword:
+            groups: ['mailbox_settings:read', 'mailbox_settings:write']
+        imapFolder:
+            groups: ['mailbox_settings:read', 'mailbox_settings:write']
+        isActive:
+            groups: ['mailbox_settings:read', 'mailbox_settings:write']
+        smtpHost:
+            groups: ['mailbox_settings:read', 'mailbox_settings:write']
+        smtpPort:
+            groups: ['mailbox_settings:read', 'mailbox_settings:write']
+        smtpEncryption:
+            groups: ['mailbox_settings:read', 'mailbox_settings:write']
+        smtpUser:
+            groups: ['mailbox_settings:read', 'mailbox_settings:write']
+        smtpPassword:
+            groups: ['mailbox_settings:read', 'mailbox_settings:write']
+        oauthProvider:
+            groups: ['mailbox_settings:read', 'mailbox_settings:write']

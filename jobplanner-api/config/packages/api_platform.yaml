@@ -1,0 +1,9 @@
+api_platform:
+    title: JobPlanner API
+    version: 1.0.0
+    patch_formats:
+        json: ['application/merge-patch+json']
+    defaults:
+        stateless: true
+        cache_headers:
+            vary: ['Content-Type', 'Authorization', 'Origin']

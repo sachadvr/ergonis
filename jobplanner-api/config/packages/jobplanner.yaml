@@ -1,0 +1,7 @@
+parameters:
+    imap_host: '%env(IMAP_HOST)%'
+    imap_port: '%env(IMAP_PORT)%'
+    imap_user: '%env(IMAP_USER)%'
+    imap_password: '%env(IMAP_PASSWORD)%'
+    imap_encryption: '%env(IMAP_ENCRYPTION)%'
+    ai_provider: '%env(default:ai_provider:AI_PROVIDER)%'

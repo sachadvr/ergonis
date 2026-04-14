@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://symfony.com/schema/dic/serializer-mapping/serializer-mapping-1.0.json
+App\Entity\AiGenerationLog:
+    attributes:
+        id:
+            groups: ['ai_log:read']
+        type:
+            groups: ['ai_log:read']
+        prompt:
+            groups: ['ai_log:read']
+        tokensUsed:
+            groups: ['ai_log:read']
+        createdAt:
+            groups: ['ai_log:read']

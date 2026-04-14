@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://symfony.com/schema/dic/serializer-mapping/serializer-mapping-1.0.json
+App\Entity\FollowUpRule:
+    attributes:
+        id:
+            groups: ['follow_up_rule:read']
+        daysWithoutReply:
+            groups: ['follow_up_rule:read', 'follow_up_rule:write']
+        templateType:
+            groups: ['follow_up_rule:read', 'follow_up_rule:write']
+        enabled:
+            groups: ['follow_up_rule:read', 'follow_up_rule:write']
+        createdAt:
+            groups: ['follow_up_rule:read']

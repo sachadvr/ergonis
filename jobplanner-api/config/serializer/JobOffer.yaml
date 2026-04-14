@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=https://symfony.com/schema/dic/serializer-mapping/serializer-mapping-1.0.json
+App\Entity\JobOffer:
+    attributes:
+        id:
+            groups: ['job_offer:read', 'application:read']
+        title:
+            groups: ['job_offer:read', 'job_offer:write', 'application:read']
+        company:
+            groups: ['job_offer:read', 'job_offer:write', 'application:read']
+        url:
+            groups: ['job_offer:read', 'job_offer:write', 'application:read']
+        location:
+            groups: ['job_offer:read', 'job_offer:write', 'application:read']
+        notes:
+            groups: ['job_offer:read', 'job_offer:write', 'application:read']
+        rawContent:
+            groups: ['job_offer:read', 'job_offer:write', 'application:read']
+        sourceUrl:
+            groups: ['job_offer:read', 'job_offer:write', 'application:read']
+        recruiterContactEmail:
+            groups: ['job_offer:read', 'job_offer:write', 'application:read']
+        jobSummary:
+            groups: ['job_offer:read', 'job_offer:write', 'application:read']
+        salaryMin:
+            groups: ['job_offer:read', 'job_offer:write', 'application:read']
+        salaryMax:
+            groups: ['job_offer:read', 'job_offer:write', 'application:read']
+        salaryCurrency:
+            groups: ['job_offer:read', 'job_offer:write', 'application:read']
+        contractType:
+            groups: ['job_offer:read', 'job_offer:write', 'application:read']
+        remotePolicy:
+            groups: ['job_offer:read', 'job_offer:write', 'application:read']
+        details:
+            groups: ['job_offer:read', 'job_offer:write', 'application:read']
+        interviewPrep:
+            groups: ['job_offer:read', 'job_offer:write', 'application:read']

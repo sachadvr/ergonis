@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://symfony.com/schema/dic/serializer-mapping/serializer-mapping-1.0.json
+App\Entity\Application:
+    attributes:
+        id:
+            groups: ['application:read']
+        jobOffer:
+            groups: ['application:read', 'application:write']
+        status:
+            groups: ['application:read', 'application:write']
+        pipelinePosition:
+            groups: ['application:read', 'application:write']
+        appliedAt:
+            groups: ['application:read', 'application:write']
+        createdAt:
+            groups: ['application:read']
+        updatedAt:
+            groups: ['application:read']
+        lastActivityAt:
+            groups: ['application:read']
+        recruiterEmails:
+            groups: ['application:read']
+        interviews:
+            groups: ['application:read']
+        cvFitAnalysisStatus:
+            groups: ['application:read']
+        cvFitAnalysisResult:
+            groups: ['application:read']
+        cvFitAnalysisRequestedAt:
+            groups: ['application:read']
+        cvFitAnalysisCompletedAt:
+            groups: ['application:read']

@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://symfony.com/schema/dic/serializer-mapping/serializer-mapping-1.0.json
+App\Entity\ApplicationHistory:
+    attributes:
+        id:
+            groups: ['application_history:read']
+        application:
+            groups: ['application_history:read']
+        actionType:
+            groups: ['application_history:read']
+        description:
+            groups: ['application_history:read']
+        isSeen:
+            groups: ['application_history:read', 'application_history:write']
+        createdAt:
+            groups: ['application_history:read']

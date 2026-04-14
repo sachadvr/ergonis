@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://symfony.com/schema/dic/serializer-mapping/serializer-mapping-1.0.json
+App\Entity\ScheduledFollowUp:
+    attributes:
+        id:
+            groups: ['scheduled_follow_up:read']
+        application:
+            groups: ['scheduled_follow_up:read']
+        scheduledAt:
+            groups: ['scheduled_follow_up:read']
+        status:
+            groups: ['scheduled_follow_up:read']
+        cancelledAt:
+            groups: ['scheduled_follow_up:read']
+        generatedContent:
+            groups: ['scheduled_follow_up:read']

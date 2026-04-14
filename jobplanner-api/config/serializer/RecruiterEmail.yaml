@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=https://symfony.com/schema/dic/serializer-mapping/serializer-mapping-1.0.json
+App\Entity\RecruiterEmail:
+    attributes:
+        id:
+            groups: ['recruiter_email:read', 'application:read']
+        sender:
+            groups: ['recruiter_email:read', 'application:read']
+        subject:
+            groups: ['recruiter_email:read', 'application:read']
+        body:
+            groups: ['recruiter_email:read', 'application:read']
+        receivedAt:
+            groups: ['recruiter_email:read', 'application:read']
+        aiSummary:
+            groups: ['recruiter_email:read', 'application:read']
+        isSeen:
+            groups: ['recruiter_email:read', 'recruiter_email:write', 'application:read']

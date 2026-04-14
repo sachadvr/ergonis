@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=https://symfony.com/schema/dic/serializer-mapping/serializer-mapping-1.0.json
+App\Entity\Interview:
+    attributes:
+        id:
+            groups: ['interview:read']
+        application:
+            groups: ['interview:read', 'interview:write']
+        scheduledAt:
+            groups: ['interview:read', 'interview:write']
+        type:
+            groups: ['interview:read', 'interview:write']
+        notes:
+            groups: ['interview:read', 'interview:write']
+        locationOrLink:
+            groups: ['interview:read', 'interview:write']
+        contactName:
+            groups: ['interview:read', 'interview:write']
