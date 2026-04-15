@@ -1,0 +1,52 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Command;
+
+use App\Repository\ScheduledFollowUpRepository;
+use App\Service\FollowUpProcessorService;
+use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
+
+#[AsCommand(
+    name: 'app:follow-ups:process',
+    description: 'Traite les relances planifiées dont la date est dépassée',
+)]
+final class ProcessFollowUpsCommand extends Command
+{
+    public function __construct(
+        private readonly ScheduledFollowUpRepository $followUpRepository,
+        private readonly FollowUpProcessorService $processor,
+    ) {
+        parent::__construct();
+    }
+
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        $io = new SymfonyStyle($input, $output);
+        $pending = $this->followUpRepository->findPendingDueNow();
+
+        if (empty($pending)) {
+            $io->success('Aucune relance à traiter.');
+
+            return Command::SUCCESS;
+        }
+
+        $io->info(sprintf('%d relance(s) à traiter.', \count($pending)));
+
+        foreach ($pending as $followUp) {
+            $app = $followUp->getApplication();
+            $poste = $app->getJobOffer()->getTitle();
+            $io->text("  → {$poste} (ID {$followUp->getId()})");
+            $this->processor->process($followUp);
+        }
+
+        $io->success('Relances traitées.');
+
+        return Command::SUCCESS;
+    }
+}
