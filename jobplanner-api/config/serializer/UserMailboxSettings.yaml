@@ -11,7 +11,7 @@ App\Entity\UserMailboxSettings:
         imapUser:
             groups: ['mailbox_settings:read', 'mailbox_settings:write']
         imapPassword:
-            groups: ['mailbox_settings:read', 'mailbox_settings:write']
+            groups: ['mailbox_settings:write']
         imapFolder:
             groups: ['mailbox_settings:read', 'mailbox_settings:write']
         isActive:
@@ -25,6 +25,6 @@ App\Entity\UserMailboxSettings:
         smtpUser:
             groups: ['mailbox_settings:read', 'mailbox_settings:write']
         smtpPassword:
-            groups: ['mailbox_settings:read', 'mailbox_settings:write']
+            groups: ['mailbox_settings:write']
         oauthProvider:
             groups: ['mailbox_settings:read', 'mailbox_settings:write']

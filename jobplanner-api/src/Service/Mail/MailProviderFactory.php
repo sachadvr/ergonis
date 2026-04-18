@@ -9,6 +9,7 @@ use App\Service\Mail\Provider\GoogleOAuthMailProvider;
 use App\Service\Mail\Provider\ImapMailProvider;
 use App\Service\Mail\Provider\MailpitMailProvider;
 use App\Service\Mail\Provider\MicrosoftOAuthMailProvider;
+use App\Security\MailboxSecretEncryptor;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -20,6 +21,7 @@ final class MailProviderFactory
         private readonly TokenRefreshService $tokenRefreshService,
         private readonly HttpClientInterface $httpClient,
         private readonly LoggerInterface $logger,
+        private readonly MailboxSecretEncryptor $secretEncryptor,
         private readonly string $imapHost = '',
         private readonly string $imapPort = '993',
         private readonly string $imapUser = '',
@@ -55,6 +57,7 @@ final class MailProviderFactory
             null,
             $this->messageMapper,
             $this->logger,
+            $this->secretEncryptor,
             $this->imapHost,
             $this->imapPort,
             $this->imapUser,
@@ -71,12 +74,14 @@ final class MailProviderFactory
                 $this->tokenRefreshService,
                 $this->messageMapper,
                 $this->logger,
+                $this->secretEncryptor,
             ),
             'microsoft' => new MicrosoftOAuthMailProvider(
                 $settings,
                 $this->tokenRefreshService,
                 $this->messageMapper,
                 $this->logger,
+                $this->secretEncryptor,
             ),
             default => $this->isMailpitHost($settings->getImapHost(), $settings->getImapPort())
                 ? $this->createMailpitProvider()
@@ -84,6 +89,7 @@ final class MailProviderFactory
                     $settings,
                     $this->messageMapper,
                     $this->logger,
+                    $this->secretEncryptor,
                 ),
         };
     }

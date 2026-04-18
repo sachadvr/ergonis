@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Mailer;
 
 use App\Entity\UserMailboxSettings;
+use App\Security\MailboxSecretEncryptor;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\Transport;
 use Symfony\Component\Mailer\Transport\TransportInterface;
@@ -13,6 +14,7 @@ final readonly class UserSmtpTransportFactory
 {
     public function __construct(
         private LoggerInterface $logger,
+        private MailboxSecretEncryptor $secretEncryptor,
     ) {
     }
 
@@ -22,7 +24,7 @@ final readonly class UserSmtpTransportFactory
         $port = $settings->getSmtpPort();
         $encryption = $settings->getSmtpEncryption();
         $username = $settings->getSmtpUser();
-        $password = $settings->getSmtpPassword();
+        $password = $this->secretEncryptor->decrypt($settings->getSmtpPassword()) ?? '';
 
         $scheme = match ($encryption) {
             'ssl' => 'smtps',
@@ -31,10 +33,11 @@ final readonly class UserSmtpTransportFactory
         };
 
         if (null !== $settings->getOauthProvider() && null !== $settings->getAccessToken()) {
+            $accessToken = $this->secretEncryptor->decrypt($settings->getAccessToken()) ?? '';
             $oauthString = sprintf(
                 "user=%s\1auth=Bearer %s\1\1",
                 $settings->getImapUser(),
-                $settings->getAccessToken()
+                $accessToken
             );
             $password = $oauthString;
             $username = $settings->getImapUser();

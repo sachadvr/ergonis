@@ -207,7 +207,7 @@ export interface UserMailboxSettings {
   imapPort: number
   imapEncryption: 'ssl' | 'tls' | 'none'
   imapUser: string
-  imapPassword: string
+  imapPassword?: string
   imapFolder: string
   smtpHost?: string
   smtpPort?: number

@@ -10,6 +10,7 @@ use App\Service\Mail\EmailMessageMapper;
 use App\Service\Mail\MailboxSettingsProviderInterface;
 use App\Service\Mail\MailProviderFactory;
 use App\Service\Mail\TokenRefreshService;
+use App\Security\MailboxSecretEncryptor;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -89,9 +90,11 @@ final class ImapConnectionServiceTest extends TestCase
                 $this->createStub(HttpClientInterface::class),
                 $this->createStub(\Doctrine\ORM\EntityManagerInterface::class),
                 $this->createStub(LoggerInterface::class),
+                new MailboxSecretEncryptor('test-secret'),
             ),
             $httpClient ?? $this->createStub(HttpClientInterface::class),
             $this->createStub(LoggerInterface::class),
+            new MailboxSecretEncryptor('test-secret'),
         );
     }
 

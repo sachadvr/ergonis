@@ -116,25 +116,18 @@ final class MicrosoftAuthController extends AbstractController
                 ],
             ]);
         } catch (\Throwable $e) {
-            error_log('Microsoft Auth Error: '.$e->getMessage());
+            error_log('Microsoft auth failed');
             if ($e instanceof HttpExceptionInterface) {
                 $response = $e->getResponse();
-                $body = $response->getContent(false);
-                error_log('Response status: '.$response->getStatusCode());
-                error_log('Response headers: '.json_encode($response->getHeaders(false)));
-                error_log('Response body: '.$body);
-
-                $decodedBody = json_decode($body, true);
 
                 return new JsonResponse([
-                    'error' => $e->getMessage(),
+                    'error' => 'Microsoft authentication failed',
                     'status' => $response->getStatusCode(),
-                    'response' => is_array($decodedBody) ? $decodedBody : $body,
                 ], $response->getStatusCode());
             }
 
             return new JsonResponse([
-                'error' => $e->getMessage(),
+                'error' => 'Microsoft authentication failed',
                 'exception' => $e::class,
             ], 500);
         }

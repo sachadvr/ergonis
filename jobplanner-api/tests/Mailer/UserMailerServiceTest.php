@@ -9,6 +9,7 @@ use App\Entity\UserMailboxSettings;
 use App\Mailer\UserMailerService;
 use App\Mailer\UserSmtpTransportFactory;
 use App\Repository\UserMailboxSettingsRepository;
+use App\Security\MailboxSecretEncryptor;
 use App\Tests\Support\DoctrineTestHarness;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
@@ -30,8 +31,9 @@ final class UserMailerServiceTest extends TestCase
     {
         $service = new UserMailerService(
             new UserMailboxSettingsRepository($this->createManagerRegistry($this->entityManager)),
-            new UserSmtpTransportFactory($this->createStub(LoggerInterface::class)),
+            new UserSmtpTransportFactory($this->createStub(LoggerInterface::class), new MailboxSecretEncryptor('test-secret')),
             $this->createStub(LoggerInterface::class),
+            new MailboxSecretEncryptor('test-secret'),
         );
 
         $this->expectException(\RuntimeException::class);
@@ -57,8 +59,9 @@ final class UserMailerServiceTest extends TestCase
 
         $service = new UserMailerService(
             new UserMailboxSettingsRepository($this->createManagerRegistry($this->entityManager)),
-            new UserSmtpTransportFactory($this->createStub(LoggerInterface::class)),
+            new UserSmtpTransportFactory($this->createStub(LoggerInterface::class), new MailboxSecretEncryptor('test-secret')),
             $this->createStub(LoggerInterface::class),
+            new MailboxSecretEncryptor('test-secret'),
         );
 
         $this->expectException(\RuntimeException::class);
@@ -97,8 +100,9 @@ final class UserMailerServiceTest extends TestCase
 
         $service = new UserMailerService(
             new UserMailboxSettingsRepository($this->createManagerRegistry($this->entityManager)),
-            new UserSmtpTransportFactory($logger),
+            new UserSmtpTransportFactory($logger, new MailboxSecretEncryptor('test-secret')),
             $logger,
+            new MailboxSecretEncryptor('test-secret'),
         );
 
         $email = (new Email())
@@ -131,8 +135,9 @@ final class UserMailerServiceTest extends TestCase
 
         $service = new UserMailerService(
             new UserMailboxSettingsRepository($this->createManagerRegistry($this->entityManager)),
-            new UserSmtpTransportFactory($this->createStub(LoggerInterface::class)),
+            new UserSmtpTransportFactory($this->createStub(LoggerInterface::class), new MailboxSecretEncryptor('test-secret')),
             $this->createStub(LoggerInterface::class),
+            new MailboxSecretEncryptor('test-secret'),
         );
 
         $service->send($ownerId, (new Email())->from('sender@example.com')->to('recipient@example.com')->subject('Hello')->text('Body'));

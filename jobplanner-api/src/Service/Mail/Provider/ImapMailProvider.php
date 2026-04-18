@@ -6,6 +6,7 @@ namespace App\Service\Mail\Provider;
 
 use App\Entity\UserMailboxSettings;
 use App\Service\Mail\EmailMessageMapper;
+use App\Security\MailboxSecretEncryptor;
 use Psr\Log\LoggerInterface;
 use Webklex\PHPIMAP\Client;
 
@@ -15,6 +16,7 @@ final class ImapMailProvider extends AbstractImapMailProvider
         private readonly ?UserMailboxSettings $settings,
         EmailMessageMapper $messageMapper,
         LoggerInterface $logger,
+        private readonly MailboxSecretEncryptor $secretEncryptor,
         private readonly string $imapHost = '',
         private readonly string $imapPort = '993',
         private readonly string $imapUser = '',
@@ -37,6 +39,8 @@ final class ImapMailProvider extends AbstractImapMailProvider
         $password = $this->settings?->getImapPassword() ?? $this->imapPassword;
         $encryption = $this->settings?->getImapEncryption() ?? $this->imapEncryption;
 
+        $password = $this->secretEncryptor->decrypt($password) ?? '';
+
         if ('' === $host || '' === $username || '' === $password) {
             return null;
         }
@@ -57,7 +61,7 @@ final class ImapMailProvider extends AbstractImapMailProvider
 
             return $client;
         } catch (\Throwable $e) {
-            error_log('IMAP client creation failed: '.$e->getMessage());
+            error_log('IMAP client creation failed');
 
             return null;
         }

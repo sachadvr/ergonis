@@ -6,6 +6,7 @@ namespace App\Mailer;
 
 use App\Entity\UserMailboxSettings;
 use App\Repository\UserMailboxSettingsRepository;
+use App\Security\MailboxSecretEncryptor;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
@@ -16,6 +17,7 @@ final readonly class UserMailerService
         private UserMailboxSettingsRepository $mailboxSettingsRepository,
         private UserSmtpTransportFactory $transportFactory,
         private LoggerInterface $logger,
+        private MailboxSecretEncryptor $secretEncryptor,
     ) {
     }
 
@@ -44,13 +46,15 @@ final readonly class UserMailerService
     private function hasValidSmtpSettings(UserMailboxSettings $settings): bool
     {
         if (null !== $settings->getOauthProvider()) {
+            $accessToken = $this->secretEncryptor->decrypt($settings->getAccessToken()) ?? '';
+
             return '' !== $settings->getSmtpHost()
                 && '' !== $settings->getSmtpUser()
-                && '' !== trim((string) $settings->getAccessToken());
+                && '' !== trim((string) $accessToken);
         }
 
         return '' !== $settings->getSmtpHost()
             && '' !== $settings->getSmtpUser()
-            && '' !== $settings->getSmtpPassword();
+            && '' !== ($this->secretEncryptor->decrypt($settings->getSmtpPassword()) ?? '');
     }
 }

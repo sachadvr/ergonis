@@ -15,6 +15,7 @@ use App\Mailer\UserSmtpTransportFactory;
 use App\Repository\UserMailboxSettingsRepository;
 use App\Service\Ai\AiServiceInterface;
 use App\Service\FollowUpProcessorService;
+use App\Security\MailboxSecretEncryptor;
 use App\Tests\Support\DoctrineTestHarness;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
@@ -90,8 +91,9 @@ final class FollowUpProcessorServiceTest extends TestCase
 
         $mailer = new UserMailerService(
             $settingsRepository,
-            new UserSmtpTransportFactory($logger),
+            new UserSmtpTransportFactory($logger, new MailboxSecretEncryptor('test-secret')),
             $logger,
+            new MailboxSecretEncryptor('test-secret'),
         );
 
         return new FollowUpProcessorService(

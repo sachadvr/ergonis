@@ -7,6 +7,7 @@ namespace App\Service\Mail\Provider;
 use App\Entity\UserMailboxSettings;
 use App\Service\Mail\EmailMessageMapper;
 use App\Service\Mail\TokenRefreshService;
+use App\Security\MailboxSecretEncryptor;
 use Psr\Log\LoggerInterface;
 
 final class GoogleOAuthMailProvider extends AbstractOAuthMailProvider
@@ -16,8 +17,9 @@ final class GoogleOAuthMailProvider extends AbstractOAuthMailProvider
         TokenRefreshService $tokenRefreshService,
         EmailMessageMapper $messageMapper,
         LoggerInterface $logger,
+        MailboxSecretEncryptor $secretEncryptor,
     ) {
-        parent::__construct($settings, $tokenRefreshService, $messageMapper, $logger);
+        parent::__construct($settings, $tokenRefreshService, $messageMapper, $logger, $secretEncryptor);
     }
 
     protected function resolveHost(): string

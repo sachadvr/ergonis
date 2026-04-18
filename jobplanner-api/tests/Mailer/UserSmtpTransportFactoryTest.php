@@ -6,6 +6,7 @@ namespace App\Tests\Mailer;
 
 use App\Entity\UserMailboxSettings;
 use App\Mailer\UserSmtpTransportFactory;
+use App\Security\MailboxSecretEncryptor;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\Transport\TransportInterface;
@@ -14,7 +15,7 @@ final class UserSmtpTransportFactoryTest extends TestCase
 {
     public function testCreateTransportBuildsStandardSmtpTransport(): void
     {
-        $factory = new UserSmtpTransportFactory($this->createStub(LoggerInterface::class));
+        $factory = new UserSmtpTransportFactory($this->createStub(LoggerInterface::class), new MailboxSecretEncryptor('test-secret'));
 
         $transport = $factory->createTransport(
             (new UserMailboxSettings())
@@ -30,7 +31,7 @@ final class UserSmtpTransportFactoryTest extends TestCase
 
     public function testCreateTransportBuildsOauthTransport(): void
     {
-        $factory = new UserSmtpTransportFactory($this->createStub(LoggerInterface::class));
+        $factory = new UserSmtpTransportFactory($this->createStub(LoggerInterface::class), new MailboxSecretEncryptor('test-secret'));
 
         $transport = $factory->createTransport(
             (new UserMailboxSettings())

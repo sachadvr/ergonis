@@ -75,6 +75,10 @@ services:
             $azureClientId: '%azure_client_id%'
             $azureClientSecret: '%azure_client_secret%'
 
+    App\Security\MailboxSecretEncryptor:
+        arguments:
+            $secret: '%env(MAILBOX_ENCRYPTION_KEY)%'
+
     App\Service\Mail\MailboxSettingsProviderInterface: '@App\Repository\UserMailboxSettingsRepository'
 
     App\Service\Mail\MailProviderFactory:

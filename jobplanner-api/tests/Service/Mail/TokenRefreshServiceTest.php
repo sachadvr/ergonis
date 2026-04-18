@@ -6,6 +6,7 @@ namespace App\Tests\Service\Mail;
 
 use App\Entity\UserMailboxSettings;
 use App\Service\Mail\TokenRefreshService;
+use App\Security\MailboxSecretEncryptor;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -19,7 +20,7 @@ final class TokenRefreshServiceTest extends TestCase
         $httpClient = $this->createMock(HttpClientInterface::class);
         $httpClient->expects($this->never())->method('request');
 
-        $service = new TokenRefreshService($httpClient, $this->createStub(EntityManagerInterface::class), $this->createStub(LoggerInterface::class), 'gid', 'gsecret', 'aid', 'asecret');
+        $service = new TokenRefreshService($httpClient, $this->createStub(EntityManagerInterface::class), $this->createStub(LoggerInterface::class), new MailboxSecretEncryptor('test-secret'), 'gid', 'gsecret', 'aid', 'asecret');
 
         $settings = (new UserMailboxSettings())
             ->setOauthProvider('google')
@@ -58,7 +59,7 @@ final class TokenRefreshServiceTest extends TestCase
         $entityManager->expects($this->once())->method('persist');
         $entityManager->expects($this->once())->method('flush');
 
-        $service = new TokenRefreshService($httpClient, $entityManager, $this->createStub(LoggerInterface::class), 'gid', 'gsecret', 'aid', 'asecret');
+        $service = new TokenRefreshService($httpClient, $entityManager, $this->createStub(LoggerInterface::class), new MailboxSecretEncryptor('test-secret'), 'gid', 'gsecret', 'aid', 'asecret');
 
         $settings = (new UserMailboxSettings())
             ->setOauthProvider('google')
@@ -99,7 +100,7 @@ final class TokenRefreshServiceTest extends TestCase
         $entityManager->expects($this->once())->method('persist');
         $entityManager->expects($this->once())->method('flush');
 
-        $service = new TokenRefreshService($httpClient, $entityManager, $this->createStub(LoggerInterface::class), 'gid', 'gsecret', 'aid', 'asecret');
+        $service = new TokenRefreshService($httpClient, $entityManager, $this->createStub(LoggerInterface::class), new MailboxSecretEncryptor('test-secret'), 'gid', 'gsecret', 'aid', 'asecret');
 
         $settings = (new UserMailboxSettings())
             ->setOauthProvider('microsoft')
@@ -116,7 +117,7 @@ final class TokenRefreshServiceTest extends TestCase
         $httpClient = $this->createMock(HttpClientInterface::class);
         $httpClient->expects($this->never())->method('request');
 
-        $service = new TokenRefreshService($httpClient, $this->createStub(EntityManagerInterface::class), $this->createStub(LoggerInterface::class), 'gid', 'gsecret', 'aid', 'asecret');
+        $service = new TokenRefreshService($httpClient, $this->createStub(EntityManagerInterface::class), $this->createStub(LoggerInterface::class), new MailboxSecretEncryptor('test-secret'), 'gid', 'gsecret', 'aid', 'asecret');
 
         $plainSettings = (new UserMailboxSettings());
         $plainSettings->setSmtpHost('smtp.example.com');
@@ -141,10 +142,10 @@ final class TokenRefreshServiceTest extends TestCase
             ->method('error')
             ->with(
                 'OAuth token refresh failed',
-                $this->callback(static fn (array $context): bool => isset($context['provider'], $context['error']))
+                $this->callback(static fn (array $context): bool => isset($context['provider'], $context['exception']))
             );
 
-        $service = new TokenRefreshService($httpClient, $this->createStub(EntityManagerInterface::class), $logger, 'gid', 'gsecret', 'aid', 'asecret');
+        $service = new TokenRefreshService($httpClient, $this->createStub(EntityManagerInterface::class), $logger, new MailboxSecretEncryptor('test-secret'), 'gid', 'gsecret', 'aid', 'asecret');
 
         $settings = (new UserMailboxSettings())
             ->setOauthProvider('google')

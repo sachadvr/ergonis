@@ -6,6 +6,7 @@ namespace App\Service\Mail;
 
 use App\Entity\UserMailboxSettings;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Security\MailboxSecretEncryptor;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -15,6 +16,7 @@ final class TokenRefreshService
         private readonly HttpClientInterface $httpClient,
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger,
+        private readonly MailboxSecretEncryptor $secretEncryptor,
         private readonly string $googleClientId = '',
         private readonly string $googleClientSecret = '',
         private readonly string $azureClientId = '',
@@ -24,7 +26,9 @@ final class TokenRefreshService
 
     public function ensureValid(UserMailboxSettings $settings): void
     {
-        if (!in_array($settings->getOauthProvider(), ['google', 'microsoft'], true) || !$settings->getRefreshToken()) {
+        $refreshToken = $this->secretEncryptor->decrypt($settings->getRefreshToken());
+
+        if (!in_array($settings->getOauthProvider(), ['google', 'microsoft'], true) || !$refreshToken) {
             return;
         }
 
@@ -41,6 +45,7 @@ final class TokenRefreshService
     private function refreshToken(UserMailboxSettings $settings): void
     {
         $provider = $settings->getOauthProvider();
+        $refreshToken = $this->secretEncryptor->decrypt($settings->getRefreshToken()) ?? '';
         $url = 'google' === $provider
             ? 'https://oauth2.googleapis.com/token'
             : 'https://login.microsoftonline.com/common/oauth2/v2.0/token';
@@ -50,7 +55,7 @@ final class TokenRefreshService
 
         try {
             $body = [
-                'refresh_token' => $settings->getRefreshToken(),
+                'refresh_token' => $refreshToken,
                 'client_id' => $clientId,
                 'client_secret' => $clientSecret,
                 'grant_type' => 'refresh_token',
@@ -76,7 +81,7 @@ final class TokenRefreshService
         } catch (\Throwable $e) {
             $this->logger->error('OAuth token refresh failed', [
                 'provider' => $provider,
-                'error' => $e->getMessage(),
+                'exception' => $e::class,
             ]);
         }
     }

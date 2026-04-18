@@ -66,7 +66,7 @@ class UserMailboxSettings
     private ?string $imapUser = null;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    #[Groups(['mailbox_settings:read', 'mailbox_settings:write'])]
+    #[Groups(['mailbox_settings:write'])]
     private ?string $imapPassword = null;
 
     #[ORM\Column(type: 'string', length: 50, nullable: true)]
@@ -97,7 +97,7 @@ class UserMailboxSettings
     private string $smtpUser = '';
 
     #[ORM\Column(type: 'string', length: 255, options: ['default' => ''])]
-    #[Groups(['mailbox_settings:read', 'mailbox_settings:write'])]
+    #[Groups(['mailbox_settings:write'])]
     private string $smtpPassword = '';
 
     #[ORM\Column(type: 'string', length: 20, nullable: true)]
@@ -199,7 +199,7 @@ class UserMailboxSettings
 
     public function getImapPassword(): string
     {
-        return $this->imapPassword;
+        return $this->imapPassword ?? '';
     }
 
     public function setImapPassword(string $imapPassword): self

@@ -7,6 +7,7 @@ namespace App\Service\Mail\Provider;
 use App\Entity\UserMailboxSettings;
 use App\Service\Mail\EmailMessageMapper;
 use App\Service\Mail\TokenRefreshService;
+use App\Security\MailboxSecretEncryptor;
 use Psr\Log\LoggerInterface;
 use Webklex\PHPIMAP\Client;
 
@@ -17,6 +18,7 @@ abstract class AbstractOAuthMailProvider extends AbstractImapMailProvider
         protected readonly TokenRefreshService $tokenRefreshService,
         EmailMessageMapper $messageMapper,
         LoggerInterface $logger,
+        protected readonly MailboxSecretEncryptor $secretEncryptor,
     ) {
         parent::__construct($messageMapper, $logger);
     }
@@ -51,7 +53,7 @@ abstract class AbstractOAuthMailProvider extends AbstractImapMailProvider
     {
         $host = $this->resolveHost();
         $username = trim($this->settings->getImapUser());
-        $accessToken = trim((string) $this->settings->getAccessToken());
+        $accessToken = trim((string) ($this->secretEncryptor->decrypt($this->settings->getAccessToken()) ?? ''));
 
         if ('' === $host || '' === $username || '' === $accessToken) {
             return null;
@@ -77,7 +79,7 @@ abstract class AbstractOAuthMailProvider extends AbstractImapMailProvider
 
             return $client;
         } catch (\Throwable $e) {
-            error_log('IMAP OAuth client creation failed: '.$e->getMessage());
+            error_log('IMAP OAuth client creation failed');
 
             return null;
         }
