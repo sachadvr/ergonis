@@ -18,7 +18,7 @@ final class MeController extends AbstractController
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
-            return new JsonResponse(['error' => 'Non authentifié'], 401);
+            return new JsonResponse(['error' => 'Unauthenticated'], 401);
         }
 
         return new JsonResponse([

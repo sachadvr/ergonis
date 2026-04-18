@@ -111,7 +111,7 @@ final class OllamaService extends AbstractAiService
                 'level' => 'unknown',
                 'recommendation' => 'analysis_failed',
             ],
-            'summary' => 'Analyse IA indisponible.',
+            'summary' => 'AI analysis unavailable.',
             'strong_matches' => [],
             'gaps' => [],
             'ats_keywords_to_add' => [],
@@ -125,8 +125,8 @@ final class OllamaService extends AbstractAiService
     public function generateFollowUpEmail(Application $application, string $tone = 'professionnel'): string
     {
         $jobOffer = $application->getJobOffer();
-        $poste = $jobOffer->getTitle();
-        $entreprise = $jobOffer->getCompany();
+        $offerTitle = $jobOffer->getTitle();
+        $company = $jobOffer->getCompany();
 
         try {
             $response = $this->httpClient->request('POST', $this->baseUrl.'/api/chat', [
@@ -136,11 +136,11 @@ final class OllamaService extends AbstractAiService
                     'messages' => [
                         [
                             'role' => 'system',
-                            'content' => "Tu es un assistant qui rédige des emails de relance pour des candidatures. Ton: {$tone}. Pas de formules trop longues. Maximum 150 mots.",
+                            'content' => "You are an assistant who writes follow-up emails for applications. Your tone: {$tone}. No too long formulas. Maximum 150 words.",
                         ],
                         [
                             'role' => 'user',
-                            'content' => "Génère un email de relance pour ma candidature au poste de {$poste} chez {$entreprise}. Je n'ai pas eu de réponse.",
+                            'content' => "Generate a follow-up email for my application for the post of {$offerTitle} at {$company}. I have not received a response.",
                         ],
                     ],
                     'stream' => false,
@@ -149,9 +149,9 @@ final class OllamaService extends AbstractAiService
             $data = $response->toArray();
             $text = $this->stripThinkingTags($data['message']['content'] ?? '');
 
-            return trim($text) ?: $this->getFallbackEmail($poste, $entreprise);
+            return trim($text) ?: $this->getFallbackEmail($offerTitle, $company);
         } catch (\Throwable) {
-            return $this->getFallbackEmail($poste, $entreprise);
+            return $this->getFallbackEmail($offerTitle, $company);
         }
     }
 
@@ -167,7 +167,7 @@ final class OllamaService extends AbstractAiService
                 'json' => [
                     'model' => $this->model,
                     'messages' => [
-                        ['role' => 'system', 'content' => 'Résume en une phrase courte (max 100 caractères).'],
+                        ['role' => 'system', 'content' => 'Summarize in one short sentence (max 100 characters).'],
                         ['role' => 'user', 'content' => substr($emailBody, 0, 2000)],
                     ],
                     'stream' => false,
@@ -189,7 +189,7 @@ final class OllamaService extends AbstractAiService
                 'json' => [
                     'model' => $this->model,
                     'messages' => [
-                        ['role' => 'system', 'content' => 'Propose 2 ou 3 réponses courtes possibles (une par ligne, préfixe "- ").'],
+                        ['role' => 'system', 'content' => 'Propose 2 or 3 short possible replies (one per line, prefix "- ").'],
                         ['role' => 'user', 'content' => substr($emailBody, 0, 1500)],
                     ],
                     'stream' => false,

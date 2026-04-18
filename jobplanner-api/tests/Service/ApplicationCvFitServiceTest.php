@@ -51,7 +51,7 @@ final class ApplicationCvFitServiceTest extends TestCase
             ->with($application, 'CV text')
             ->willReturn([
                 'overall_fit' => ['score' => 82, 'level' => 'strong', 'recommendation' => 'apply'],
-                'summary' => 'Bon alignement.',
+                'summary' => 'Good fit.',
                 'strong_matches' => ['Symfony'],
                 'gaps' => [],
                 'ats_keywords_to_add' => [],

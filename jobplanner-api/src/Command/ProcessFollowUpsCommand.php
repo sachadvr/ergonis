@@ -14,7 +14,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'app:follow-ups:process',
-    description: 'Traite les relances planifiées dont la date est dépassée',
+    description: 'Process the scheduled follow-ups whose date has passed',
 )]
 final class ProcessFollowUpsCommand extends Command
 {
@@ -31,21 +31,21 @@ final class ProcessFollowUpsCommand extends Command
         $pending = $this->followUpRepository->findPendingDueNow();
 
         if (empty($pending)) {
-            $io->success('Aucune relance à traiter.');
+            $io->success('No follow-up to process.');
 
             return Command::SUCCESS;
         }
 
-        $io->info(sprintf('%d relance(s) à traiter.', \count($pending)));
+        $io->info(sprintf('%d follow-up(s) to process.', \count($pending)));
 
         foreach ($pending as $followUp) {
             $app = $followUp->getApplication();
-            $poste = $app->getJobOffer()->getTitle();
-            $io->text("  → {$poste} (ID {$followUp->getId()})");
+            $offerTitle = $app->getJobOffer()->getTitle();
+            $io->text("  → {$offerTitle} (ID {$followUp->getId()})");
             $this->processor->process($followUp);
         }
 
-        $io->success('Relances traitées.');
+        $io->success('Follow-ups processed.');
 
         return Command::SUCCESS;
     }

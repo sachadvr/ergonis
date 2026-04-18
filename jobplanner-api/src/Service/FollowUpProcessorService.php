@@ -49,7 +49,7 @@ final readonly class FollowUpProcessorService
 
             $from = $owner->getUserIdentifier();
 
-            $subject = 'Re: Candidature '.$jobOffer->getTitle();
+            $subject = 'Re: Application for '.$jobOffer->getTitle();
 
             $email = (new Email())
                 ->from($from)

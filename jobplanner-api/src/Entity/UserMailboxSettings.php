@@ -42,7 +42,7 @@ class UserMailboxSettings
 
     #[ORM\OneToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: false, unique: true)]
-    private ?User $user = null;
+    private ?User $owner = null;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     #[Assert\Length(max: 255)]
@@ -133,14 +133,14 @@ class UserMailboxSettings
         return $this->id;
     }
 
-    public function getUser(): ?User
+    public function getOwner(): ?User
     {
-        return $this->user;
+        return $this->owner;
     }
 
-    public function setUser(User $user): self
+    public function setOwner(User $owner): self
     {
-        $this->user = $user;
+        $this->owner = $owner;
 
         return $this;
     }

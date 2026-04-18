@@ -22,7 +22,7 @@ final class UserMailboxSettingsRepository extends ServiceEntityRepository implem
     public function findByUserId(int $userId): ?UserMailboxSettings
     {
         return $this->createQueryBuilder('s')
-            ->where('s.user = :userId')
+            ->where('s.owner = :userId')
             ->setParameter('userId', $userId)
             ->orderBy('s.id', 'DESC')
             ->setMaxResults(1)
@@ -36,7 +36,7 @@ final class UserMailboxSettingsRepository extends ServiceEntityRepository implem
     public function findActiveForSync(): array
     {
         return $this->createQueryBuilder('s')
-            ->innerJoin('s.user', 'u')
+            ->innerJoin('s.owner', 'u')
             ->where('s.isActive = :active')
             ->setParameter('active', true)
             ->getQuery()

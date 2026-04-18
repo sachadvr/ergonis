@@ -18,7 +18,7 @@ use Symfony\Component\Mime\Email;
 
 #[AsCommand(
     name: 'send:mail',
-    description: 'Envoie un email et lance la sync mailbox pour le user destinataire',
+    description: 'Send an email and launch the mailbox sync for the recipient user',
 )]
 final class SendMailCommand extends Command
 {
@@ -33,10 +33,10 @@ final class SendMailCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addOption('from', null, InputOption::VALUE_REQUIRED, 'Adresse expediteur')
-            ->addOption('to', null, InputOption::VALUE_REQUIRED, 'Adresse destinataire')
-            ->addOption('subject', null, InputOption::VALUE_REQUIRED, 'Sujet du mail')
-            ->addOption('content', null, InputOption::VALUE_REQUIRED, 'Contenu texte du mail');
+            ->addOption('from', null, InputOption::VALUE_REQUIRED, 'Sender address')
+            ->addOption('to', null, InputOption::VALUE_REQUIRED, 'Recipient address')
+            ->addOption('subject', null, InputOption::VALUE_REQUIRED, 'Subject of the email')
+            ->addOption('content', null, InputOption::VALUE_REQUIRED, 'Text content of the email');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -49,7 +49,7 @@ final class SendMailCommand extends Command
         $content = trim((string) $input->getOption('content'));
 
         if ('' === $from || '' === $to || '' === $subject || '' === $content) {
-            $io->error('Options requises: --from, --to, --subject, --content');
+            $io->error('Required options: --from, --to, --subject, --content');
 
             return Command::INVALID;
         }
@@ -64,31 +64,31 @@ final class SendMailCommand extends Command
         try {
             $sender = $this->userRepository->findOneBy(['email' => $from]);
             if (null === $sender || null === $sender->getId()) {
-                $io->error('Aucun user local ne correspond a l\'expediteur.');
+                $io->error('No local user corresponds to the sender.');
 
                 return Command::INVALID;
             }
 
             $this->userMailerService->send((int) $sender->getId(), $email);
-            $io->success(sprintf('Email envoye via la boite de %s', $from));
+            $io->success(sprintf('Email sent via the box of %s', $from));
         } catch (\Throwable $e) {
-            $io->error('Echec envoi via la boite utilisateur: '.$e->getMessage());
+            $io->error('Email sending failed via the user box: '.$e->getMessage());
 
             return Command::FAILURE;
         }
 
         $user = $this->userRepository->findOneBy(['email' => $to]);
         if (null === $user) {
-            $io->note('Aucun user local pour ce destinataire, sync ignoree.');
+            $io->note('No local user for this recipient, sync ignored.');
 
             return Command::SUCCESS;
         }
 
         try {
             $this->messageBus->dispatch(new SyncEmailsMessage((int) $user->getId()));
-            $io->success(sprintf('Sync declenchee pour user %s', $to));
+            $io->success(sprintf('Sync triggered for user %s', $to));
         } catch (\Throwable $e) {
-            $io->warning('Mail envoye mais sync echouee: '.$e->getMessage());
+            $io->warning('Email sent but sync failed: '.$e->getMessage());
 
             return Command::FAILURE;
         }

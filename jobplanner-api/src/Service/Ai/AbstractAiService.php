@@ -20,7 +20,7 @@ abstract class AbstractAiService implements AiServiceInterface
     protected function buildFallbackExtraction(string $title, string $content): array
     {
         return [
-            'title' => '' !== $title ? $title : 'Offre sans titre',
+            'title' => '' !== $title ? $title : 'Offer without title',
             'company' => $this->companyExtractor->extract($content, $title),
             'location' => null,
         ];
@@ -113,8 +113,8 @@ abstract class AbstractAiService implements AiServiceInterface
         return array_values(array_slice($lines, 0, 3));
     }
 
-    protected function getFallbackEmail(string $poste, string $entreprise): string
+    protected function getFallbackEmail(string $offerTitle, string $company): string
     {
-        return "Bonjour,\n\nJ'ai le plaisir de vous contacter concernant ma candidature au poste de {$poste} chez {$entreprise}.\n\nJe reste à votre disposition pour tout complément d'information.\n\nCordialement";
+        return "Hello,\n\nI have the pleasure of contacting you regarding my application for the post of {$offerTitle} at {$company}.\n\nI remain at your disposal for any additional information.\n\nSincerely";
     }
 }

@@ -40,7 +40,7 @@ final readonly class NotificationFactory
         $application = $history->getApplication();
         $applicationId = (int) $application->getId();
         $applicationTitle = $application->getJobOffer()->getTitle();
-        $description = $history->getDescription() ?? 'Candidature créée depuis l\'extension navigateur';
+        $description = $history->getDescription() ?? 'Application created from the browser extension';
 
         return new NotificationItem(
             id: (int) $history->getId(),

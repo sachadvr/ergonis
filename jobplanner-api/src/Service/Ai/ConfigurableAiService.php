@@ -7,7 +7,7 @@ namespace App\Service\Ai;
 use App\Entity\Application;
 
 /**
- * Délègue vers le service IA configuré (OpenAI, Anthropic ou Null).
+ * Delegates to the configured AI service (OpenAI, Anthropic or Null).
  */
 final readonly class ConfigurableAiService implements AiServiceInterface
 {

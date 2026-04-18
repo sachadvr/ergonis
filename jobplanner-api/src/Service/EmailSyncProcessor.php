@@ -120,7 +120,7 @@ final readonly class EmailSyncProcessor
         $history = new ApplicationHistory();
         $history->setApplication($application);
         $history->setActionType(ApplicationHistoryActionType::EMAIL_RECEIVED);
-        $history->setDescription('Email reçu de '.$recruiterEmail->getSender());
+        $history->setDescription('Email received from '.$recruiterEmail->getSender());
         $this->entityManager->persist($history);
 
         $application->setLastActivityAt(new \DateTimeImmutable());

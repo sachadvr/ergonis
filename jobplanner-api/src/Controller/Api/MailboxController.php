@@ -27,18 +27,18 @@ final class MailboxController extends AbstractController
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
-            return new JsonResponse(['error' => 'Non authentifié'], Response::HTTP_UNAUTHORIZED);
+            return new JsonResponse(['error' => 'Unauthenticated'], Response::HTTP_UNAUTHORIZED);
         }
 
         if (!$this->imapService->hasImapConfigured($user->getId())) {
-            return new JsonResponse(['success' => false, 'message' => 'Aucune configuration IMAP'], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['success' => false, 'message' => 'No IMAP configuration'], Response::HTTP_BAD_REQUEST);
         }
 
         $ok = $this->imapService->testConnection($user->getId());
 
         return new JsonResponse([
             'success' => $ok,
-            'message' => $ok ? 'Connexion réussie' : 'Échec de la connexion IMAP',
+            'message' => $ok ? 'Connection successful' : 'IMAP connection failed',
         ]);
     }
 
@@ -47,18 +47,18 @@ final class MailboxController extends AbstractController
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
-            return new JsonResponse(['error' => 'Non authentifié'], Response::HTTP_UNAUTHORIZED);
+            return new JsonResponse(['error' => 'Unauthenticated'], Response::HTTP_UNAUTHORIZED);
         }
 
         if (!$this->imapService->hasImapConfigured($user->getId())) {
-            return new JsonResponse(['success' => false, 'message' => 'Aucune configuration IMAP'], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['success' => false, 'message' => 'No IMAP configuration'], Response::HTTP_BAD_REQUEST);
         }
 
         $this->messageBus->dispatch(new SyncEmailsMessage($user->getId()));
 
         return new JsonResponse([
             'success' => true,
-            'message' => 'Synchronisation lancée',
+            'message' => 'Synchronization started',
         ]);
     }
 }

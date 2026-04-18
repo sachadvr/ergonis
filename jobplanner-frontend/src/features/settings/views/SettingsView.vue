@@ -147,10 +147,10 @@ const handleRuleSave = async (rule: FollowUpRule) => {
 onMounted(() => {
   settingsStore.fetchSettings()
   if (route.query.gmail_connected) {
-    successMessage.value = 'Votre compte Gmail a été connecté avec succès !'
+    successMessage.value = 'Your Gmail account has been connected successfully!'
   }
   if (route.query.microsoft_connected) {
-    successMessage.value = 'Votre compte Outlook a été connecté avec succès !'
+    successMessage.value = 'Your Outlook account has been connected successfully!'
   }
 })
 </script>
@@ -195,7 +195,7 @@ onMounted(() => {
           <CardTitle class="flex items-center justify-between gap-2">
             <div class="flex items-center gap-2"><Inbox :size="18" /> Mailbox Settings</div>
             <Button v-if="showManualForm" size="sm" variant="ghost" class="h-8 text-xs underline" @click="showManualForm = false">
-                Retour aux options
+                Back to options
             </Button>
           </CardTitle>
         </CardHeader>
@@ -216,17 +216,17 @@ onMounted(() => {
                 </svg>
             </div>
             <div>
-                <h3 class="text-xl font-semibold">Compte {{ String(mailboxSettings[0]?.oauthProvider ?? '') === 'google' ? 'Gmail' : 'Outlook' }} synchronisé</h3>
-                <p class="mt-1 text-muted-foreground">Vos emails de candidatures sont automatiquement lus depuis :</p>
+                <h3 class="text-xl font-semibold">{{ String(mailboxSettings[0]?.oauthProvider ?? '') === 'google' ? 'Gmail' : 'Outlook' }} account synchronized</h3>
+                <p class="mt-1 text-muted-foreground">Your application emails are automatically read from:</p>
                 <div class="mt-2 text-lg font-medium text-blue-600">{{ mailboxSettings[0].imapUser }}</div>
             </div>
             <div class="flex justify-center gap-4 pt-2">
                 <Button variant="outline" @click="handleMailboxTest" :disabled="isTestingMailbox" class="gap-2">
                     <PlugZap :size="18" />
-                    {{ isTestingMailbox ? 'Test en cours...' : 'Tester la connexion' }}
+                    {{ isTestingMailbox ? 'Test in progress...' : 'Test connection' }}
                 </Button>
                 <Button variant="ghost" class="text-destructive hover:bg-destructive/10 hover:text-destructive" @click="mailboxForm = { imapHost: '', imapPort: 993, imapEncryption: 'ssl', imapUser: '', imapPassword: '', imapFolder: 'INBOX', isActive: false, smtpHost: '', smtpPort: 587, smtpEncryption: 'tls', smtpUser: '', smtpPassword: '', oauthProvider: null }; handleMailboxSave()">
-                    Déconnecter {{ String(mailboxSettings[0]?.oauthProvider ?? '') === 'google' ? 'Gmail' : 'Outlook' }}
+                    Disconnect {{ String(mailboxSettings[0]?.oauthProvider ?? '') === 'google' ? 'Gmail' : 'Outlook' }}
                 </Button>
             </div>
         </div>
@@ -247,7 +247,7 @@ onMounted(() => {
                     </svg>
                 </div>
                 <h4 class="text-lg font-bold font-heading">Google (Gmail)</h4>
-                <p class="mt-2 text-center text-sm text-muted-foreground">Recommandé. Connexion sécurisée en un clic.</p>
+                <p class="mt-2 text-center text-sm text-muted-foreground">Recommended. Secure connection in one click.</p>
                 <div v-if="isConnectingGoogle" class="absolute inset-0 flex items-center justify-center rounded-xl bg-white/60">
                     <Loader2 class="h-8 w-8 animate-spin text-blue-600" />
                 </div>
@@ -268,7 +268,7 @@ onMounted(() => {
                     </svg>
                 </div>
                 <h4 class="text-lg font-bold font-heading">Microsoft (Outlook)</h4>
-                <p class="mt-2 text-center text-sm text-muted-foreground">Entreprise ou Personnel. Connexion via Office 365.</p>
+                <p class="mt-2 text-center text-sm text-muted-foreground">Enterprise or Personal. Connection via Office 365.</p>
                 <div v-if="isConnectingMicrosoft" class="absolute inset-0 flex items-center justify-center rounded-xl bg-white/60">
                     <Loader2 class="h-8 w-8 animate-spin text-blue-700" />
                 </div>
@@ -282,8 +282,8 @@ onMounted(() => {
                 <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 transition-transform group-hover:scale-110">
                     <Server :size="32" />
                 </div>
-                <h4 class="text-lg font-bold font-heading">Configuration Manuelle</h4>
-                <p class="mt-2 text-center text-sm text-muted-foreground">Serveurs personnalisés. Pour experts ou configurations spécifiques.</p>
+                <h4 class="text-lg font-bold font-heading">Manual Configuration</h4>
+                <p class="mt-2 text-center text-sm text-muted-foreground">Custom servers. For experts or specific configurations.</p>
             </button>
         </div>
 
@@ -352,9 +352,9 @@ onMounted(() => {
                 @click="handleMailboxTest"
               >
                 <PlugZap :size="16" />
-                <span v-if="isTestingMailbox">Connexion en cours...</span>
-                <span v-else-if="mailboxTestResult?.success === false">Échec de la connexion IMAP</span>
-                <span v-else>Tester la connexion</span>
+                <span v-if="isTestingMailbox">Connection in progress...</span>
+                <span v-else-if="mailboxTestResult?.success === false">IMAP connection failed</span>
+                <span v-else>Test connection</span>
               </Button>
               <Button :disabled="isSavingMailbox || isLoading" type="button" @click="handleMailboxSave">
                 <Save :size="16" />

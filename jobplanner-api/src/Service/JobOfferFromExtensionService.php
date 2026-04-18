@@ -17,9 +17,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-/**
- * Create a job offer (and optionally an application) from the data of the browser extension.
- */
 final class JobOfferFromExtensionService
 {
     public function __construct(
@@ -153,7 +150,7 @@ final class JobOfferFromExtensionService
         $history = new ApplicationHistory();
         $history->setApplication($application);
         $history->setActionType(ApplicationHistoryActionType::IMPORTED_FROM_EXTENSION);
-        $history->setDescription('Candidature créée depuis l\'extension navigateur');
+        $history->setDescription('Application created from the browser extension');
 
         return $history;
     }

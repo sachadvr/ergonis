@@ -36,13 +36,13 @@ final readonly class JobOfferFromExtensionInput
     public function validateMinimumData(\Symfony\Component\Validator\Context\ExecutionContextInterface $context): void
     {
         if ('' === $this->url && '' === $this->title) {
-            $context->buildViolation('L\'url ou le titre est requis.')
+            $context->buildViolation('The URL or title is required.')
                 ->addViolation();
         }
     }
 
     public function getResolvedTitle(): string
     {
-        return '' !== $this->title ? $this->title : 'Offre sans titre';
+        return '' !== $this->title ? $this->title : 'Offer without title';
     }
 }

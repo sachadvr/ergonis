@@ -40,7 +40,7 @@ final class AnthropicService extends AbstractAiService
                             'content' => self::JOB_EXTRACTION_PROMPT."\n\nURL: {$url}, Titre: {$title}\n\nContenu:\n".substr($content, 0, 8000),
                         ],
                     ],
-                    'system' => 'Réponds uniquement en JSON valide.',
+                    'system' => 'Respond only with valid JSON.',
                 ],
             ]);
             $data = $response->toArray();
@@ -93,7 +93,7 @@ final class AnthropicService extends AbstractAiService
                 'level' => 'unknown',
                 'recommendation' => 'analysis_failed',
             ],
-            'summary' => 'Analyse IA indisponible.',
+            'summary' => 'AI analysis unavailable.',
             'strong_matches' => [],
             'gaps' => [],
             'ats_keywords_to_add' => [],
@@ -107,11 +107,11 @@ final class AnthropicService extends AbstractAiService
     public function generateFollowUpEmail(Application $application, string $tone = 'professionnel'): string
     {
         $jobOffer = $application->getJobOffer();
-        $poste = $jobOffer->getTitle();
-        $entreprise = $jobOffer->getCompany();
+        $offerTitle = $jobOffer->getTitle();
+        $company = $jobOffer->getCompany();
 
         if ('' === $this->apiKey) {
-            return "Bonjour,\n\nJ'ai le plaisir de vous contacter concernant ma candidature au poste de {$poste} chez {$entreprise}.\n\nJe reste à votre disposition pour tout complément d'information.\n\nCordialement";
+            return "Hello,\n\nI have the pleasure of contacting you regarding my application for the post of {$offerTitle} at {$company}.\n\nI remain at your disposal for any additional information.\n\nSincerely";
         }
 
         try {
@@ -127,17 +127,17 @@ final class AnthropicService extends AbstractAiService
                     'messages' => [
                         [
                             'role' => 'user',
-                            'content' => "Génère un email de relance pour ma candidature au poste de {$poste} chez {$entreprise}. Ton: {$tone}. Pas de réponse reçue. Max 150 mots.",
+                            'content' => "Generate a follow-up email for my application for the post of {$offerTitle} at {$company}. Your tone: {$tone}. No response received. Max 150 words.",
                         ],
                     ],
-                    'system' => 'Tu rédiges des emails professionnels de candidature.',
+                    'system' => 'You write professional application emails.',
                 ],
             ]);
             $data = $response->toArray();
 
-            return trim($data['content'][0]['text'] ?? '') ?: $this->getFallbackEmail($poste, $entreprise);
+            return trim($data['content'][0]['text'] ?? '') ?: $this->getFallbackEmail($offerTitle, $company);
         } catch (\Throwable) {
-            return $this->getFallbackEmail($poste, $entreprise);
+            return $this->getFallbackEmail($offerTitle, $company);
         }
     }
 
@@ -160,7 +160,7 @@ final class AnthropicService extends AbstractAiService
                     'messages' => [
                         [
                             'role' => 'user',
-                            'content' => 'Résume en une phrase (max 100 chars): '.substr($emailBody, 0, 2000),
+                            'content' => 'Summarize in one sentence (max 100 chars): '.substr($emailBody, 0, 2000),
                         ],
                     ],
                 ],
@@ -192,7 +192,7 @@ final class AnthropicService extends AbstractAiService
                     'messages' => [
                         [
                             'role' => 'user',
-                            'content' => 'Propose 2-3 réponses courtes possibles (une par ligne, préfixe "- "): '.substr($emailBody, 0, 1500),
+                            'content' => 'Propose 2-3 short possible replies (one per line, prefix "- "): '.substr($emailBody, 0, 1500),
                         ],
                     ],
                 ],

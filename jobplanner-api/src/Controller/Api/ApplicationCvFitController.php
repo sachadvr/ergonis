@@ -30,25 +30,25 @@ final class ApplicationCvFitController extends AbstractController
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
-            return new JsonResponse(['error' => 'Authentification requise'], Response::HTTP_UNAUTHORIZED);
+            return new JsonResponse(['error' => 'Authentication required'], Response::HTTP_UNAUTHORIZED);
         }
 
         $application = $this->entityManager->getRepository(Application::class)->find($id);
         if (!$application instanceof Application) {
-            return new JsonResponse(['error' => 'Candidature introuvable'], Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['error' => 'Application not found'], Response::HTTP_NOT_FOUND);
         }
 
         $file = $request->files->get('cv') ?? $request->files->get('pdf');
         if (null === $file) {
-            return new JsonResponse(['error' => 'Un fichier PDF est requis dans le champ cv'], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => 'A PDF file is required in the cv field'], Response::HTTP_BAD_REQUEST);
         }
 
         if (!$file instanceof UploadedFile) {
-            return new JsonResponse(['error' => 'Fichier PDF invalide'], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => 'Invalid PDF file'], Response::HTTP_BAD_REQUEST);
         }
 
         if (($file->getSize() ?? 0) <= 0) {
-            return new JsonResponse(['error' => 'Le fichier PDF est vide'], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => 'The PDF file is empty'], Response::HTTP_BAD_REQUEST);
         }
 
         $storageDir = $this->getParameter('kernel.project_dir').'/var/cv-fit';

@@ -5,16 +5,12 @@ import { applicationsApi } from '../api/applications.api'
 import { interviewsApi } from '@/features/interviews/api/interviews.api'
 import { jobOffersApi } from '@/features/job-offers/api/job-offers.api'
 import {
-  transformApplication,
-  prepareApplicationForCreate,
-  prepareApplicationForUpdate,
-  prepareJobOfferForApi,
+  applicationDto,
+  applicationPostDto,
+  applicationPatchDto,
+  jobOfferPatchDTO,
 } from '@/lib/utils/api-transforms'
 
-/**
- * Applications Store
- * Manages the state of job applications
- */
 export const useApplicationsStore = defineStore('applications', () => {
   const applications = ref<Application[]>([])
   const currentApplication = ref<Application | null>(null)
@@ -50,16 +46,13 @@ export const useApplicationsStore = defineStore('applications', () => {
     accepted: applications.value.filter((a) => a.status === 'accepted').length,
   }))
 
-  /**
-   * Fetch all applications
-   */
   async function fetchApplications() {
     try {
       isLoading.value = true
       error.value = null
       const response = await applicationsApi.getAll()
       const rawApplications = response.member || response['hydra:member'] || []
-      applications.value = rawApplications.map(transformApplication)
+      applications.value = rawApplications.map(applicationDto)
     } catch (e) {
       error.value = 'Failed to fetch applications'
       console.error('Error fetching applications:', e)
@@ -68,15 +61,12 @@ export const useApplicationsStore = defineStore('applications', () => {
     }
   }
 
-  /**
-   * Fetch a single application by ID
-   */
   async function fetchApplicationById(id: string) {
     try {
       isLoading.value = true
       error.value = null
       const rawApplication = await applicationsApi.getById(id)
-      currentApplication.value = transformApplication(rawApplication)
+      currentApplication.value = applicationDto(rawApplication)
     } catch (e) {
       error.value = 'Failed to fetch application'
       console.error('Error fetching application:', e)
@@ -85,20 +75,17 @@ export const useApplicationsStore = defineStore('applications', () => {
     }
   }
 
-  /**
-   * Create a new application
-   */
   async function createApplication(
     data: ApplicationFormValues,
   ) {
     try {
       isLoading.value = true
       error.value = null
-      const createdJobOffer = await jobOffersApi.create(prepareJobOfferForApi(data))
+      const createdJobOffer = await jobOffersApi.create(jobOfferPatchDTO(data))
       const rawApplication = await applicationsApi.create(
-        prepareApplicationForCreate(`/api/job_offers/${createdJobOffer.id}`, data) as unknown as Partial<Application>,
+        applicationPostDto(`/api/job_offers/${createdJobOffer.id}`, data) as unknown as Partial<Application>,
       )
-      const newApplication = transformApplication(rawApplication)
+      const newApplication = applicationDto(rawApplication)
       applications.value.push(newApplication)
       return newApplication
     } catch (e) {
@@ -110,9 +97,6 @@ export const useApplicationsStore = defineStore('applications', () => {
     }
   }
 
-  /**
-   * Update an existing application
-   */
   async function updateApplication(id: number, data: ApplicationFormValues, jobOfferId?: number) {
     try {
       isLoading.value = true
@@ -120,14 +104,14 @@ export const useApplicationsStore = defineStore('applications', () => {
       let updatedJobOffer = null
 
       if (jobOfferId !== undefined && jobOfferId !== null) {
-        updatedJobOffer = await jobOffersApi.update(String(jobOfferId), prepareJobOfferForApi(data))
+        updatedJobOffer = await jobOffersApi.update(String(jobOfferId), jobOfferPatchDTO(data))
       }
 
       const rawApplication = await applicationsApi.update(
         String(id),
-        prepareApplicationForUpdate(data) as unknown as Partial<Application>,
+        applicationPatchDto(data) as unknown as Partial<Application>,
       )
-      const updatedApplication = transformApplication(rawApplication)
+      const updatedApplication = applicationDto(rawApplication)
       if (updatedJobOffer) {
         updatedApplication.jobOffer = {
           ...updatedApplication.jobOffer,
@@ -158,9 +142,6 @@ export const useApplicationsStore = defineStore('applications', () => {
     }
   }
 
-  /**
-   * Delete an application
-   */
   async function deleteApplication(id: number) {
     try {
       isLoading.value = true
@@ -181,9 +162,6 @@ export const useApplicationsStore = defineStore('applications', () => {
     }
   }
 
-  /**
-   * Delete an application and its linked job offer
-   */
   async function deleteApplicationWithJobOffer(id: number, jobOfferId?: number) {
     try {
       isLoading.value = true
@@ -209,9 +187,6 @@ export const useApplicationsStore = defineStore('applications', () => {
     }
   }
 
-  /**
-   * Update application status
-   */
   async function updateApplicationStatus(
     id: number,
     status: Application['status'],
@@ -219,7 +194,7 @@ export const useApplicationsStore = defineStore('applications', () => {
     try {
       error.value = null
       const rawApplication = await applicationsApi.updateStatus(String(id), status)
-      const updatedApplication = transformApplication(rawApplication)
+      const updatedApplication = applicationDto(rawApplication)
 
       const index = applications.value.findIndex((a) => a.id === id)
       if (index !== -1) {
@@ -238,9 +213,6 @@ export const useApplicationsStore = defineStore('applications', () => {
     }
   }
 
-  /**
-   * Move an application to interview and create the interview entry
-   */
   async function moveApplicationToInterview(
     id: number,
     scheduledAt: string,
@@ -264,9 +236,6 @@ export const useApplicationsStore = defineStore('applications', () => {
     }
   }
 
-  /**
-   * Analyze a PDF CV against an application
-   */
   async function analyzeApplicationCvFit(id: number, file: File) {
     try {
       isLoading.value = true
@@ -281,9 +250,6 @@ export const useApplicationsStore = defineStore('applications', () => {
     }
   }
 
-  /**
-   * Update CV fit analysis fields from a Mercure event
-   */
   function patchApplicationCvFit(
     id: number,
     data: {
@@ -314,9 +280,6 @@ export const useApplicationsStore = defineStore('applications', () => {
     }
   }
 
-  /**
-   * Reset store
-   */
   function $reset() {
     applications.value = []
     currentApplication.value = null

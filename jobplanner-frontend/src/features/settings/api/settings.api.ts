@@ -5,18 +5,30 @@ import type { User } from '@/types/models.types'
 import { API_ENDPOINTS } from '@/lib/constants/api.constants'
 
 export const settingsApi = {
+  /**
+   * Get the application configuration
+   */
   async getConfig(): Promise<AppConfig> {
     return apiClient(API_ENDPOINTS.SETTINGS.CONFIG)
   },
 
+  /**
+   * Get the mailbox settings
+   */
   async getMailboxSettings(): Promise<PaginatedResponse<UserMailboxSettings>> {
     return apiClient(API_ENDPOINTS.SETTINGS.MAILBOX)
   },
 
+  /**
+   * Get the follow-up rules
+   */
   async getFollowUpRules(): Promise<PaginatedResponse<FollowUpRule>> {
     return apiClient(API_ENDPOINTS.SETTINGS.FOLLOW_UP_RULES)
   },
 
+  /**
+   * Update the mailbox settings
+   */
   async updateMailboxSettings(id: number, data: Partial<UserMailboxSettings>): Promise<UserMailboxSettings> {
     return apiClient(`${API_ENDPOINTS.SETTINGS.MAILBOX}/${id}`, {
       method: 'PATCH',
@@ -27,6 +39,9 @@ export const settingsApi = {
     })
   },
 
+  /**
+   * Create a new mailbox settings
+   */
   async createMailboxSettings(data: Partial<UserMailboxSettings>): Promise<UserMailboxSettings> {
     return apiClient(API_ENDPOINTS.SETTINGS.MAILBOX, {
       method: 'POST',
@@ -37,6 +52,9 @@ export const settingsApi = {
     })
   },
 
+  /**
+   * Update a follow-up rule
+   */
   async updateFollowUpRule(id: number, data: Partial<FollowUpRule>): Promise<FollowUpRule> {
     return apiClient(`${API_ENDPOINTS.SETTINGS.FOLLOW_UP_RULES}/${id}`, {
       method: 'PUT',
@@ -47,6 +65,9 @@ export const settingsApi = {
     })
   },
 
+  /**
+   * Test the mailbox connection
+   */
   async testMailboxConnection(): Promise<{ success: boolean; message: string }> {
     return apiClient(API_ENDPOINTS.SETTINGS.MAILBOX_TEST, {
       method: 'POST',
@@ -54,10 +75,16 @@ export const settingsApi = {
     })
   },
 
+  /**
+   * Get the Google authentication URL
+   */
   async getGoogleAuthUrl(): Promise<{ url: string }> {
     return apiClient('/api/auth/google/url')
   },
 
+  /**
+   * Confirm the Google authentication
+   */
   async confirmGoogleAuth(code: string): Promise<{ success: boolean; email: string; token?: string; user?: User }> {
     return apiClient('/api/auth/google/callback', {
       method: 'POST',
@@ -65,10 +92,16 @@ export const settingsApi = {
     })
   },
 
+  /**
+   * Get the Microsoft authentication URL
+   */
   async getMicrosoftAuthUrl(): Promise<{ url: string }> {
     return apiClient('/api/auth/microsoft/url')
   },
 
+  /**
+   * Confirm the Microsoft authentication
+   */
   async confirmMicrosoftAuth(code: string): Promise<{ success: boolean; email: string; token?: string; user?: User }> {
     return apiClient('/api/auth/microsoft/callback', {
       method: 'POST',

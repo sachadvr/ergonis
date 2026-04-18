@@ -14,8 +14,8 @@ use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
- * Centralise le format des réponses d'erreur pour l'API.
- * Les controllers peuvent toujours gérer localement, ce subscriber assure la cohérence.
+ * Centralizes the format of the error responses for the API.
+ * The controllers can still handle locally, this subscriber ensures consistency.
  */
 final class ApiExceptionSubscriber implements EventSubscriberInterface
 {

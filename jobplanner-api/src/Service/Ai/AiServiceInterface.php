@@ -86,31 +86,31 @@ Meanings:
 PROMPT;
 
     /**
-     * Extrait et structure les informations d'une offre depuis le contenu brut.
+     * Extracts and structures the information from a job offer from the raw content.
      *
      * @return array<string, mixed>
      */
     public function extractJobOfferFromContent(string $url, string $title, string $content): array;
 
     /**
-     * Analyse l'adéquation entre une offre et un CV texte.
+     * Analyzes the fit between a job offer and a text CV.
      *
      * @return array<string, mixed>
      */
     public function analyzeApplicationFit(Application $application, string $cvText): array;
 
     /**
-     * Génère un mail de relance adapté à la candidature.
+     * Generates a follow-up email adapted to the application.
      */
     public function generateFollowUpEmail(Application $application, string $tone = 'professionnel'): string;
 
     /**
-     * Résume le contenu d'un email.
+     * Summarizes the content of an email.
      */
     public function summarizeEmail(string $emailBody): string;
 
     /**
-     * Suggère des réponses prêtes à l'envoi.
+     * Suggests replies ready to send.
      *
      * @return array<string>
      */

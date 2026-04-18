@@ -141,6 +141,7 @@ final class AppFixtures extends Fixture
 
             [3, 'Me', 'Candidature spontanée', "Bonjour,\n\nJe souhaiterais vous proposer ma candidature pour...", '2025-02-12 12:00:00', null, 'OUTGOING', false, false, true, []],
 
+            // DELETED
             [4, 'newsletter@indeed.com', 'Nouvelles offres d\'emploi', 'Voici les nouvelles offres correspondant à votre profil...', '2025-01-30 08:00:00', 'Newsletter', 'INCOMING', false, true, false, ['Read later']],
         ];
 
@@ -156,6 +157,7 @@ final class AppFixtures extends Fixture
             $email->setReceivedAt(new \DateTimeImmutable($receivedAt));
             $email->setAiSummary($aiSummary);
 
+            // New fields
             $email->setDirection($direction);
             $email->setIsFavourite($isFav);
             $email->setIsDeleted($isDel);
@@ -216,7 +218,7 @@ final class AppFixtures extends Fixture
         }
 
         $settings = new UserMailboxSettings();
-        $settings->setUser($user);
+        $settings->setOwner($user);
         $settings->setImapHost('imap.example.com');
         $settings->setImapPort(993);
         $settings->setImapEncryption('ssl');
@@ -236,14 +238,14 @@ final class AppFixtures extends Fixture
     private function createAiGenerationLogs(ObjectManager $manager, User $user): void
     {
         $logsData = [
-            ['follow_up', 'Génère une relance pour l\'offre TechCorp...', 150],
-            ['thank_you', 'Génère un mail de remerciement après entretien...', 120],
-            ['spontaneous', 'Génère une candidature spontanée pour StartupHub...', 200],
+            ['follow_up', 'Generate a follow-up for the TechCorp offer...', 150],
+            ['thank_you', 'Generate a thank you email after the interview...', 120],
+            ['spontaneous', 'Generate a spontaneous application for StartupHub...', 200],
         ];
 
         foreach ($logsData as [$type, $prompt, $tokens]) {
             $log = new AiGenerationLog();
-            $log->setUser($user);
+            $log->setOwner($user);
             $log->setType($type);
             $log->setPrompt($prompt);
             $log->setTokensUsed($tokens);
@@ -284,7 +286,7 @@ final class AppFixtures extends Fixture
     private function createScheduledFollowUps(ObjectManager $manager, array $applications): void
     {
         $scheduledData = [
-            [1, '+2 days 10:00', ScheduledFollowUp::STATUS_PENDING, 'Relance prévue si pas de réponse sous 7 jours'],
+            [1, '+2 days 10:00', ScheduledFollowUp::STATUS_PENDING, 'Follow-up planned if no response under 7 days'],
             [2, '+5 days 14:00', ScheduledFollowUp::STATUS_PENDING, null],
         ];
 

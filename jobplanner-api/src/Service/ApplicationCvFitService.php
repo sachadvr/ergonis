@@ -26,11 +26,11 @@ final readonly class ApplicationCvFitService
     {
         $owner = $application->getOwner();
         if (null === $owner || $owner->getId() !== $user->getId()) {
-            throw new NotFoundHttpException('Candidature introuvable.');
+            throw new NotFoundHttpException('Application not found.');
         }
 
         if (!str_contains((string) $pdfFile->getMimeType(), 'pdf') && 'pdf' !== strtolower((string) $pdfFile->getClientOriginalExtension())) {
-            throw new BadRequestHttpException('Le fichier doit être un PDF.');
+            throw new BadRequestHttpException('The file must be a PDF.');
         }
 
         $cvText = $this->pdfTextExtractor->extract($pdfFile);

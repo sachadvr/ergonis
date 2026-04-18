@@ -56,7 +56,7 @@ abstract class AbstractOAuthClient
         int $expiresIn,
     ): UserMailboxSettings {
         $settings = $this->mailboxSettingsRepository->findByUserId($user->getId()) ?? new UserMailboxSettings();
-        $settings->setUser($user);
+        $settings->setOwner($user);
         $settings->setOauthProvider($this->getOauthProvider());
         $settings->setAccessToken($accessToken);
 

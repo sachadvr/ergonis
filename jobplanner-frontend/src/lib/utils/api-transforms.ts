@@ -18,10 +18,7 @@ export interface ApplicationWritePayload {
   appliedAt?: string | null
 }
 
-/**
- * Transform API response to flatten the jobOffer structure
- */
-export function transformApplication(apiApplication: any): Application {
+export function applicationDto(apiApplication: any): Application {
   return {
     id: apiApplication.id,
     jobTitle: apiApplication.jobOffer?.title || '',
@@ -59,10 +56,7 @@ export function transformApplication(apiApplication: any): Application {
   }
 }
 
-/**
- * Transform application data for API submission
- */
-export function prepareJobOfferForApi(application: Partial<ApplicationFormValues>): JobOfferWritePayload {
+export function jobOfferPatchDTO(application: Partial<ApplicationFormValues>): JobOfferWritePayload {
   return {
     title: application.jobTitle,
     company: application.companyName,
@@ -75,7 +69,7 @@ export function prepareJobOfferForApi(application: Partial<ApplicationFormValues
   }
 }
 
-export function prepareApplicationForCreate(
+export function applicationPostDto(
   jobOfferIri: string,
   application: Partial<ApplicationFormValues>,
 ): ApplicationWritePayload {
@@ -87,7 +81,7 @@ export function prepareApplicationForCreate(
   }
 }
 
-export function prepareApplicationForUpdate(application: Partial<ApplicationFormValues>): ApplicationWritePayload {
+export function applicationPatchDto(application: Partial<ApplicationFormValues>): ApplicationWritePayload {
   return {
     status: application.status,
     pipelinePosition: application.pipelinePosition,

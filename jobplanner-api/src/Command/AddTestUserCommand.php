@@ -16,7 +16,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[AsCommand(
     name: 'app:add-test-user',
-    description: 'Crée un utilisateur de test (guest@test.com / guest)',
+    description: 'Create a test user',
 )]
 final class AddTestUserCommand extends Command
 {
@@ -35,7 +35,7 @@ final class AddTestUserCommand extends Command
         $password = 'guest';
 
         if ($this->userRepository->existsByEmail($email)) {
-            $io->success("L'utilisateur {$email} existe déjà. Identifiants : {$email} / {$password}");
+            $io->success("The user {$email} already exists. Credentials: {$email} / {$password}");
 
             return Command::SUCCESS;
         }
@@ -47,7 +47,7 @@ final class AddTestUserCommand extends Command
         $this->entityManager->persist($user);
         $this->entityManager->flush();
 
-        $io->success("Utilisateur de test créé : {$email} / {$password}");
+        $io->success("Test user created: {$email} / {$password}");
 
         return Command::SUCCESS;
     }

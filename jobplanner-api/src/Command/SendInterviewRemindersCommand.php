@@ -17,7 +17,7 @@ use Symfony\Component\Mime\Email;
 
 #[AsCommand(
     name: 'app:interview-reminders:send',
-    description: 'Envoie les rappels pour les entretiens dans les 24h',
+    description: 'Send reminders for interviews in the next 24 hours',
 )]
 final class SendInterviewRemindersCommand extends Command
 {
@@ -32,7 +32,7 @@ final class SendInterviewRemindersCommand extends Command
 
     protected function configure(): void
     {
-        $this->addOption('hours', null, InputOption::VALUE_OPTIONAL, 'Heures avant l\'entretien pour envoyer le rappel', '24');
+        $this->addOption('hours', null, InputOption::VALUE_OPTIONAL, 'Hours before the interview to send the reminder', '24');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -42,14 +42,14 @@ final class SendInterviewRemindersCommand extends Command
         $interviews = $this->interviewRepository->findUpcomingNeedingReminder($hours);
 
         if (empty($interviews)) {
-            $io->success('Aucun rappel à envoyer.');
+            $io->success('No reminder to send.');
 
             return Command::SUCCESS;
         }
 
         $isSimulation = filter_var($this->simulationMode, \FILTER_VALIDATE_BOOLEAN);
         if ($isSimulation) {
-            $io->note('Mode simulation : aucun email ne sera envoyé.');
+            $io->note('Simulation mode: no email will be sent.');
         }
 
         foreach ($interviews as $interview) {
@@ -57,45 +57,45 @@ final class SendInterviewRemindersCommand extends Command
             $jobOffer = $app->getJobOffer();
             $owner = $app->getOwner();
             if (null === $owner || '' === $owner->getUserIdentifier()) {
-                $io->warning("Entretien ID {$interview->getId()} : pas d'email utilisateur, ignoré.");
+                $io->warning("Interview ID {$interview->getId()} : no user email, ignored.");
                 continue;
             }
 
             $to = $owner->getUserIdentifier();
 
             if (null === $owner->getId()) {
-                $io->warning("Entretien ID {$interview->getId()} : utilisateur sans ID, ignoré.");
+                $io->warning("Interview ID {$interview->getId()} : user without ID, ignored.");
                 continue;
             }
 
             $from = $owner->getUserIdentifier();
 
             $dateStr = $interview->getScheduledAt()->format('d/m/Y à H:i');
-            $poste = $jobOffer->getTitle();
-            $entreprise = $jobOffer->getCompany();
-            $lien = $interview->getLocationOrLink();
+            $offerTitle = $jobOffer->getTitle();
+            $company = $jobOffer->getCompany();
+            $locationOrLink = $interview->getLocationOrLink();
 
-            $body = "Bonjour,\n\nRappel : vous avez un entretien prévu le {$dateStr} pour le poste de {$poste} chez {$entreprise}.";
-            if ($lien) {
-                $body .= "\n\nLien : {$lien}";
+            $body = "Hello,\n\nReminder: you have an interview scheduled for {$dateStr} for the post of {$offerTitle} at {$company}.";
+            if ($locationOrLink) {
+                $body .= "\n\nLink: {$locationOrLink}";
             }
-            $body .= "\n\nBonne préparation !";
+            $body .= "\n\nGood preparation!";
 
             if (!$isSimulation) {
                 $email = (new Email())
                     ->from($from)
                     ->to($to)
-                    ->subject("Rappel entretien : {$poste} - {$entreprise}")
+                    ->subject("Interview reminder: {$offerTitle} - {$company}")
                     ->text($body);
                 $this->userMailerService->send((int) $owner->getId(), $email);
             }
 
             $interview->setReminderSent(true);
-            $io->text("  → {$poste} chez {$entreprise} ({$dateStr})");
+            $io->text("  → {$offerTitle} at {$company} ({$dateStr})");
         }
 
         $this->entityManager->flush();
-        $io->success(sprintf('%d rappel(s) traité(s).', \count($interviews)));
+        $io->success(sprintf('%d reminder(s) processed.', \count($interviews)));
 
         return Command::SUCCESS;
     }

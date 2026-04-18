@@ -15,7 +15,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'app:mailbox:sync',
-    description: 'Syncronise les emails de la boîte mail pour un utilisateur',
+    description: 'Synchronize the emails of the mailbox for a user',
 )]
 final class SyncMailboxCommand extends Command
 {
@@ -27,7 +27,7 @@ final class SyncMailboxCommand extends Command
 
     protected function configure(): void
     {
-        $this->addArgument('user-id', InputArgument::REQUIRED, 'ID de l\'utilisateur');
+        $this->addArgument('user-id', InputArgument::REQUIRED, 'ID of the user');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

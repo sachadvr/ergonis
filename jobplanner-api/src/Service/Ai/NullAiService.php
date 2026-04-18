@@ -8,8 +8,7 @@ use App\Entity\Application;
 use App\Service\CompanyExtractor;
 
 /**
- * Implémentation de repli sans API IA configurée.
- * Utilise CompanyExtractor pour une extraction basique.
+ * Fallback implementation for AI services that are not configured.
  */
 final class NullAiService implements AiServiceInterface
 {
@@ -21,7 +20,7 @@ final class NullAiService implements AiServiceInterface
     public function extractJobOfferFromContent(string $url, string $title, string $content): array
     {
         return [
-            'title' => '' !== $title ? $title : 'Offre sans titre',
+            'title' => '' !== $title ? $title : 'Offer without title',
             'company' => $this->companyExtractor->extract($content, $title),
             'location' => null,
         ];
@@ -35,7 +34,7 @@ final class NullAiService implements AiServiceInterface
                 'level' => 'unknown',
                 'recommendation' => 'provider_not_configured',
             ],
-            'summary' => 'Aucun provider IA n\'est configuré.',
+            'summary' => 'No AI provider is configured.',
             'strong_matches' => [],
             'gaps' => [],
             'ats_keywords_to_add' => [],
@@ -51,7 +50,7 @@ final class NullAiService implements AiServiceInterface
         $jobTitle = $application->getJobOffer()->getTitle();
         $company = $application->getJobOffer()->getCompany();
 
-        return "Bonjour,\n\nJ'ai le plaisir de vous contacter concernant ma candidature au poste de {$jobTitle} chez {$company}.\n\nJe reste à votre disposition pour tout complément d'information.\n\nCordialement";
+        return "Hello,\n\nI have the pleasure of contacting you regarding my application for the post of {$jobTitle} at {$company}.\n\nI remain at your disposal for any additional information.\n\nSincerely";
     }
 
     public function summarizeEmail(string $emailBody): string

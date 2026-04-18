@@ -24,7 +24,7 @@ final readonly class SyncAllMailboxesHandler
     public function __invoke(SyncAllMailboxesMessage $message): void
     {
         foreach ($this->mailboxSettingsRepository->findActiveForSync() as $settings) {
-            $user = $settings->getUser();
+            $user = $settings->getOwner();
             if (null === $user) {
                 continue;
             }

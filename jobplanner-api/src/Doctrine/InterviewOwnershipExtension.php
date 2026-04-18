@@ -13,7 +13,8 @@ use Doctrine\ORM\QueryBuilder;
 use Symfony\Bundle\SecurityBundle\Security;
 
 /**
- * Filtre les entretiens pour n'afficher que ceux liés aux candidatures du user connecté.
+ * Filters the interviews to only display those related to the authenticated user's applications.
+ * Because OwnershipExtension is only applied to direct owner_id fields.
  */
 final class InterviewOwnershipExtension implements QueryCollectionExtensionInterface, QueryItemExtensionInterface
 {

@@ -9,11 +9,11 @@ use Symfony\Component\Validator\Constraints as Assert;
 final readonly class RegisterInput
 {
     public function __construct(
-        #[Assert\NotBlank(message: 'L\'email est requis')]
-        #[Assert\Email(message: 'Format d\'email invalide')]
+        #[Assert\NotBlank(message: 'The email is required')]
+        #[Assert\Email(message: 'Invalid email format')]
         public string $email,
-        #[Assert\NotBlank(message: 'Le mot de passe est requis')]
-        #[Assert\Length(min: 8, minMessage: 'Le mot de passe doit contenir au moins 8 caractères')]
+        #[Assert\NotBlank(message: 'The password is required')]
+        #[Assert\Length(min: 8, minMessage: 'The password must contain at least 8 characters')]
         public string $password,
     ) {
     }

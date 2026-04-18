@@ -43,16 +43,16 @@ final readonly class SendInterviewRemindersHandler
 
             $jobOffer = $app->getJobOffer();
             $dateStr = $interview->getScheduledAt()->format('d/m/Y à H:i');
-            $body = "Bonjour,\n\nRappel : entretien le {$dateStr} pour {$jobOffer->getTitle()} chez {$jobOffer->getCompany()}.";
+            $body = "Hello,\n\nReminder: interview on {$dateStr} for {$jobOffer->getTitle()} at {$jobOffer->getCompany()}.";
             if ($interview->getLocationOrLink()) {
-                $body .= "\n\nLien : ".$interview->getLocationOrLink();
+                $body .= "\n\nLink: ".$interview->getLocationOrLink();
             }
 
             if (!$isSimulation) {
                 $email = (new Email())
                     ->from($from)
                     ->to($to)
-                    ->subject("Rappel entretien : {$jobOffer->getTitle()}")
+                    ->subject("Reminder: interview on {$jobOffer->getTitle()}")
                     ->text($body);
                 $this->userMailerService->send((int) $owner->getId(), $email);
             }

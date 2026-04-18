@@ -11,8 +11,8 @@ use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * Processor générique qui assigne l'utilisateur connecté comme owner des entités OwnedEntityInterface.
- * Évite la duplication de logique entre JobOffer, Application, FollowUpRule.
+ * Generic processor that assigns the authenticated user as the owner of OwnedEntityInterface entities.
+ * Avoids duplication of logic between JobOffer, Application, FollowUpRule.
  */
 final class OwnedEntityProcessor implements ProcessorInterface
 {

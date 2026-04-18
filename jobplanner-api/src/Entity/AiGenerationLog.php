@@ -30,7 +30,7 @@ class AiGenerationLog
 
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: true)]
-    private ?User $user = null;
+    private ?User $owner = null;
 
     #[ORM\Column(type: 'string', length: 50)]
     #[Groups(['ai_log:read'])]
@@ -58,14 +58,14 @@ class AiGenerationLog
         return $this->id;
     }
 
-    public function getUser(): ?User
+    public function getOwner(): ?User
     {
-        return $this->user;
+        return $this->owner;
     }
 
-    public function setUser(?User $user): self
+    public function setOwner(?User $owner): self
     {
-        $this->user = $user;
+        $this->owner = $owner;
 
         return $this;
     }

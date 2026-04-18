@@ -24,8 +24,8 @@ final class UserMailboxSettingsProcessor implements ProcessorInterface
     {
         if ($data instanceof UserMailboxSettings) {
             $user = $this->security->getUser();
-            if ($user instanceof User && null === $data->getUser()) {
-                $data->setUser($user);
+            if ($user instanceof User && null === $data->getOwner()) {
+                $data->setOwner($user);
             }
         }
 

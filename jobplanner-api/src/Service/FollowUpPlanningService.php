@@ -10,7 +10,7 @@ use App\Entity\ScheduledFollowUp;
 use App\Repository\FollowUpRuleRepository;
 
 /**
- * Planifie les relances automatiques selon les règles de l'utilisateur.
+ * Plans the automatic follow-ups according to the user's rules.
  */
 final readonly class FollowUpPlanningService
 {

@@ -19,8 +19,6 @@ final class InterviewRepository extends ServiceEntityRepository
     }
 
     /**
-     * Entretiens dans les X prochaines heures n'ayant pas encore reçu de rappel.
-     *
      * @return Interview[]
      */
     public function findUpcomingNeedingReminder(int $hoursAhead = 24): array

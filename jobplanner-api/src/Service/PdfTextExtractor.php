@@ -15,7 +15,7 @@ class PdfTextExtractor
         $tempBase = tempnam(sys_get_temp_dir(), 'jobplanner_pdf_');
 
         if (false === $tempBase) {
-            throw new UnprocessableEntityHttpException('Impossible de préparer l\'extraction du PDF.');
+            throw new UnprocessableEntityHttpException('Unable to prepare the PDF extraction.');
         }
 
         unlink($tempBase);
@@ -33,14 +33,14 @@ class PdfTextExtractor
 
         if (0 !== $exitCode || !is_file($outputPath)) {
             @unlink($outputPath);
-            throw new UnprocessableEntityHttpException('Impossible d\'extraire le texte du PDF.');
+            throw new UnprocessableEntityHttpException('Unable to extract the text from the PDF.');
         }
 
         $text = file_get_contents($outputPath);
         @unlink($outputPath);
 
         if (!is_string($text) || '' === trim($text)) {
-            throw new UnprocessableEntityHttpException('Le PDF ne contient pas de texte exploitable.');
+            throw new UnprocessableEntityHttpException('The PDF does not contain any text to extract.');
         }
 
         $text = str_replace(["\r\n", "\r"], "\n", $text);

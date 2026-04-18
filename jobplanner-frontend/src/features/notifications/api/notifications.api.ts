@@ -4,10 +4,16 @@ import type { NotificationItem } from '@/types/models.types'
 import type { PaginatedResponse } from '@/types/api.types'
 
 export const notificationsApi = {
+  /**
+   * Get all notifications
+   */
   async getAll(): Promise<PaginatedResponse<NotificationItem>> {
     return apiClient(API_ENDPOINTS.NOTIFICATIONS.BASE)
   },
 
+  /**
+   * Mark a notification as seen
+   */
   async markAsSeen(notification: NotificationItem): Promise<void> {
     const endpoint =
       'imported_from_extension' === notification.type

@@ -12,8 +12,8 @@ use App\Entity\RecruiterEmail;
 use App\Entity\UserMailboxSettings;
 
 /**
- * Liste des entités filtrées par ownership dans OwnershipExtension.
- * Centralise la config pour éviter la duplication.
+ * List of entities filtered by ownership in OwnershipExtension.
+ * Centralizes the config to avoid duplication.
  */
 final class OwnedEntities
 {
@@ -25,12 +25,6 @@ final class OwnedEntities
         Application::class,
         RecruiterEmail::class,
         FollowUpRule::class,
-        UserMailboxSettings::class,
-        AiGenerationLog::class,
-    ];
-
-    /** Entités utilisant "user" au lieu de "owner" */
-    private const USER_FIELD_ENTITIES = [
         UserMailboxSettings::class,
         AiGenerationLog::class,
     ];
@@ -50,6 +44,6 @@ final class OwnedEntities
 
     public static function getOwnerField(string $resourceClass): string
     {
-        return in_array($resourceClass, self::USER_FIELD_ENTITIES, true) ? 'user' : 'owner';
+        return 'owner';
     }
 }

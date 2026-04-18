@@ -60,7 +60,7 @@ final readonly class AnalyzeApplicationCvFitHandler
         } catch (\Throwable $exception) {
             $application->setCvFitAnalysisStatus('failed');
             $application->setCvFitAnalysisResult([
-                'summary' => 'Analyse indisponible.',
+                'summary' => 'AI analysis unavailable.',
                 'error' => $exception->getMessage(),
             ]);
             $application->setCvFitAnalysisCompletedAt(new \DateTimeImmutable());

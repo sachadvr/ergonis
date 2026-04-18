@@ -9,8 +9,8 @@ use App\Repository\ApplicationRepository;
 use App\Repository\RecruiterEmailRepository;
 
 /**
- * Associe les emails reçus aux candidatures existantes.
- * Critères : expéditeur (domaine), contenu (entreprise, intitulé du poste).
+ * Associates the received emails to existing applications.
+ * Criteria: sender (domain), content (company, job title).
  */
 final readonly class EmailMatchingService
 {

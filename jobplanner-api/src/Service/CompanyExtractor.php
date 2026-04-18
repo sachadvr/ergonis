@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App\Service;
 
 /**
- * Extrait le nom de l'entreprise depuis un contenu brut (offre d'emploi, titre).
- * Peut être complété par l'IA (AiService) pour une extraction plus précise.
+ * Extracts the name of the company from the raw content (job offer, title).
+ * Can be complemented by the AI (AiService) for a more precise extraction.
  */
 final class CompanyExtractor
 {
-    private const PATTERN_COMPANY_IN_CONTENT = '/(?:entreprise|société|company|chez)\s*[:：]\s*([^\n,]+)/iu';
+    private const PATTERN_COMPANY_IN_CONTENT = '/(?:entreprise|société|company|company name|employer|organization|organisation|firm|chez)\s*[:：]\s*([^\n,]+)/iu';
     private const PATTERN_COMPANY_IN_TITLE = '/^([^-–—]+?)\s*[-–—]\s/i';
-    private const FALLBACK_COMPANY = 'Entreprise non spécifiée';
+    private const FALLBACK_COMPANY = 'Company not specified';
 
     public function extract(string $content, string $title): string
     {

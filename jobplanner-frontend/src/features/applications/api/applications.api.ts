@@ -3,10 +3,6 @@ import type { PaginatedResponse } from '@/types/api.types'
 import { apiClient } from '@/lib/api/client'
 import { API_ENDPOINTS } from '@/lib/constants/api.constants'
 
-/**
- * Applications API
- * Handles all API calls related to job applications
- */
 export const applicationsApi = {
   /**
    * Fetch all applications for the authenticated user
