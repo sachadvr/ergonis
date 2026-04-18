@@ -150,11 +150,11 @@ final class OpenAiService extends AbstractAiService
                     'messages' => [
                         [
                             'role' => 'system',
-                            'content' => "You are an assistant who writes follow-up emails for applications. Your tone: {$tone}. No too long formulas. Maximum 150 words.",
+                            'content' => "You are an assistant who writes follow-up emails for applications in the same language as the offer. Your tone: {$tone}. No too long formulas. Maximum 150 words.",
                         ],
                         [
                             'role' => 'user',
-                            'content' => "Generate a follow-up email for my application for the post of {$offerTitle} at {$company}. I have not received a response.",
+                            'content' => "Generate a follow-up email for my application for the post of {$offerTitle} at {$company}. Use the same language as the offer. I have not received a response.",
                         ],
                     ],
                     'temperature' => 0.7,
@@ -183,7 +183,7 @@ final class OpenAiService extends AbstractAiService
                 'json' => [
                     'model' => $this->model,
                     'messages' => [
-                        ['role' => 'system', 'content' => 'Summarize in one short sentence (max 100 characters).'],
+                        ['role' => 'system', 'content' => 'Summarize in one short sentence (max 100 characters) in the same language as the email.'],
                         ['role' => 'user', 'content' => substr($emailBody, 0, 2000)],
                     ],
                     'temperature' => 0.3,
@@ -212,7 +212,7 @@ final class OpenAiService extends AbstractAiService
                 'json' => [
                     'model' => $this->model,
                     'messages' => [
-                        ['role' => 'system', 'content' => 'Propose 2 or 3 short possible replies (one per line, prefix "- ").'],
+                        ['role' => 'system', 'content' => 'Propose 2 or 3 short possible replies in the same language as the email (one per line, prefix "- ").'],
                         ['role' => 'user', 'content' => substr($emailBody, 0, 1500)],
                     ],
                     'temperature' => 0.3,

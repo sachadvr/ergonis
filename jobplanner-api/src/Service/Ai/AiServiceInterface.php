@@ -16,6 +16,7 @@ Rules:
 - No invention
 - Missing/unclear -> null or []
 - No empty strings
+- Use the same language as the posting for free-text fields; keep enum values exactly as specified
 - salary.min/max: number only if clearly stated, else null
 - Booleans: true only if explicit; else conservative false
 - Keep ATS-relevant wording when useful
@@ -63,6 +64,7 @@ Rules:
 - No invention
 - Missing/unclear -> null or []
 - No empty strings
+- Use the language of the offer/CV for free-text fields; keep enum values exactly as specified
 - Keep ATS-relevant wording when useful
 - Be candid on matches, gaps, unclear points
 - Focus on actionable improvements (CV, cover letter, interview)

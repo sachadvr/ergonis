@@ -127,10 +127,10 @@ final class AnthropicService extends AbstractAiService
                     'messages' => [
                         [
                             'role' => 'user',
-                            'content' => "Generate a follow-up email for my application for the post of {$offerTitle} at {$company}. Your tone: {$tone}. No response received. Max 150 words.",
+                            'content' => "Generate a follow-up email for my application for the post of {$offerTitle} at {$company}. Use the same language as the offer. Your tone: {$tone}. No response received. Max 150 words.",
                         ],
                     ],
-                    'system' => 'You write professional application emails.',
+                    'system' => 'You write professional application emails in the same language as the offer.',
                 ],
             ]);
             $data = $response->toArray();
@@ -160,7 +160,7 @@ final class AnthropicService extends AbstractAiService
                     'messages' => [
                         [
                             'role' => 'user',
-                            'content' => 'Summarize in one sentence (max 100 chars): '.substr($emailBody, 0, 2000),
+                            'content' => 'Summarize in one sentence (max 100 chars) in the same language as the email: '.substr($emailBody, 0, 2000),
                         ],
                     ],
                 ],
@@ -192,7 +192,7 @@ final class AnthropicService extends AbstractAiService
                     'messages' => [
                         [
                             'role' => 'user',
-                            'content' => 'Propose 2-3 short possible replies (one per line, prefix "- "): '.substr($emailBody, 0, 1500),
+                            'content' => 'Propose 2-3 short possible replies in the same language as the email (one per line, prefix "- "): '.substr($emailBody, 0, 1500),
                         ],
                     ],
                 ],
