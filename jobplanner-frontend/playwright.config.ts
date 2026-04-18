@@ -10,6 +10,7 @@ export default defineConfig({
   use: {
     baseURL: process.env.FRONTEND_URL,
     trace: 'on-first-retry',
+    channel: 'chromium',
   },
   projects: [
     {
@@ -20,7 +21,7 @@ export default defineConfig({
   webServer: {
     command: 'npm run dev',
     url: process.env.FRONTEND_URL,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: true,
     timeout: 120000,
   },
 })

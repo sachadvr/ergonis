@@ -1,0 +1,126 @@
+name: CI/CD
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run PHP CS Fixer
+        run: make csfix
+
+      - name: Install frontend dependencies
+        run: cd jobplanner-frontend && npm install
+
+      - name: Run TypeScript check
+        run: cd jobplanner-frontend && npm run build
+
+  test-api:
+    name: Test API
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup environment
+        run: cp .env.example jobplanner-api/.env
+
+      - name: Start API dependencies
+        run: docker compose -f compose.test.yaml up -d database mercure mailpit
+
+      - name: Run API tests
+        run: docker compose -f compose.test.yaml run --rm api php bin/phpunit --configuration phpunit.dist.xml
+
+  test-e2e:
+    name: Test E2E
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup environment
+        run: cp .env.example jobplanner-api/.env
+
+      - name: Start services
+        run: docker compose -f compose.test.yaml up -d database mercure frontend
+
+      - name: Wait for services
+        run: sleep 10
+
+      - name: Run migrations
+        run: docker compose -f compose.test.yaml exec -T api php bin/console doctrine:migrations:migrate --no-interaction -e dev
+
+      - name: Clear cache
+        run: docker compose -f compose.test.yaml exec -T api rm -rf var/cache/*
+
+      - name: Load fixtures
+        run: docker compose -f compose.test.yaml exec -T api php bin/console doctrine:fixtures:load --append -e dev
+
+      - name: Install Playwright browsers
+        run: docker compose -f compose.test.yaml exec -T frontend -- sh -c "npx playwright install --force chromium"
+
+      - name: Run Playwright tests
+        run: docker compose -f compose.test.yaml exec -T frontend npm run test:e2e
+        env:
+          FRONTEND_URL: http://localhost:5173
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    environment: tests
+    if: github.ref == 'refs/heads/master'
+    needs: [test-api, test-e2e]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: api
+            context: ./jobplanner-api
+            dockerfile: ./jobplanner-api/Dockerfile
+          - service: frontend
+            context: ./jobplanner-frontend
+            dockerfile: ./jobplanner-frontend/Dockerfile
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup environment
+        run: cp .env.example jobplanner-api/.env
+
+      - name: Build image
+        run: |
+          IMAGE_NAME="sachadvr/jobplanner-${{ matrix.service }}"
+          docker build --platform linux/amd64 -f "${{ matrix.dockerfile }}" -t "$IMAGE_NAME:master" -t "$IMAGE_NAME:latest" "${{ matrix.context }}"
+
+      - name: Push image
+        run: |
+          IMAGE_NAME="sachadvr/jobplanner-${{ matrix.service }}"
+          if [ -n "${{ secrets.DOCKER_HUB_TOKEN }}" ]; then
+            echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+            docker push "$IMAGE_NAME:master"
+            docker push "$IMAGE_NAME:latest"
+          else
+            echo "DOCKER_HUB_TOKEN not set, skipping push"
+          fi
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment: tests
+    if: github.ref == 'refs/heads/master'
+    needs: build
+    steps:
+      - name: Call Portainer webhook
+        env:
+          PORTAINER_WEBHOOK_URL: ${{ secrets.PORTAINER_WEBHOOK_URL }}
+        run: |
+          if [ -n "$PORTAINER_WEBHOOK_URL" ]; then
+            curl -fsSk -X POST "$PORTAINER_WEBHOOK_URL"
+          else
+            echo "PORTAINER_WEBHOOK_URL not set, skipping deploy"
+          fi

@@ -212,7 +212,7 @@ final class AppFixtures extends Fixture
 
     private function createUserMailboxSettings(ObjectManager $manager, User $user): void
     {
-        $existing = $manager->getRepository(UserMailboxSettings::class)->findOneBy(['user' => $user]);
+        $existing = $manager->getRepository(UserMailboxSettings::class)->findOneBy(['owner' => $user]);
         if ($existing instanceof UserMailboxSettings) {
             return;
         }

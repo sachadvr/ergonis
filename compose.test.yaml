@@ -27,6 +27,11 @@ services:
         cors_origins http://localhost:5173 http://127.0.0.1:5173
     command: /usr/bin/caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
 
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "1025:1025"
+
   api:
     build:
       context: ./jobplanner-api
@@ -62,6 +67,7 @@ services:
     volumes:
       - ./jobplanner-frontend:/app
       - frontend_node_modules:/app/node_modules
+      - playwright_browsers:/ms-playwright
     ports:
       - "5173:5173"
     environment:
@@ -76,3 +82,4 @@ volumes:
   database_data:
   api_vendor:
   frontend_node_modules:
+  playwright_browsers:
