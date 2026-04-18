@@ -41,7 +41,6 @@ export interface JobOffer {
 
 export interface Application {
   id: number
-  // Flattened fields from jobOffer for easier access
   jobTitle: string
   companyName: string
   location?: string
@@ -56,7 +55,6 @@ export interface Application {
   details?: Record<string, unknown>
   salaryMin?: number
   salaryMax?: number
-  // Original nested structure
   jobOffer: JobOffer
   status: ApplicationStatus
   pipelinePosition: number

@@ -53,7 +53,6 @@ export const useSettingsStore = defineStore('settings', () => {
       console.error('Error saving mailbox settings:', e)
       throw e
     } finally {
-      // Handled locally in component
     }
   }
 
@@ -73,7 +72,6 @@ export const useSettingsStore = defineStore('settings', () => {
       console.error('Error saving follow-up rule:', e)
       throw e
     } finally {
-      // Handled locally in component
     }
   }
 

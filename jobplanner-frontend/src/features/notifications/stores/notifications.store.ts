@@ -79,7 +79,6 @@ export const useNotificationsStore = defineStore('notifications', () => {
         const payload = JSON.parse(event.data) as unknown
         mercureListeners.forEach((listener) => listener(payload))
       } catch {
-        // Ignore malformed payloads.
       }
     }
     eventSource.onerror = () => {

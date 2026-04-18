@@ -22,7 +22,6 @@ const sortedApplications = computed(() => {
     })
 })
 
-// Computed: Active applications (applied + interview)
 const activeCount = computed(() => stats.value.applied + stats.value.interview)
 
 const daysSince = (value?: string) => {
@@ -174,7 +173,6 @@ const openInterviews = () => {
   router.push({ name: 'Interviews' })
 }
 
-// Fetch applications on mount
 onMounted(() => {
   if (applications.value.length === 0) {
     applicationsStore.fetchApplications()

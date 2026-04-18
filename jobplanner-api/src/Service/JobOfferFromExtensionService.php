@@ -18,7 +18,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
- * Crée une offre d'emploi (et optionnellement une candidature) depuis les données de l'extension navigateur.
+ * Create a job offer (and optionally an application) from the data of the browser extension.
  */
 final class JobOfferFromExtensionService
 {
@@ -87,7 +87,6 @@ final class JobOfferFromExtensionService
         $jobOffer->setSourceUrl('' !== $input->url ? $input->url : null);
         $jobOffer->setOwner($user);
 
-        // Map rich AI data
         if (!empty($fullData)) {
             $jobOffer->setJobSummary($fullData['job_summary'] ?? null);
             $jobOffer->setRecruiterContactEmail($this->normalizeNullableString($fullData['recruiter_contact_email'] ?? null));

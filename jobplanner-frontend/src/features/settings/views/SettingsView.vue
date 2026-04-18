@@ -85,11 +85,9 @@ watch(mailboxSettings, (values) => {
       }
 }, { immediate: true })
 
-// Auto-detect settings when email changes
 watch(() => mailboxForm.value.imapUser, (newEmail) => {
   if (!newEmail || !newEmail.includes('@')) return
   
-  // Only auto-detect if fields are empty or default to avoid overwriting user manual changes
   if (mailboxForm.value.imapHost && !mailboxForm.value.imapHost.includes('example.com')) return
 
   const config = detectMailConfig(newEmail)
@@ -234,7 +232,6 @@ onMounted(() => {
         </div>
         
         <div v-else-if="!showManualForm" class="grid gap-6 p-8 md:grid-cols-2">
-            <!-- Option 1: Google -->
             <button 
                 class="group relative flex flex-col items-center justify-center rounded-xl border-2 border-border p-8 transition-all hover:border-blue-500 hover:bg-blue-50/50"
                 :class="String(mailboxSettings[0]?.oauthProvider ?? '') === 'google' ? 'border-blue-500' : 'border-border'"
@@ -256,7 +253,6 @@ onMounted(() => {
                 </div>
             </button>
 
-            <!-- Option 2: Microsoft -->
             <button 
                 class="group relative flex flex-col items-center justify-center rounded-xl border-2 border-border p-8 transition-all hover:border-blue-700 hover:bg-blue-50/50"
                 :class="String(mailboxSettings[0]?.oauthProvider ?? '') === 'microsoft' ? 'border-blue-700' : 'border-border'"
@@ -278,7 +274,6 @@ onMounted(() => {
                 </div>
             </button>
 
-            <!-- Option 3: Manual -->
             <button 
                 class="group flex flex-col items-center justify-center rounded-xl border-2 border-border p-8 transition-all hover:border-emerald-500 hover:bg-emerald-50/50"
                 :class="!String(mailboxSettings[0]?.oauthProvider ?? '') ? 'border-emerald-500' : 'border-border'"

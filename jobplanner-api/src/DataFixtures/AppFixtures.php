@@ -132,19 +132,15 @@ final class AppFixtures extends Fixture
     private function createRecruiterEmails(ObjectManager $manager, array $applications): void
     {
         $emailsData = [
-            // INCOMING
             [0, 'marie.dupont@techcorp.fr', 'Convocation entretien technique - Développeur Full Stack', "Bonjour,\n\nNous avons bien reçu votre candidature pour le poste de Développeur Full Stack.\n\nNous vous convions à un entretien technique le 15 février 2025 à 14h.\n\nLien de connexion : https://meet.example.com/techcorp-interview\n\nN'hésitez pas à nous recontacter en cas de question.\n\nCordialement,\nMarie Dupont\nRecruteuse TechCorp SAS", '2025-02-10 09:30:00', 'Convocation entretien technique', 'INCOMING', true, false, false, ['Promising offers']],
             [0, 'marie.dupont@techcorp.fr', 'Re: Candidature Développeur Full Stack', "Bonjour,\n\nVotre profil nous intéresse beaucoup. Nous étudions actuellement les candidatures reçues et reviendrons vers vous sous peu pour un éventuel entretien.\n\nBonne journée,\nMarie", '2025-02-05 14:00:00', 'Accusé de réception positif', 'INCOMING', false, false, false, []],
             [1, 'jean.martin@cloudfactory.io', 'Re: Ingénieur DevOps - Candidature', "Bonjour,\n\nMerci pour votre relance. Nous sommes actuellement en train de finaliser nos recrutements pour le poste d'Ingénieur DevOps.\n\nJe vous recontacterai personnellement la semaine prochaine pour vous donner une réponse plus précise.\n\nBien cordialement,\nJean Martin\nResponsable technique CloudFactory", '2025-02-08 11:15:00', 'Réponse positive en attente', 'INCOMING', false, false, false, ['Work in Progress']],
             [2, 'rh@startuphub.co', 'Re: Lead Developer Vue.js', "Bonjour,\n\nVotre candidature pour le poste de Lead Developer Vue.js a bien été reçue.\n\nNous étudions actuellement tous les dossiers et nous reviendrons vers vous sous 2 semaines maximum.\n\nMerci de votre intérêt pour StartupHub.\n\nL'équipe RH", '2025-02-09 10:00:00', 'Accusé de réception standard', 'INCOMING', false, false, false, []],
 
-            // OUTGOING (Sent)
             [0, 'Me', 'Re: Convocation entretien technique - Développeur Full Stack', "Bonjour Marie,\n\nMerci pour cette invitation. Je vous confirme ma présence pour l'entretien technique le 15 février à 14h.\n\nCordialement,\nSébastien", '2025-02-10 10:00:00', null, 'OUTGOING', false, false, false, []],
 
-            // DRAFT
             [3, 'Me', 'Candidature spontanée', "Bonjour,\n\nJe souhaiterais vous proposer ma candidature pour...", '2025-02-12 12:00:00', null, 'OUTGOING', false, false, true, []],
 
-            // DELETED
             [4, 'newsletter@indeed.com', 'Nouvelles offres d\'emploi', 'Voici les nouvelles offres correspondant à votre profil...', '2025-01-30 08:00:00', 'Newsletter', 'INCOMING', false, true, false, ['Read later']],
         ];
 
@@ -160,7 +156,6 @@ final class AppFixtures extends Fixture
             $email->setReceivedAt(new \DateTimeImmutable($receivedAt));
             $email->setAiSummary($aiSummary);
 
-            // New fields
             $email->setDirection($direction);
             $email->setIsFavourite($isFav);
             $email->setIsDeleted($isDel);

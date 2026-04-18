@@ -53,7 +53,6 @@ final class OpenAiService extends AbstractAiService
                 return $this->buildExtractionResult($decoded, $title, $content, $text);
             }
         } catch (\Throwable) {
-            // fallback
         }
 
         return $this->buildFallbackExtraction($title, $content);
@@ -111,7 +110,6 @@ final class OpenAiService extends AbstractAiService
                 return $decoded;
             }
         } catch (\Throwable) {
-            // fallback
         }
 
         return [

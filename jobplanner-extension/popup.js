@@ -50,7 +50,6 @@ async function syncTokenFromFrontendTab() {
                 return token;
             }
         } catch {
-            // Ignore tabs that do not have the content script yet.
         }
     }
 
@@ -79,7 +78,6 @@ async function validateToken(token) {
             await setToken('');
         }
     } catch {
-        // Network failure: keep the token as-is and let submit handle it.
         return true;
     }
 

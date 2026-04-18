@@ -31,5 +31,4 @@ export interface ApiError {
   }>
 }
 
-// Alias for HydraCollection for easier usage
 export type PaginatedResponse<T> = HydraCollection<T>

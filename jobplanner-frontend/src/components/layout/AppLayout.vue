@@ -48,8 +48,6 @@ const getCurrentRouteApplicationId = (): number | null => {
   return Number.isNaN(routeApplicationId) ? null : routeApplicationId
 }
 
-// Logo path is /logo.png (served from public folder)
-
 const navItems = [
   { name: 'Dashboard', path: '/', icon: LayoutDashboard },
   { name: 'Applications', path: '/applications', icon: Briefcase },
@@ -157,7 +155,6 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="flex h-[100dvh] bg-background text-foreground">
-    <!-- Sidebar -->
     <aside
       class="app-shell paper-panel hidden w-52 flex-col overflow-hidden"
       :class="isSidebarMode ? 'lg:flex' : 'lg:hidden'"
@@ -192,7 +189,6 @@ onBeforeUnmount(() => {
         </RouterLink>
       </nav>
 
-      <!-- User section at bottom -->
       <div class="fixed bottom-0 left-0 right-0 backdrop-blur-sm border-t border-border/70">
         <div class="rounded-[1.5rem]">
           <div class="flex items-center gap-3 rounded-xl border border-border/80 bg-card/90 px-1 py-2 cursor-pointer"  @click="handleLogout">
@@ -211,9 +207,7 @@ onBeforeUnmount(() => {
       </div>
     </aside>
 
-    <!-- Main content -->
     <div class="app-shell paper-panel flex flex-1 flex-col overflow-hidden rounded-[2rem] border border-border/70">
-      <!-- Topbar -->
       <header class="sticky top-0 z-30 border-b border-border/70 bg-background/90 px-6 py-4 backdrop-blur-sm lg:static lg:bg-transparent lg:px-8 lg:py-5 lg:backdrop-blur-none">
         <div class="flex flex-col" :class="showMobileNav ? 'gap-4' : 'gap-0'">
           <div class="flex items-center justify-between gap-4">
@@ -255,7 +249,6 @@ onBeforeUnmount(() => {
         </div>
       </header>
 
-      <!-- Page content -->
       <main ref="mainRef" class="flex-1 overflow-auto px-6 py-6 sm:px-8 sm:py-8">
         <RouterView />
       </main>

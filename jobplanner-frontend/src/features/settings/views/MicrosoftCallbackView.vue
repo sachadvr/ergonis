@@ -23,11 +23,9 @@ onMounted(async () => {
     const result = await settingsApi.confirmMicrosoftAuth(code)
     if (result.success) {
       if (result.token && result.user) {
-        // This is a login flow
         await authStore.completeSocialLogin(result.token, result.user)
         router.push({ name: 'Dashboard' })
       } else {
-        // This is just connecting a mailbox to existing user
         router.push({ name: 'Settings', query: { microsoft_connected: 'true' } })
       }
     } else {

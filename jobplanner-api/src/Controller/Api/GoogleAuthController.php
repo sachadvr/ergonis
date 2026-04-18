@@ -72,7 +72,6 @@ final class GoogleAuthController extends AbstractController
 
             $tokenData = $response->toArray();
 
-            // Get user email from Google to confirm identity
             $userResponse = $this->httpClient->request('GET', 'https://www.googleapis.com/oauth2/v3/userinfo', [
                 'headers' => [
                     'Authorization' => 'Bearer '.$tokenData['access_token'],

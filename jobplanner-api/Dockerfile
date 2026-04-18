@@ -36,7 +36,6 @@ COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 WORKDIR /srv/app
 
-# .env minimal + clés JWT pour le build (exclu par .dockerignore)
 RUN mkdir -p config/jwt && \
     openssl genrsa -out config/jwt/private.pem 4096 && \
     openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem && \

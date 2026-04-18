@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-use App\Entity\RecruiterEmail;
 use App\Entity\ApplicationHistory;
+use App\Entity\RecruiterEmail;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -115,5 +115,4 @@ final readonly class MercureNotificationPublisher
             ]);
         }
     }
-
 }

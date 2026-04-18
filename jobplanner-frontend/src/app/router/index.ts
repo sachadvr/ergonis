@@ -106,11 +106,9 @@ const router = createRouter({
   },
 })
 
-// Auth guard
 router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
   
-  // Try to restore session from localStorage
   await authStore.initialize()
   
   const requiresAuth = to.meta.requiresAuth !== false
@@ -128,7 +126,6 @@ router.afterEach((to) => {
   setDocumentTitle(typeof to.meta.title === 'string' ? to.meta.title : undefined)
 })
 
-// Handle unauthorized event from apiClient without full page reload
 window.addEventListener('auth:unauthorized', () => {
   const authStore = useAuthStore()
   const notificationsStore = useNotificationsStore()

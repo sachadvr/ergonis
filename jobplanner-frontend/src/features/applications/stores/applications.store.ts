@@ -16,13 +16,11 @@ import {
  * Manages the state of job applications
  */
 export const useApplicationsStore = defineStore('applications', () => {
-  // State
   const applications = ref<Application[]>([])
   const currentApplication = ref<Application | null>(null)
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
-  // Computed - Group applications by status for Kanban view
   const applicationsByStatus = computed(() => {
     const grouped: Record<Application['status'], Application[]> = {
       wishlist: [],
@@ -42,7 +40,6 @@ export const useApplicationsStore = defineStore('applications', () => {
     return grouped
   })
 
-  // Computed - Statistics
   const stats = computed(() => ({
     total: applications.value.length,
     wishlist: applications.value.filter((a) => a.status === 'wishlist').length,
@@ -53,7 +50,6 @@ export const useApplicationsStore = defineStore('applications', () => {
     accepted: applications.value.filter((a) => a.status === 'accepted').length,
   }))
 
-  // Actions
   /**
    * Fetch all applications
    */
@@ -143,13 +139,11 @@ export const useApplicationsStore = defineStore('applications', () => {
         updatedApplication.interviewPrep = updatedApplication.jobOffer.interviewPrep
       }
       
-      // Update in the list
       const index = applications.value.findIndex((a) => a.id === id)
       if (index !== -1) {
         applications.value[index] = updatedApplication
       }
 
-      // Update current if it's the same
       if (currentApplication.value?.id === id) {
         currentApplication.value = updatedApplication
       }
@@ -173,10 +167,8 @@ export const useApplicationsStore = defineStore('applications', () => {
       error.value = null
       await applicationsApi.delete(String(id))
       
-      // Remove from list
       applications.value = applications.value.filter((a) => a.id !== id)
 
-      // Clear current if it's the same
       if (currentApplication.value?.id === id) {
         currentApplication.value = null
       }
@@ -337,17 +329,12 @@ export const useApplicationsStore = defineStore('applications', () => {
   }
 
   return {
-    // State
     applications,
     currentApplication,
     isLoading,
     error,
-
-    // Computed
     applicationsByStatus,
     stats,
-
-    // Actions
     fetchApplications,
     fetchApplicationById,
     createApplication,

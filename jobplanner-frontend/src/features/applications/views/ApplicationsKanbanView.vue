@@ -17,7 +17,6 @@ const applicationsStore = useApplicationsStore()
 const router = useRouter()
 const { applicationsByStatus, isLoading } = storeToRefs(applicationsStore)
 
-// Dialog state
 const isDialogOpen = ref(false)
 const editingApplication = ref<Application | null>(null)
 const isInterviewDialogOpen = ref(false)
@@ -33,7 +32,6 @@ const handleNewApplication = (): void => {
 }
 
 const handleDialogSuccess = (): void => {
-  // Refresh applications after successful create/update
   applicationsStore.fetchApplications()
 }
 
@@ -115,7 +113,6 @@ const handleConfirmInterviewDate = async (): Promise<void> => {
 }
 
 
-// Column definitions
 const columns: Array<{
   title: string
   status: Application['status']
@@ -128,7 +125,6 @@ const columns: Array<{
   { title: 'Accepted', status: 'accepted' },
 ]
 
-// Handle drag & drop move
 const handleMove = async (
   applicationId: number,
   _fromStatus: Application['status'],
@@ -146,7 +142,6 @@ const handleMove = async (
   }
 }
 
-// Fetch applications on mount
 onMounted(() => {
   applicationsStore.fetchApplications()
 })
@@ -154,7 +149,6 @@ onMounted(() => {
 
 <template>
   <div class="flex h-full flex-col gap-6">
-    <!-- Header -->
     <Card>
       <CardContent class="flex flex-col gap-6 p-8 lg:flex-row lg:items-end lg:justify-between">
       <div>
@@ -182,7 +176,6 @@ onMounted(() => {
       </CardContent>
     </Card>
 
-    <!-- Loading State -->
     <div
       v-if="isLoading && !applicationsByStatus"
       class="flex h-64 items-center justify-center"
@@ -193,7 +186,6 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Kanban Board -->
     <div
       v-else
       class="grid flex-1 grid-cols-1 gap-4 overflow-x-auto pb-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"
@@ -209,7 +201,6 @@ onMounted(() => {
       />
     </div>
 
-    <!-- Application Form Dialog -->
     <ApplicationFormDialog
       :open="isDialogOpen"
       :application="editingApplication"

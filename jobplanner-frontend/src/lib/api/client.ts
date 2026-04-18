@@ -27,12 +27,10 @@ export const apiClient = ofetch.create({
   },
 
   async onResponseError({ response }) {
-    // ofetch already parses the body and puts it in _data for errors
     const body = response._data || (response.bodyUsed ? {} : await response.clone().json().catch(() => ({})))
     
     if (response.status === 401 || body.code === 401) {
       localStorage.removeItem('auth_token')
-      // Use a custom event so the Vue router handles the redirect without a full page reload
       window.dispatchEvent(new CustomEvent('auth:unauthorized'))
       
       const error = new Error(body.message || body.detail || body.error || 'Unauthorized')

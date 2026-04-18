@@ -27,7 +27,6 @@ const handleApplicationClick = (application: Application): void => {
 
 const columnRef = ref<HTMLElement | null>(null)
 
-// Color variants for column headers
 const colorVariants: Record<string, string> = {
   wishlist: 'bg-stone-500/10 text-stone-700',
   applied: 'bg-sky-500/12 text-sky-700',
@@ -39,7 +38,6 @@ const colorVariants: Record<string, string> = {
 
 const headerColorClass = computed(() => colorVariants[props.status] || colorVariants.default)
 
-// Initialize sortable for drag & drop
 useSortable(columnRef, props.applications, {
   animation: 200,
   group: 'kanban',
@@ -59,7 +57,6 @@ useSortable(columnRef, props.applications, {
 
 <template>
   <div class="flex h-full flex-col rounded-[1.75rem] border border-border/80 bg-card/70 shadow-sm">
-    <!-- Column Header -->
     <div class="sticky top-0 z-20 bg-white pt-0.5">
       <div class="flex items-center justify-between gap-2 rounded-t-[1.75rem] border-b border-border/80 px-5 py-4">
         <div class="flex items-center gap-2">
@@ -71,7 +68,6 @@ useSortable(columnRef, props.applications, {
       </div>
     </div>
 
-    <!-- Cards Container -->
     <div
       ref="columnRef"
       :data-status="status"
@@ -89,7 +85,6 @@ useSortable(columnRef, props.applications, {
         />
       </div>
 
-      <!-- Empty State -->
       <div
         v-if="applications.length === 0"
         class="flex h-32 items-center justify-center rounded-[1.25rem] border-2 border-dashed border-border/60 bg-secondary/30 text-sm text-muted-foreground"
@@ -101,7 +96,6 @@ useSortable(columnRef, props.applications, {
 </template>
 
 <style scoped>
-/* Custom scrollbar for the column */
 .overflow-y-auto::-webkit-scrollbar {
   width: 6px;
 }

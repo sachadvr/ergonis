@@ -100,7 +100,6 @@ export const applicationsApi = {
     const response = await this.getAll()
     const applications = response.member || response['hydra:member'] || []
 
-    // Group by status
     return applications.reduce(
       (acc, app) => {
         if (!acc[app.status]) {

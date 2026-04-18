@@ -20,7 +20,6 @@ const handleClick = (): void => {
   emit('click', props.application)
 }
 
-// Get badge variant based on status
 const companyToneClass = computed(() => {
   const tones: Record<Application['status'], string> = {
     wishlist: 'bg-secondary text-secondary-foreground',
@@ -34,13 +33,11 @@ const companyToneClass = computed(() => {
   return tones[props.application.status]
 })
 
-// Format date
 const formattedDate = computed(() => {
   if (!props.application.appliedAt) return null
   return format(new Date(props.application.appliedAt), 'MMM d, yyyy')
 })
 
-// Format salary
 const formattedSalary = computed(() => {
   if (!props.application.salaryMin && !props.application.salaryMax) return null
   
@@ -79,22 +76,17 @@ const isNew = computed(() => {
     </CardHeader>
     
     <CardContent class="space-y-3">
-      <!-- Company -->
       
-      
-      <!-- Location -->
       <div v-if="application.location" class="flex items-center gap-2 text-sm text-muted-foreground">
         <MapPin :size="16" class="shrink-0" />
         <span class="truncate">{{ application.location }}</span>
       </div>
       
-      <!-- Salary -->
       <div v-if="formattedSalary" class="flex items-center gap-2 text-sm text-muted-foreground">
         <DollarSign :size="16" class="shrink-0" />
         <span>{{ formattedSalary }}</span>
       </div>
       
-      <!-- Applied Date -->
       <div v-if="formattedDate" class="flex items-center gap-2 text-sm text-muted-foreground">
         <Calendar :size="16" class="shrink-0" />
         <span>{{ formattedDate }}</span>

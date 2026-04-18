@@ -75,7 +75,7 @@ class RecruiterEmail
 
     #[ORM\Column(type: 'string', length: 20)]
     #[Groups(['recruiter_email:read', 'recruiter_email:write', 'application:read'])]
-    private string $direction = 'INCOMING'; // INCOMING, OUTGOING
+    private string $direction = 'INCOMING';
 
     #[ORM\Column(type: 'boolean')]
     #[Groups(['recruiter_email:read', 'recruiter_email:write', 'application:read'])]

@@ -103,7 +103,6 @@ final class OllamaService extends AbstractAiService
                 return $decoded;
             }
         } catch (\Throwable) {
-            // fallback
         }
 
         return [

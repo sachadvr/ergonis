@@ -9,7 +9,6 @@ export function transformJsonLd<T>(data: any): T {
   if (data && typeof data === 'object') {
     const transformed: any = {}
 
-    // Handle collection payloads
     if (data.member) {
       return transformJsonLd(data.member) as T
     }
@@ -18,7 +17,6 @@ export function transformJsonLd<T>(data: any): T {
       return transformJsonLd(data['hydra:member']) as T
     }
 
-    // Remove @context, @id, @type
     Object.keys(data).forEach((key) => {
       if (key.startsWith('@') || key.startsWith('hydra:')) {
         return
@@ -26,7 +24,6 @@ export function transformJsonLd<T>(data: any): T {
       transformed[key] = transformJsonLd(data[key])
     })
 
-    // Extract ID from IRI if present
     if (data['@id']) {
       const match = data['@id'].match(/\/(\d+)$/)
       if (match) {

@@ -69,7 +69,6 @@ final class MicrosoftAuthController extends AbstractController
 
             $tokenData = $response->toArray();
 
-            // Get user email from id_token (more reliable than calling Graph when using legacy scopes)
             $email = null;
             if (isset($tokenData['id_token'])) {
                 $parts = explode('.', $tokenData['id_token']);
@@ -81,7 +80,6 @@ final class MicrosoftAuthController extends AbstractController
 
             if (!$email) {
                 try {
-                    // Fallback to Microsoft Graph if id_token is missing or lacks email
                     $userResponse = $this->httpClient->request('GET', 'https://graph.microsoft.com/v1.0/me', [
                         'headers' => [
                             'Authorization' => 'Bearer '.$tokenData['access_token'],

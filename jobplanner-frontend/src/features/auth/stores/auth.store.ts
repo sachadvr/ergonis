@@ -5,17 +5,14 @@ import { apiClient } from '@/lib/api/client'
 import { API_ENDPOINTS } from '@/lib/constants/api.constants'
 
 export const useAuthStore = defineStore('auth', () => {
-  // State
   const user = ref<User | null>(null)
   const token = ref<string | null>(localStorage.getItem('auth_token'))
   const isLoading = ref(false)
   const error = ref<Error | null>(null)
   const isInitialized = ref(false)
 
-  // Getters
   const isAuthenticated = computed(() => !!token.value && !!user.value)
 
-  // Actions
   const login = async (email: string, password: string) => {
     try {
       isLoading.value = true
@@ -29,7 +26,6 @@ export const useAuthStore = defineStore('auth', () => {
       token.value = response.token
       localStorage.setItem('auth_token', response.token)
 
-      // Fetch user data
       await fetchMe()
     } catch (e) {
       error.value = e as Error
@@ -49,7 +45,6 @@ export const useAuthStore = defineStore('auth', () => {
         body: { email, password },
       })
 
-      // Auto-login after registration
       await login(email, password)
     } catch (e) {
       error.value = e as Error
@@ -70,15 +65,12 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const initialize = async () => {
-    // Only initialize once
     if (isInitialized.value) return
     
-    // If we have a token but no user, try to fetch the user
     if (token.value && !user.value) {
       try {
         await fetchMe()
       } catch (e) {
-        // If fetching user fails, clear the invalid token
         logout()
       }
     }
@@ -109,16 +101,13 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   return {
-    // State
     user,
     token,
     isLoading,
     error,
 
-    // Getters
     isAuthenticated,
 
-    // Actions
     login,
     register,
     fetchMe,

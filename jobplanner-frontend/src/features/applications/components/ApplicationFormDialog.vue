@@ -37,7 +37,6 @@ const emit = defineEmits<{
 const applicationsStore = useApplicationsStore()
 const { isLoading } = storeToRefs(applicationsStore)
 
-// Form state
 const formData = ref<ApplicationFormValues>({
   jobTitle: '',
   companyName: '',
@@ -56,7 +55,6 @@ const formData = ref<ApplicationFormValues>({
 const errors = ref<Record<string, string>>({})
 const isSubmitting = ref(false)
 
-// Status options for select
 const statusOptions: SelectOption[] = [
   { value: APPLICATION_STATUSES[0], label: 'Wishlist' },
   { value: APPLICATION_STATUSES[1], label: 'Applied' },
@@ -66,7 +64,6 @@ const statusOptions: SelectOption[] = [
   { value: APPLICATION_STATUSES[5], label: 'Accepted' },
 ]
 
-// Computed
 const isEditMode = computed(() => !!props.application)
 const dialogTitle = computed(() => isEditMode.value ? 'Edit Application' : 'New Application')
 const dialogDescription = computed(() => 
@@ -75,7 +72,6 @@ const dialogDescription = computed(() =>
     : 'Add a new job application to track your progress.'
 )
 
-// Watch for application prop changes (when editing)
 watch(() => props.application, (newApplication) => {
   if (newApplication) {
     formData.value = {
@@ -96,7 +92,6 @@ watch(() => props.application, (newApplication) => {
   }
 }, { immediate: true })
 
-// Reset form when dialog closes
 watch(() => props.open, (isOpen) => {
   if (!isOpen) {
     resetForm()
@@ -215,7 +210,6 @@ const handleDelete = async (): Promise<void> => {
 
       <form @submit.prevent="handleSubmit" class="flex max-h-[calc(85vh-88px)] flex-col">
         <div class="flex-1 space-y-4 overflow-y-auto px-6 py-5">
-        <!-- Job Title -->
         <div class="space-y-2">
           <Label for="jobTitle">Job Title *</Label>
           <Input
@@ -227,7 +221,6 @@ const handleDelete = async (): Promise<void> => {
           <p v-if="errors.jobTitle" class="text-sm text-red-500">{{ errors.jobTitle }}</p>
         </div>
 
-        <!-- Company Name -->
         <div class="space-y-2">
           <Label for="companyName">Company Name *</Label>
           <Input
@@ -239,7 +232,6 @@ const handleDelete = async (): Promise<void> => {
           <p v-if="errors.companyName" class="text-sm text-red-500">{{ errors.companyName }}</p>
         </div>
 
-        <!-- Location & Status (side by side) -->
         <div class="grid gap-4 sm:grid-cols-2">
           <div class="space-y-2">
             <Label for="location">Location</Label>
@@ -261,7 +253,6 @@ const handleDelete = async (): Promise<void> => {
           </div>
         </div>
 
-        <!-- Salary Range (side by side) -->
         <div class="grid gap-4 sm:grid-cols-2">
           <div class="space-y-2">
             <Label for="salaryMin">Minimum Salary (€)</Label>
@@ -286,7 +277,6 @@ const handleDelete = async (): Promise<void> => {
           </div>
         </div>
 
-        <!-- Job URL -->
         <div class="space-y-2">
           <Label for="jobUrl">Job URL</Label>
           <Input
@@ -321,7 +311,6 @@ const handleDelete = async (): Promise<void> => {
           </div>
         </div>
 
-        <!-- Notes -->
         <div class="space-y-2">
           <Label for="notes">Notes</Label>
           <Textarea
@@ -342,7 +331,6 @@ const handleDelete = async (): Promise<void> => {
           />
         </div>
 
-        <!-- Submit Error -->
         <p v-if="errors.submit" class="text-sm text-red-500">{{ errors.submit }}</p>
         </div>
 

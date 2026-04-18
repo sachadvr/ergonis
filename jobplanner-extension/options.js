@@ -123,7 +123,6 @@ document.getElementById('openFrontend').addEventListener('click', async () => {
                 return;
             }
         } catch {
-            // Ignore tabs that are not ready yet.
         }
     }
 
