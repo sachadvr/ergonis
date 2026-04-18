@@ -11,8 +11,8 @@ use App\Entity\User;
 use App\Service\Ai\AiServiceInterface;
 use App\Service\Ai\AnthropicService;
 use App\Service\CompanyExtractor;
-use Symfony\Contracts\HttpClient\ResponseInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 final class AnthropicServiceTest extends AiServiceTestBase
 {

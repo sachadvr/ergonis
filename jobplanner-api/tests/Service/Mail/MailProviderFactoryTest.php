@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Service\Mail;
 
 use App\Entity\UserMailboxSettings;
+use App\Security\MailboxSecretEncryptor;
 use App\Service\Mail\EmailMessageMapper;
 use App\Service\Mail\MailboxSettingsProviderInterface;
 use App\Service\Mail\MailProviderFactory;
@@ -13,7 +14,6 @@ use App\Service\Mail\Provider\ImapMailProvider;
 use App\Service\Mail\Provider\MailpitMailProvider;
 use App\Service\Mail\Provider\MicrosoftOAuthMailProvider;
 use App\Service\Mail\TokenRefreshService;
-use App\Security\MailboxSecretEncryptor;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;

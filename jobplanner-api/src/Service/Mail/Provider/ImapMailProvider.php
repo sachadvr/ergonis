@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Service\Mail\Provider;
 
 use App\Entity\UserMailboxSettings;
-use App\Service\Mail\EmailMessageMapper;
 use App\Security\MailboxSecretEncryptor;
+use App\Service\Mail\EmailMessageMapper;
 use Psr\Log\LoggerInterface;
 use Webklex\PHPIMAP\Client;
 

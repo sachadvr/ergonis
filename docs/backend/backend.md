@@ -30,6 +30,7 @@ Backend = Symfony 8 + API Platform.
 - IMAP pour lire mail entrant.
 - SMTP pour envoyer mail sortant.
 - OAuth supporte Google et Microsoft.
+- Secrets mailbox chiffrés au repos via `MAILBOX_ENCRYPTION_KEY`.
 
 ## Async
 - Transport `async` = doctrine queue `async`.

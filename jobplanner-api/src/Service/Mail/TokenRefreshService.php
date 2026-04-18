@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Service\Mail;
 
 use App\Entity\UserMailboxSettings;
-use Doctrine\ORM\EntityManagerInterface;
 use App\Security\MailboxSecretEncryptor;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 

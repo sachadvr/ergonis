@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Service\Mail;
 
 use App\Entity\UserMailboxSettings;
-use App\Service\Mail\TokenRefreshService;
 use App\Security\MailboxSecretEncryptor;
+use App\Service\Mail\TokenRefreshService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;

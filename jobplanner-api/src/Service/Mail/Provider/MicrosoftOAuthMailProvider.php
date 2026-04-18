@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Service\Mail\Provider;
 
 use App\Entity\UserMailboxSettings;
+use App\Security\MailboxSecretEncryptor;
 use App\Service\Mail\EmailMessageMapper;
 use App\Service\Mail\TokenRefreshService;
-use App\Security\MailboxSecretEncryptor;
 use Psr\Log\LoggerInterface;
 
 final class MicrosoftOAuthMailProvider extends AbstractOAuthMailProvider

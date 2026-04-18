@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Service\Mail;
 
 use App\Entity\UserMailboxSettings;
+use App\Security\MailboxSecretEncryptor;
 use App\Service\Mail\Provider\GoogleOAuthMailProvider;
 use App\Service\Mail\Provider\ImapMailProvider;
 use App\Service\Mail\Provider\MailpitMailProvider;
 use App\Service\Mail\Provider\MicrosoftOAuthMailProvider;
-use App\Security\MailboxSecretEncryptor;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 

@@ -158,13 +158,35 @@ final class MercureNotificationPublisherTest extends TestCase
     public function testPublishRecruiterEmailLogsWhenHubRejectsNotification(): void
     {
         $httpClient = $this->createMock(HttpClientInterface::class);
-        $response = new class implements ResponseInterface {
-            public function getStatusCode(): int { return 500; }
-            public function getHeaders(bool $throw = true): array { return []; }
-            public function getContent(bool $throw = true): string { return ''; }
-            public function toArray(bool $throw = true): array { return []; }
-            public function cancel(): void { }
-            public function getInfo(?string $type = null): mixed { return null; }
+        $response = new class() implements ResponseInterface {
+            public function getStatusCode(): int
+            {
+                return 500;
+            }
+
+            public function getHeaders(bool $throw = true): array
+            {
+                return [];
+            }
+
+            public function getContent(bool $throw = true): string
+            {
+                return '';
+            }
+
+            public function toArray(bool $throw = true): array
+            {
+                return [];
+            }
+
+            public function cancel(): void
+            {
+            }
+
+            public function getInfo(?string $type = null): mixed
+            {
+                return null;
+            }
         };
 
         $httpClient->expects($this->once())->method('request')->willReturn($response);

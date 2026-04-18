@@ -13,5 +13,9 @@
 - Sync lit emails, matche candidature, sauve `RecruiterEmail`.
 - Mail deja vu saute via `messageId`.
 
+## Secrets
+- `UserMailboxSettings` secrets sont chiffrés au repos avec `MAILBOX_ENCRYPTION_KEY`.
+- Frontend ne recoit plus passwords/tokens en lecture.
+
 ## Dev
 - Mailpit simplifie test local.
