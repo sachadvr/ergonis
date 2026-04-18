@@ -25,7 +25,6 @@ final class SendInterviewRemindersCommand extends Command
         private readonly InterviewRepository $interviewRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly UserMailerService $userMailerService,
-        private readonly string $simulationMode = 'true',
     ) {
         parent::__construct();
     }
@@ -45,11 +44,6 @@ final class SendInterviewRemindersCommand extends Command
             $io->success('No reminder to send.');
 
             return Command::SUCCESS;
-        }
-
-        $isSimulation = filter_var($this->simulationMode, \FILTER_VALIDATE_BOOLEAN);
-        if ($isSimulation) {
-            $io->note('Simulation mode: no email will be sent.');
         }
 
         foreach ($interviews as $interview) {
@@ -81,14 +75,12 @@ final class SendInterviewRemindersCommand extends Command
             }
             $body .= "\n\nGood preparation!";
 
-            if (!$isSimulation) {
-                $email = (new Email())
-                    ->from($from)
-                    ->to($to)
-                    ->subject("Interview reminder: {$offerTitle} - {$company}")
-                    ->text($body);
-                $this->userMailerService->send((int) $owner->getId(), $email);
-            }
+            $email = (new Email())
+                ->from($from)
+                ->to($to)
+                ->subject("Interview reminder: {$offerTitle} - {$company}")
+                ->text($body);
+            $this->userMailerService->send((int) $owner->getId(), $email);
 
             $interview->setReminderSent(true);
             $io->text("  → {$offerTitle} at {$company} ({$dateStr})");

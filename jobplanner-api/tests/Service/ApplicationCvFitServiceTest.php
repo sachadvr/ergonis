@@ -11,16 +11,16 @@ use App\Entity\User;
 use App\Service\Ai\AiServiceInterface;
 use App\Service\ApplicationCvFitService;
 use App\Service\PdfTextExtractor;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use App\Tests\Support\TestEntityHelpers;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-#[AllowMockObjectsWithoutExpectations]
 final class ApplicationCvFitServiceTest extends TestCase
 {
+    use TestEntityHelpers;
+
     private PdfTextExtractor&MockObject $pdfTextExtractor;
     private AiServiceInterface&MockObject $aiService;
     private ApplicationCvFitService $service;
@@ -75,6 +75,9 @@ final class ApplicationCvFitServiceTest extends TestCase
         $jobOffer = $this->createJobOffer(20);
         $application = $this->createApplication(30, $owner, $jobOffer);
 
+        $this->pdfTextExtractor->expects($this->never())->method('extract');
+        $this->aiService->expects($this->never())->method('analyzeApplicationFit');
+
         $this->expectException(NotFoundHttpException::class);
 
         $this->service->analyze($application, $otherUser, $this->createPdfUpload());
@@ -86,6 +89,9 @@ final class ApplicationCvFitServiceTest extends TestCase
         $jobOffer = $this->createJobOffer(20);
         $application = $this->createApplication(30, $owner, $jobOffer);
 
+        $this->pdfTextExtractor->expects($this->never())->method('extract');
+        $this->aiService->expects($this->never())->method('analyzeApplicationFit');
+
         $this->expectException(BadRequestHttpException::class);
 
         $this->service->analyze($application, $owner, $this->createPdfUpload('cv.txt', 'text/plain', 'plain text'));
@@ -96,7 +102,7 @@ final class ApplicationCvFitServiceTest extends TestCase
         $application = new Application();
         $application->setJobOffer($jobOffer);
         $application->setOwner($owner);
-        $this->setId($application, $id);
+        $this->setEntityId($application, $id);
 
         return $application;
     }
@@ -106,7 +112,7 @@ final class ApplicationCvFitServiceTest extends TestCase
         $jobOffer = new JobOffer();
         $jobOffer->setTitle('Backend Engineer');
         $jobOffer->setCompany('Acme');
-        $this->setId($jobOffer, $id);
+        $this->setEntityId($jobOffer, $id);
 
         return $jobOffer;
     }
@@ -116,26 +122,8 @@ final class ApplicationCvFitServiceTest extends TestCase
         $user = new User();
         $user->setEmail($email);
         $user->setPassword('secret');
-        $this->setId($user, $id);
+        $this->setEntityId($user, $id);
 
         return $user;
-    }
-
-    private function createPdfUpload(string $name = 'cv.pdf', string $mimeType = 'application/pdf', string $content = '%PDF-1.4'): UploadedFile
-    {
-        $path = tempnam(sys_get_temp_dir(), 'jobplanner_cv_');
-        if (false === $path) {
-            self::fail('Unable to create temp file');
-        }
-
-        file_put_contents($path, $content);
-
-        return new UploadedFile($path, $name, $mimeType, null, true);
-    }
-
-    private function setId(object $entity, int $id): void
-    {
-        $reflection = new \ReflectionProperty($entity, 'id');
-        $reflection->setValue($entity, $id);
     }
 }

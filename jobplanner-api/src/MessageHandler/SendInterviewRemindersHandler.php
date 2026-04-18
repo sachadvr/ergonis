@@ -18,14 +18,12 @@ final readonly class SendInterviewRemindersHandler
         private InterviewRepository $interviewRepository,
         private EntityManagerInterface $entityManager,
         private UserMailerService $userMailerService,
-        private string $simulationMode = 'true',
     ) {
     }
 
     public function __invoke(SendInterviewRemindersMessage $message): void
     {
         $interviews = $this->interviewRepository->findUpcomingNeedingReminder(24);
-        $isSimulation = filter_var($this->simulationMode, \FILTER_VALIDATE_BOOLEAN);
 
         foreach ($interviews as $interview) {
             $app = $interview->getApplication();
@@ -48,14 +46,12 @@ final readonly class SendInterviewRemindersHandler
                 $body .= "\n\nLink: ".$interview->getLocationOrLink();
             }
 
-            if (!$isSimulation) {
-                $email = (new Email())
-                    ->from($from)
-                    ->to($to)
-                    ->subject("Reminder: interview on {$jobOffer->getTitle()}")
-                    ->text($body);
-                $this->userMailerService->send((int) $owner->getId(), $email);
-            }
+            $email = (new Email())
+                ->from($from)
+                ->to($to)
+                ->subject("Reminder: interview on {$jobOffer->getTitle()}")
+                ->text($body);
+            $this->userMailerService->send((int) $owner->getId(), $email);
 
             $interview->setReminderSent(true);
         }

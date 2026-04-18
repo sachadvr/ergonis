@@ -16,7 +16,6 @@ final readonly class FollowUpProcessorService
         private EntityManagerInterface $entityManager,
         private AiServiceInterface $aiService,
         private UserMailerService $userMailerService,
-        private string $simulationMode = 'true',
     ) {
     }
 
@@ -40,25 +39,18 @@ final readonly class FollowUpProcessorService
             $followUp->setGeneratedContent($content);
         }
 
-        $isSimulation = filter_var($this->simulationMode, \FILTER_VALIDATE_BOOLEAN);
-        if (!$isSimulation) {
-            $owner = $application->getOwner();
-            if (null === $owner || null === $owner->getId()) {
-                throw new \RuntimeException('No owner found for follow-up '.$followUp->getId());
-            }
-
-            $from = $owner->getUserIdentifier();
-
-            $subject = 'Re: Application for '.$jobOffer->getTitle();
-
-            $email = (new Email())
-                ->from($from)
-                ->to($to)
-                ->subject($subject)
-                ->text($content);
-
-            $this->userMailerService->send((int) $owner->getId(), $email);
+        $owner = $application->getOwner();
+        if (null === $owner || null === $owner->getId()) {
+            throw new \RuntimeException('No owner found for follow-up '.$followUp->getId());
         }
+
+        $email = (new Email())
+            ->from($owner->getUserIdentifier())
+            ->to($to)
+            ->subject('Re: Application for '.$jobOffer->getTitle())
+            ->text($content);
+
+        $this->userMailerService->send((int) $owner->getId(), $email);
 
         $followUp->setStatus(ScheduledFollowUp::STATUS_SENT);
         $this->entityManager->flush();

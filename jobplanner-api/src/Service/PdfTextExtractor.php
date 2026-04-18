@@ -9,6 +9,11 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class PdfTextExtractor
 {
+    public function __construct(
+        private readonly PdfCommandRunner $commandRunner,
+    ) {
+    }
+
     public function extract(UploadedFile $file): string
     {
         $inputPath = $file->getPathname();
@@ -29,7 +34,7 @@ class PdfTextExtractor
 
         $output = [];
         $exitCode = 0;
-        exec($command, $output, $exitCode);
+        $this->commandRunner->run($command, $output, $exitCode);
 
         if (0 !== $exitCode || !is_file($outputPath)) {
             @unlink($outputPath);

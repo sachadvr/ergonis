@@ -7,6 +7,7 @@ namespace App\Mailer;
 use App\Entity\UserMailboxSettings;
 use App\Repository\UserMailboxSettingsRepository;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
 
 final readonly class UserMailerService
@@ -34,8 +35,8 @@ final readonly class UserMailerService
 
         $this->logger->info('Email sent via user SMTP', [
             'userId' => $userId,
-            'from' => $email->getFrom()[0] ?? 'unknown',
-            'to' => implode(',', $email->getTo()),
+            'from' => ($email->getFrom()[0] ?? null)?->toString() ?? 'unknown',
+            'to' => implode(',', array_map(static fn (Address $address) => $address->toString(), $email->getTo())),
             'subject' => $email->getSubject(),
         ]);
     }

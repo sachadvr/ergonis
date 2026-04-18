@@ -3,15 +3,30 @@ name: Docker Build
 on:
   push:
     branches:
-      - master
+      - '**'
 
 permissions:
   contents: read
 
 jobs:
+  test-api:
+    name: Test API
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Start API dependencies
+        run: docker compose up -d database mercure
+
+      - name: Run API tests
+        run: docker compose run --rm api php bin/phpunit --configuration phpunit.dist.xml
+
   build:
     name: Build ${{ matrix.service }} image
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
     strategy:
       fail-fast: false
       matrix:

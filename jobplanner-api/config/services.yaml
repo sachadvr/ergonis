@@ -7,7 +7,6 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
-    default_simulation_mode: 'true'
     default_ai_provider: 'null'
     openai_key: ''
     openai_model: 'gpt-4o-mini'
@@ -88,21 +87,9 @@ services:
             $mailpitUrl: '%mailpit_url%'
 
     App\Service\FollowUpProcessorService:
-        arguments:
-            $simulationMode: '%env(default:default_simulation_mode:SIMULATION_MODE)%'
-
     App\Command\SendInterviewRemindersCommand:
-        arguments:
-            $simulationMode: '%env(default:default_simulation_mode:SIMULATION_MODE)%'
-
     App\MessageHandler\SendInterviewRemindersHandler:
-        arguments:
-            $simulationMode: '%env(default:default_simulation_mode:SIMULATION_MODE)%'
-
     App\Controller\Api\ConfigController:
-        arguments:
-            $simulationMode: '%env(default:default_simulation_mode:SIMULATION_MODE)%'
-
     App\Controller\Api\GoogleAuthController:
         arguments:
             $googleClientId: '%google_client_id%'
