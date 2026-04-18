@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-const BASE_URL = process.env.FRONTEND_URL
+const BASE_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
 
 test.describe('API Error Handling', () => {
   test('should display error message on login failure', async ({ page }) => {

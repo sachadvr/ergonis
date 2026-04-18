@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-const BASE_URL = process.env.FRONTEND_URL
+const BASE_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
 
 test.describe('Protected Routes', () => {
   test('should redirect to login when accessing dashboard without auth', async ({ page }) => {

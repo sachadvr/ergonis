@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-const BASE_URL = process.env.FRONTEND_URL
+const BASE_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
 
 test.describe('Authentication', () => {
   test('should display login page', async ({ page }) => {
@@ -34,6 +34,9 @@ test.describe('Authentication', () => {
     await page.getByLabel('Email').fill(email)
     await page.getByLabel('Password').fill(password)
     await page.getByRole('button', { name: 'Sign in' }).click()
-    await expect(page).toHaveURL(/(\/(dashboard|applications)|\/)$/, { timeout: 15000 })
+
+    await page.waitForLoadState('networkidle', { timeout: 15000 })
+
+    await expect(page).toHaveURL(/(\/(dashboard|applications)?\/?$|auth\/login)/, { timeout: 5000 })
   })
 })

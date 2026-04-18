@@ -11,9 +11,10 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
+    allowedHosts: ['frontend', 'host.docker.internal', 'api'],
     proxy: {
       '/api': {
-        target: 'http://host.docker.internal:8000',
+        target: 'http://api:8000',
         changeOrigin: true,
       },
     },

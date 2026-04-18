@@ -8,8 +8,9 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'list',
   use: {
-    baseURL: process.env.FRONTEND_URL,
+    baseURL: process.env.FRONTEND_URL || 'http://localhost:5173',
     trace: 'on-first-retry',
+    channel: 'chromium',
   },
   projects: [
     {
@@ -17,10 +18,4 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: {
-    command: 'npm run dev',
-    url: process.env.FRONTEND_URL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
-  },
 })
