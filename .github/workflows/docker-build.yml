@@ -15,6 +15,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup environment
+        run: cp .env.example jobplanner-api/.env
+
       - name: Start API dependencies
         run: docker compose -f compose.test.yaml up -d database mercure
 
@@ -40,8 +43,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build and push ${{ matrix.service }} image
+      - name: Setup environment
+        run: cp .env.example jobplanner-api/.env
+
+      - name: Build ${{ matrix.service }} image
+        run: docker build --platform linux/amd64 -f "${{ matrix.dockerfile }}" -t "jobplanner-${{ matrix.service }}:ci" "${{ matrix.context }}"
+
+      - name: Push ${{ matrix.service }} image
+        if: github.ref == 'refs/heads/master'
         run: |
-          docker build --platform linux/amd64 -f "${{ matrix.dockerfile }}" -t "jobplanner-${{ matrix.service }}:ci" "${{ matrix.context }}"
-          echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-          docker push "jobplanner-${{ matrix.service }}:ci"
+          if [ -n "${{ secrets.DOCKER_HUB_TOKEN }}" ]; then
+            echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+            docker push "jobplanner-${{ matrix.service }}:ci"
+          else
+            echo "DOCKER_HUB_TOKEN not set, skipping push"
+          fi
