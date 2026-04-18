@@ -10,7 +10,7 @@ PLATFORM = linux/amd64
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build build-frontend build-backend push push-frontend push-backend release-frontend release-backend csfix
+.PHONY: help build build-frontend build-backend push push-frontend push-backend release-frontend release-backend csfix e2e e2e-ui
 
 help:
 	@echo "Available commands:"
@@ -23,6 +23,8 @@ help:
 	@echo "  make release-frontend   Build + push frontend"
 	@echo "  make release-backend    Build + push backend"
 	@echo "  make csfix              Run PHP CS Fixer"
+	@echo "  make e2e                Run E2E tests"
+	@echo "  make e2e-ui             Run E2E tests with UI"
 
 build: build-frontend build-backend
 
@@ -50,5 +52,11 @@ release-backend:
 
 csfix:
 	docker run --rm -v $$(pwd):/app cytopia/php-cs-fixer fix --config=/app/jobplanner-api/.php-cs-fixer.php
+
+e2e:
+	cd $(FRONTEND_DIR) && FRONTEND_URL=$(FRONTEND_URL) npm run test:e2e
+
+e2e-ui:
+	cd $(FRONTEND_DIR) && FRONTEND_URL=$(FRONTEND_URL) npm run test:e2e-ui
 
 release: release-frontend release-backend
