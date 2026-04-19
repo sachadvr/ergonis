@@ -68,6 +68,12 @@ services:
   api:
     image: sachadvr/jobplanner
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     environment:
       APP_ENV: prod
       APP_DEBUG: "0"
@@ -177,7 +183,8 @@ services:
     image: sachadvr/jobplanner-front
     restart: unless-stopped
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     labels:
       - traefik.enable=true
       - traefik.http.routers.front.rule=Host(`ergonis.app`)
