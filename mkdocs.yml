@@ -1,0 +1,30 @@
+site_name: JobPlanner Docs
+site_description: Documentation for JobPlanner project
+site_url: https://sduvivier.github.io/JobPlanner
+
+theme:
+  name: material
+
+nav:
+  - Overview: index.md
+  - Architecture: overview/architecture.md
+  - Frontend:
+      - frontend/frontend.md
+      - frontend/extension.md
+  - Backend:
+      - backend/backend.md
+      - backend/api.md
+      - backend/data-model.md
+      - backend/flux.md
+      - backend/security.md
+      - backend/realtime.md
+      - backend/mail.md
+      - backend/ai.md
+  - Dev: dev/dev.md
+
+markdown_extensions:
+  - admonition
+  - codehilite:
+      guess_lang: false
+  - toc:
+      permalink: true
