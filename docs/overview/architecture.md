@@ -13,15 +13,7 @@ JobPlanner tourne en 3 blocs.
 - Mercure pour push temps reel.
 - Messenger pour traitement async.
 
-## Donnees
-- `User` : compte candidat.
-- `JobOffer` : offre capturee.
-- `Application` : lien user + offre.
-- `RecruiterEmail` : mail entrant relie a candidature.
-- `FollowUpRule` / `ScheduledFollowUp` : relances auto.
-- `Interview` : rendez-vous.
-- `ApplicationHistory` : trace actions.
-- `AiGenerationLog` : traces IA.
+[Data model](../backend/data-model.md)
 
 ## Infra locale
 - PostgreSQL.

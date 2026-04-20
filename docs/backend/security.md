@@ -13,5 +13,9 @@
 - `POST /api/mercure/token` donne cookie subscribe.
 - Topic user = `urn:jobplanner:user:{id}:notifications`.
 
+# UserMailboxSettings
+- `UserMailboxSettings` secrets sont chiffrés au repos avec `MAILBOX_ENCRYPTION_KEY`.
+- Frontend ne recoit plus passwords/tokens en lecture.
+
 ## Tests
-- En test, hash password moins cher.
+- Des tests e2e coté front & Tests phpunit coté api sont présents afin de tester le projet

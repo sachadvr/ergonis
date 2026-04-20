@@ -13,7 +13,7 @@ JobPlanner = suivi candidature.
 - `backend/mail.md` : IMAP, SMTP, OAuth, sync.
 - `backend/realtime.md` : Mercure et notifs.
 - `frontend/frontend.md` : pages, stores, et flux UI.
-- `frontend/extension.md` : role extension navigateur.
+- `extension/extension.md` : role extension navigateur.
 - `dev/dev.md` : run local, services, commandes.
 
 ## Resume

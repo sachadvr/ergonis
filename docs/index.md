@@ -1,6 +1,6 @@
-# JobPlanner Documentation
+# Ergonis Documentation
 
-Welcome to the JobPlanner documentation.
+Documentation de Ergonis Job Planner
 
 ## Getting Started
 
@@ -9,7 +9,7 @@ Check the [Architecture](overview/architecture.md) to understand the project str
 ## Frontend
 
 - [Frontend Overview](frontend/frontend.md)
-- [Browser Extension](frontend/extension.md)
+- [Browser Extension](extension/extension.md)
 
 ## Backend
 

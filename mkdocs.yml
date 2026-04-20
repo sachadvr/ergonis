@@ -10,7 +10,8 @@ nav:
   - Architecture: overview/architecture.md
   - Frontend:
       - frontend/frontend.md
-      - frontend/extension.md
+  - Extension:
+      - extension/extension.md
   - Backend:
       - backend/backend.md
       - backend/api.md
