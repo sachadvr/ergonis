@@ -6,7 +6,7 @@ classDiagram
 class User {
   +int id
   +string email
-  +string[] roles
+  +string roles
   +string password
   +datetime createdAt
   +datetime updatedAt
@@ -107,10 +107,7 @@ class AiGenerationLog {
   +datetime createdAt
 }
 
-%% ENUMS
-
 class ApplicationStatus {
-  <<enum>>
   WISHLIST
   APPLIED
   INTERVIEW
@@ -120,7 +117,6 @@ class ApplicationStatus {
 }
 
 class ApplicationHistoryActionType {
-  <<enum>>
   EMAIL_RECEIVED
   STATUS_CHANGED
   CREATED
@@ -128,8 +124,6 @@ class ApplicationHistoryActionType {
   RELANCE_SENT
   INTERVIEW_SCHEDULED
 }
-
-%% RELATIONS
 
 User "1" --> "*" Application : owner
 User "1" --> "*" JobOffer : owner

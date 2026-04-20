@@ -5,6 +5,10 @@ site_url: https://sduvivier.github.io/JobPlanner
 theme:
   name: material
 
+plugins:
+  - search
+  - mermaid2
+
 nav:
   - Overview: index.md
   - Architecture: overview/architecture.md
@@ -22,10 +26,17 @@ nav:
       - backend/mail.md
       - backend/ai.md
   - Dev: dev/dev.md
+  - Devops:
+      - CI: devops/ci.md
 
 markdown_extensions:
   - admonition
   - codehilite:
       guess_lang: false
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:mermaid2.fence_mermaid
   - toc:
       permalink: true
