@@ -68,6 +68,8 @@ ollama run bjoernb/gemma4-31b-think:latest
 
 Ollama tourne sur l'hôte (pas dans Docker), accédé depuis les containers via `host.docker.internal:11434`.
 
+L'instance de démo [ergonis.app](https://ergonis.app) utilise actuellement une version cloud de Gemma 31B pour les tests sans matériel dédié. Tout autre modèle local fonctionne (ex : `odytrice/gemma4-31b:5090`), changer `OLLAMA_MODEL` dans le `.env`. Côté confidentialité, la [Privacy Policy d'Ollama](https://ollama.com/privacy) précise que les prompts/réponses cloud sont traités de façon transitoire, jamais stockés au-delà de la requête, jamais utilisés pour entraîner les modèles.
+
 ### OpenAI / Anthropic
 
 `.env` :
@@ -78,6 +80,14 @@ OPENAI_API_KEY=sk-...
 AI_PROVIDER=anthropic
 ANTHROPIC_API_KEY=sk-ant-...
 ```
+
+## Livrables Projet Master
+
+| Livrable | Date | Fichier |
+|---|---|---|
+| L1 — Description & Planning | 31 mars 2026 | [`pdf/L1.pdf`](pdf/L1.pdf) |
+| L2 — Rapport d'avancement & Conception | 28 avril 2026 | [`pdf/L2.pdf`](pdf/L2.pdf) |
+| L3 — Rapport Final | 21 mai 2026 | [`pdf/L3.pdf`](pdf/L3.pdf) |
 
 ## Documentation
 
