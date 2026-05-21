@@ -23,8 +23,8 @@ git clone https://github.com/sachadvr/ergonis && cd ergonis
 cp .env.example jobplanner-api/.env
 # Éditer jobplanner-api/.env : remplacer MAILBOX_ENCRYPTION_KEY par une chaîne aléatoire >= 32 chars
 docker compose up -d
-docker compose exec api php bin/console doctrine:migrations:migrate
-docker compose exec api php bin/console doctrine:fixtures:load
+docker compose exec api php bin/console doctrine:migrations:migrate --no-interaction
+docker compose exec api php bin/console doctrine:fixtures:load --no-interaction
 ```
 
 Services : Frontend `http://localhost:5173` / API `http://localhost:8000` / Mailpit `http://localhost:8025`.

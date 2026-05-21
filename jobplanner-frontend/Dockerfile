@@ -1,9 +1,7 @@
 FROM node:22-alpine AS builder
 WORKDIR /app
-ARG VITE_USE_PROXY=true
-ARG VITE_API_URL
-ARG VITE_MERCURE_URL
-ENV VITE_USE_PROXY=${VITE_USE_PROXY}
+ARG VITE_API_URL=https://api.ergonis.app
+ARG VITE_MERCURE_URL=https://mercure.ergonis.app/.well-known/mercure
 ENV VITE_API_URL=${VITE_API_URL}
 ENV VITE_MERCURE_URL=${VITE_MERCURE_URL}
 COPY package*.json ./

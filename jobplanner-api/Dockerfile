@@ -5,11 +5,11 @@ WORKDIR /app
 
 COPY composer.json composer.lock ./
 
-RUN composer install --no-scripts --no-autoloader --prefer-dist --no-dev
+RUN composer install --no-scripts --no-autoloader --prefer-dist
 
 COPY . .
 
-RUN composer dump-autoload --optimize --classmap-authoritative --no-dev
+RUN composer dump-autoload --optimize --classmap-authoritative
 
 # Runtime stage
 FROM dunglas/frankenphp:1-php8.4
@@ -51,7 +51,7 @@ RUN mkdir -p config/jwt && \
     echo 'CORS_ALLOW_ORIGIN=^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$' >> .env && \
     echo 'DEFAULT_URI=http://localhost' >> .env
 
-RUN composer install --optimize-autoloader --no-interaction --no-scripts --no-dev && \
+RUN composer install --optimize-autoloader --no-interaction --no-scripts && \
     APP_ENV=prod APP_DEBUG=0 php bin/console cache:clear --env=prod --no-debug && \
     APP_ENV=prod APP_DEBUG=0 php bin/console cache:warmup --env=prod --no-debug && \
     chmod -R a+rwX var

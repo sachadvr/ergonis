@@ -1,5 +1,4 @@
-const useProxy = import.meta.env.VITE_USE_PROXY === 'true'
-export const API_BASE_URL = useProxy ? '' : (import.meta.env.VITE_API_URL || '')
+export const API_BASE_URL = import.meta.env.VITE_API_URL || ''
 export const API_TIMEOUT = 10000
 
 export const API_ENDPOINTS = {
