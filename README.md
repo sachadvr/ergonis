@@ -16,7 +16,7 @@ Instance de démo : [ergonis.app](https://ergonis.app) — compte : `guest@test.
 
 ## Démarrage local
 
-Prérequis : Docker Desktop, Git. Ollama installé sur l'hôte si IA locale souhaitée.
+Prérequis : [Docker Desktop](https://www.docker.com/products/docker-desktop/) (ou [OrbStack](https://orbstack.dev/) en alternative), [Git](https://git-scm.com/downloads). [Ollama](https://ollama.com/download) installé sur l'hôte si IA locale souhaitée.
 
 ```bash
 git clone https://github.com/sachadvr/ergonis && cd ergonis
