@@ -122,11 +122,12 @@ final class OllamaService extends AbstractAiService
         ];
     }
 
-    public function generateFollowUpEmail(Application $application, string $tone = 'professionnel'): string
+    public function generateFollowUpEmail(Application $application, string $tone = 'professionnel', string $templateType = 'follow_up'): string
     {
         $jobOffer = $application->getJobOffer();
         $offerTitle = $jobOffer->getTitle();
         $company = $jobOffer->getCompany();
+        $prompts = FollowUpEmailPromptBuilder::build($application, $tone, $templateType);
 
         try {
             $response = $this->httpClient->request('POST', $this->baseUrl.'/api/chat', [
@@ -134,14 +135,8 @@ final class OllamaService extends AbstractAiService
                 'json' => [
                     'model' => $this->model,
                     'messages' => [
-                        [
-                            'role' => 'system',
-                            'content' => "You are an assistant who writes follow-up emails for applications in the same language as the offer. Your tone: {$tone}. No too long formulas. Maximum 150 words.",
-                        ],
-                        [
-                            'role' => 'user',
-                            'content' => "Generate a follow-up email for my application for the post of {$offerTitle} at {$company}. Use the same language as the offer. I have not received a response.",
-                        ],
+                        ['role' => 'system', 'content' => $prompts['system']],
+                        ['role' => 'user', 'content' => $prompts['user']],
                     ],
                     'stream' => false,
                 ],

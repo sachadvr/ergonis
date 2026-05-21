@@ -3,7 +3,7 @@ import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { settingsApi } from '../api/settings.api'
 import { storeToRefs } from 'pinia'
-import { Server, Inbox, Send, WandSparkles, Save, PlugZap } from 'lucide-vue-next'
+import { Server, Inbox, Send, WandSparkles, Save, PlugZap, Plus, Trash2 } from 'lucide-vue-next'
 import { useSettingsStore } from '../stores/settings.store'
 import { detectMailConfig } from '../utils/mail-detect'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -139,6 +139,33 @@ const handleRuleSave = async (rule: FollowUpRule) => {
       enabled: rule.enabled,
     })
     successMessage.value = 'Follow-up rule saved.'
+  } finally {
+    savingRuleId.value = null
+  }
+}
+
+const isCreatingRule = ref(false)
+
+const handleRuleAdd = async () => {
+  isCreatingRule.value = true
+  try {
+    await settingsStore.createFollowUpRule({
+      daysWithoutReply: 7,
+      templateType: FOLLOW_UP_TEMPLATE_TYPES[0],
+      enabled: true,
+    })
+    successMessage.value = 'Follow-up rule added.'
+  } finally {
+    isCreatingRule.value = false
+  }
+}
+
+const handleRuleDelete = async (rule: FollowUpRule) => {
+  if (!confirm(`Delete the ${rule.daysWithoutReply}-day follow-up rule?`)) return
+  savingRuleId.value = rule.id
+  try {
+    await settingsStore.deleteFollowUpRule(rule.id)
+    successMessage.value = 'Follow-up rule deleted.'
   } finally {
     savingRuleId.value = null
   }
@@ -374,32 +401,46 @@ onMounted(() => {
       </Card>
 
       <Card class="lg:col-span-3">
-        <CardHeader>
-          <CardTitle class="flex items-center gap-2"><WandSparkles :size="18" /> Follow-up Rules</CardTitle>
+        <CardHeader class="flex flex-row items-center justify-between gap-4">
+          <div>
+            <CardTitle class="flex items-center gap-2"><WandSparkles :size="18" /> Follow-up Rules</CardTitle>
+            <p class="mt-1 text-xs text-muted-foreground flex items-center gap-1">
+              <Send :size="12" /> Each rule schedules an automatic follow-up N days after applying. Disable per-application from the application page.
+            </p>
+          </div>
+          <Button size="sm" :disabled="isCreatingRule || isLoading" @click="handleRuleAdd">
+            <Plus :size="14" />
+            {{ isCreatingRule ? 'Adding...' : 'Add rule' }}
+          </Button>
         </CardHeader>
-        <CardContent class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          <div v-for="rule in followUpRules" :key="rule.id" class="rounded-lg border border-border p-4 text-sm space-y-4">
-            <div class="flex items-center justify-between">
-              <strong>{{ rule.daysWithoutReply }} days</strong>
-              <Badge :variant="rule.enabled ? 'success' : 'secondary'">{{ rule.enabled ? 'Active' : 'Disabled' }}</Badge>
-            </div>
-            <div class="space-y-2">
-              <label class="text-sm font-medium">Days without reply</label>
-              <Input v-model.number="rule.daysWithoutReply" type="number" min="1" />
-            </div>
-            <div class="space-y-2">
-              <label class="text-sm font-medium">Template type</label>
-              <Select v-model="rule.templateType" :options="templateOptions" />
-            </div>
-            <label class="flex items-center gap-3 text-sm text-muted-foreground">
+        <CardContent class="space-y-2">
+          <div v-if="!followUpRules.length" class="text-sm text-muted-foreground py-4 text-center">
+            No follow-up rules. Add one to schedule automatic reminders.
+          </div>
+          <div v-else class="hidden md:grid grid-cols-[100px_1fr_120px_140px] gap-3 px-3 pb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <span>Days</span>
+            <span>Template</span>
+            <span>Status</span>
+            <span class="text-right">Actions</span>
+          </div>
+          <div
+            v-for="rule in followUpRules"
+            :key="rule.id"
+            class="grid grid-cols-1 md:grid-cols-[100px_1fr_120px_140px] gap-3 items-center rounded-lg border border-border bg-card px-3 py-2 text-sm"
+          >
+            <Input v-model.number="rule.daysWithoutReply" type="number" min="1" class="md:w-20" />
+            <Select v-model="rule.templateType" :options="templateOptions" />
+            <label class="flex items-center gap-2 text-sm">
               <input v-model="rule.enabled" type="checkbox" class="h-4 w-4 rounded border-border" />
-              Enabled
+              <Badge :variant="rule.enabled ? 'success' : 'secondary'">{{ rule.enabled ? 'Active' : 'Disabled' }}</Badge>
             </label>
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2 text-muted-foreground"><Send :size="14" /> {{ rule.templateType }}</div>
+            <div class="flex items-center justify-end gap-2">
+              <Button size="sm" variant="destructive" :disabled="savingRuleId === rule.id || isLoading" @click="handleRuleDelete(rule)" title="Delete rule">
+                <Trash2 :size="14" />
+              </Button>
               <Button size="sm" :disabled="savingRuleId === rule.id || isLoading" @click="handleRuleSave(rule)">
                 <Save :size="14" />
-                {{ savingRuleId === rule.id ? 'Saving...' : 'Save' }}
+                {{ savingRuleId === rule.id ? '...' : 'Save' }}
               </Button>
             </div>
           </div>

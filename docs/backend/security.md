@@ -14,7 +14,7 @@
 - Topic user = `urn:jobplanner:user:{id}:notifications`.
 
 # UserMailboxSettings
-- `UserMailboxSettings` secrets sont chiffrés au repos avec `MAILBOX_ENCRYPTION_KEY`.
+- `UserMailboxSettings` secrets sont chiffrés en base avec `MAILBOX_ENCRYPTION_KEY`.
 - Frontend ne recoit plus passwords/tokens en lecture.
 
 ## Tests

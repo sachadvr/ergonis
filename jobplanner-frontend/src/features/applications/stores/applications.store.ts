@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Application, ApplicationCvFitAnalysis, ApplicationFormValues } from '@/types/models.types'
+import type { Application, ApplicationCvFitAnalysis, ApplicationFormValues, InterviewType } from '@/types/models.types'
 import { applicationsApi } from '../api/applications.api'
 import { interviewsApi } from '@/features/interviews/api/interviews.api'
 import { jobOffersApi } from '@/features/job-offers/api/job-offers.api'
@@ -94,6 +94,26 @@ export const useApplicationsStore = defineStore('applications', () => {
       throw e
     } finally {
       isLoading.value = false
+    }
+  }
+
+  async function setFollowUpsEnabled(id: number, enabled: boolean): Promise<Application | undefined> {
+    try {
+      error.value = null
+      const raw = await applicationsApi.update(String(id), { followUpsEnabled: enabled } as Partial<Application>)
+      const updated = applicationDto(raw)
+      const index = applications.value.findIndex((a) => a.id === id)
+      if (index !== -1) {
+        applications.value[index] = updated
+      }
+      if (currentApplication.value?.id === id) {
+        currentApplication.value = updated
+      }
+      return updated
+    } catch (e) {
+      error.value = 'Failed to update follow-up setting'
+      console.error('Error updating follow-up setting:', e)
+      throw e
     }
   }
 
@@ -216,6 +236,7 @@ export const useApplicationsStore = defineStore('applications', () => {
   async function moveApplicationToInterview(
     id: number,
     scheduledAt: string,
+    options: { type?: InterviewType; locationOrLink?: string; notes?: string } = {},
   ): Promise<Application | undefined> {
     try {
       isLoading.value = true
@@ -224,6 +245,9 @@ export const useApplicationsStore = defineStore('applications', () => {
       await interviewsApi.create({
         application: `/api/applications/${id}`,
         scheduledAt,
+        ...(options.type ? { type: options.type } : {}),
+        ...(options.locationOrLink ? { locationOrLink: options.locationOrLink } : {}),
+        ...(options.notes ? { notes: options.notes } : {}),
       })
 
       return await updateApplicationStatus(id, 'interview')
@@ -305,6 +329,7 @@ export const useApplicationsStore = defineStore('applications', () => {
     deleteApplication,
     deleteApplicationWithJobOffer,
     updateApplicationStatus,
+    setFollowUpsEnabled,
     moveApplicationToInterview,
     analyzeApplicationCvFit,
     patchApplicationCvFit,

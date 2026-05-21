@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useApplicationsStore } from '../stores/applications.store'
-import type { Application } from '@/types/models.types'
+import type { Application, InterviewType } from '@/types/models.types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, type SelectOption } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { INTERVIEW_TYPES } from '@/lib/constants/app.constants'
 import KanbanColumn from '../components/KanbanColumn.vue'
 import ApplicationFormDialog from '../components/ApplicationFormDialog.vue'
 import { Plus, RefreshCw } from 'lucide-vue-next'
@@ -22,9 +25,21 @@ const editingApplication = ref<Application | null>(null)
 const isInterviewDialogOpen = ref(false)
 const interviewApplicationId = ref<number | null>(null)
 const interviewScheduledAt = ref('')
+const interviewType = ref<InterviewType>('visio')
+const interviewLocation = ref('')
+const interviewNotes = ref('')
 const interviewError = ref('')
 const interviewMoveCommitted = ref(false)
 const interviewApplicationsSnapshot = ref<Application[]>([])
+
+const interviewTypeOptions: SelectOption[] = INTERVIEW_TYPES.map((type) => ({
+  value: type,
+  label: type === 'visio' ? 'Visio' : type === 'tel' ? 'Phone' : 'On-site',
+}))
+
+const locationLabel = computed(() =>
+  interviewType.value === 'presentiel' ? 'Location (address)' : 'Meeting link',
+)
 
 const handleNewApplication = (): void => {
   editingApplication.value = null
@@ -42,6 +57,9 @@ const handleApplicationClick = (application: Application): void => {
 const openInterviewDialog = (applicationId: number): void => {
   interviewApplicationId.value = applicationId
   interviewScheduledAt.value = ''
+  interviewType.value = 'visio'
+  interviewLocation.value = ''
+  interviewNotes.value = ''
   interviewError.value = ''
   interviewMoveCommitted.value = false
   interviewApplicationsSnapshot.value = applicationsStore.applications.map((application) => ({
@@ -55,6 +73,9 @@ const resetInterviewDialog = (): void => {
   isInterviewDialogOpen.value = false
   interviewApplicationId.value = null
   interviewScheduledAt.value = ''
+  interviewType.value = 'visio'
+  interviewLocation.value = ''
+  interviewNotes.value = ''
   interviewError.value = ''
 }
 
@@ -102,6 +123,11 @@ const handleConfirmInterviewDate = async (): Promise<void> => {
     await applicationsStore.moveApplicationToInterview(
       interviewApplicationId.value,
       scheduledAt.toISOString(),
+      {
+        type: interviewType.value,
+        locationOrLink: interviewLocation.value.trim() || undefined,
+        notes: interviewNotes.value.trim() || undefined,
+      },
     )
     interviewMoveCommitted.value = true
     resetInterviewDialog()
@@ -217,13 +243,36 @@ onMounted(() => {
           </DialogDescription>
         </DialogHeader>
 
-        <div class="space-y-2 py-2">
-          <Label for="interviewScheduledAt">Interview date and time</Label>
-          <Input
-            id="interviewScheduledAt"
-            v-model="interviewScheduledAt"
-            type="datetime-local"
-          />
+        <div class="space-y-4 py-2">
+          <div class="space-y-2">
+            <Label for="interviewScheduledAt">Interview date and time</Label>
+            <Input
+              id="interviewScheduledAt"
+              v-model="interviewScheduledAt"
+              type="datetime-local"
+            />
+          </div>
+          <div class="space-y-2">
+            <Label for="interviewType">Type</Label>
+            <Select id="interviewType" v-model="interviewType" :options="interviewTypeOptions" />
+          </div>
+          <div class="space-y-2">
+            <Label for="interviewLocation">{{ locationLabel }}</Label>
+            <Input
+              id="interviewLocation"
+              v-model="interviewLocation"
+              :placeholder="interviewType === 'presentiel' ? 'Address' : 'https://...'"
+            />
+          </div>
+          <div class="space-y-2">
+            <Label for="interviewNotes">Notes</Label>
+            <Textarea
+              id="interviewNotes"
+              v-model="interviewNotes"
+              :rows="3"
+              placeholder="Optional notes (interviewer, agenda, prep...)"
+            />
+          </div>
           <p v-if="interviewError" class="text-sm text-destructive">{{ interviewError }}</p>
         </div>
 

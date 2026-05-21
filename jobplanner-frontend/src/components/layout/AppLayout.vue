@@ -26,8 +26,6 @@ const notificationsStore = useNotificationsStore()
 const mainRef = ref<HTMLElement | null>(null)
 const showMobileNav = ref(true)
 
-let lastScrollTop = 0
-let scrollTimeout: number | undefined
 let unsubscribeMercure: (() => void) | null = null
 
 type MercurePayload = {
@@ -109,24 +107,7 @@ const updateMobileNavVisibility = () => {
     return
   }
 
-  const currentScrollTop = mainElement.scrollTop
-
-  if (currentScrollTop <= 8) {
-    showMobileNav.value = true
-  } else if (currentScrollTop > lastScrollTop) {
-    showMobileNav.value = false
-  } else if (currentScrollTop < lastScrollTop) {
-    showMobileNav.value = true
-  }
-
-  lastScrollTop = currentScrollTop
-
-  window.clearTimeout(scrollTimeout)
-  scrollTimeout = window.setTimeout(() => {
-    if ((mainRef.value?.scrollTop ?? 0) <= 8) {
-      showMobileNav.value = true
-    }
-  }, 120)
+  showMobileNav.value = mainElement.scrollTop <= 8
 }
 
 onMounted(() => {
@@ -136,7 +117,6 @@ onMounted(() => {
     return
   }
 
-  lastScrollTop = mainElement.scrollTop
   mainElement.addEventListener('scroll', updateMobileNavVisibility, { passive: true })
 
   unsubscribeMercure = notificationsStore.subscribeMercure((payload) => {
@@ -148,8 +128,6 @@ onBeforeUnmount(() => {
   mainRef.value?.removeEventListener('scroll', updateMobileNavVisibility)
   unsubscribeMercure?.()
   unsubscribeMercure = null
-
-  window.clearTimeout(scrollTimeout)
 })
 </script>
 
@@ -209,7 +187,7 @@ onBeforeUnmount(() => {
 
     <div class="app-shell paper-panel flex flex-1 flex-col overflow-hidden rounded-[2rem] border border-border/70">
       <header class="sticky top-0 z-30 border-b border-border/70 bg-background/90 px-6 py-4 backdrop-blur-sm lg:static lg:bg-transparent lg:px-8 lg:py-5 lg:backdrop-blur-none">
-        <div class="flex flex-col" :class="showMobileNav ? 'gap-4' : 'gap-0'">
+        <div class="flex flex-col">
           <div class="flex items-center justify-between gap-4">
             <div>
               <p class="section-kicker mb-2">Workspace</p>
@@ -224,7 +202,7 @@ onBeforeUnmount(() => {
           </div>
 
           <nav
-            class="-mx-2 flex gap-2 overflow-x-auto px-2 pb-1 transition-all duration-200 lg:flex"
+            class="-mx-2 flex gap-2 overflow-x-auto overflow-y-hidden px-2 pb-1 pt-4 transition-all duration-200 lg:flex"
             :class="[
               isSidebarMode ? 'lg:hidden' : 'lg:flex',
               showMobileNav

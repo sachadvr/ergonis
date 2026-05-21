@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\DTO\RegisterInput;
+use App\Entity\FollowUpRule;
 use App\Entity\User;
 use App\Exception\UserAlreadyExistsException;
 use App\Exception\ValidationFailedException;
@@ -39,6 +40,7 @@ final class UserRegistrationService
 
         $user = $this->createUser($input);
         $this->entityManager->persist($user);
+        $this->createDefaultFollowUpRules($user);
         $this->entityManager->flush();
 
         return [
@@ -65,5 +67,22 @@ final class UserRegistrationService
         $user->setPassword($this->passwordHasher->hashPassword($user, $input->password));
 
         return $user;
+    }
+
+    private function createDefaultFollowUpRules(User $user): void
+    {
+        $defaults = [
+            [7, FollowUpRule::TEMPLATE_FOLLOW_UP],
+            [14, FollowUpRule::TEMPLATE_FOLLOW_UP],
+        ];
+
+        foreach ($defaults as [$days, $template]) {
+            $rule = new FollowUpRule();
+            $rule->setOwner($user);
+            $rule->setDaysWithoutReply($days);
+            $rule->setTemplateType($template);
+            $rule->setEnabled(true);
+            $this->entityManager->persist($rule);
+        }
     }
 }

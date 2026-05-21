@@ -129,7 +129,7 @@ final class OpenAiService extends AbstractAiService
         ];
     }
 
-    public function generateFollowUpEmail(Application $application, string $tone = 'professionnel'): string
+    public function generateFollowUpEmail(Application $application, string $tone = 'professionnel', string $templateType = 'follow_up'): string
     {
         $jobOffer = $application->getJobOffer();
         $offerTitle = $jobOffer->getTitle();
@@ -138,6 +138,8 @@ final class OpenAiService extends AbstractAiService
         if ('' === $this->apiKey) {
             return "Hello,\n\nI have the pleasure of contacting you regarding my application for the post of {$offerTitle} at {$company}.\n\nI remain at your disposal for any additional information.\n\nSincerely";
         }
+
+        $prompts = FollowUpEmailPromptBuilder::build($application, $tone, $templateType);
 
         try {
             $response = $this->httpClient->request('POST', 'https://api.openai.com/v1/chat/completions', [
@@ -148,14 +150,8 @@ final class OpenAiService extends AbstractAiService
                 'json' => [
                     'model' => $this->model,
                     'messages' => [
-                        [
-                            'role' => 'system',
-                            'content' => "You are an assistant who writes follow-up emails for applications in the same language as the offer. Your tone: {$tone}. No too long formulas. Maximum 150 words.",
-                        ],
-                        [
-                            'role' => 'user',
-                            'content' => "Generate a follow-up email for my application for the post of {$offerTitle} at {$company}. Use the same language as the offer. I have not received a response.",
-                        ],
+                        ['role' => 'system', 'content' => $prompts['system']],
+                        ['role' => 'user', 'content' => $prompts['user']],
                     ],
                     'temperature' => 0.7,
                 ],

@@ -35,8 +35,9 @@ final readonly class FollowUpProcessorService
 
         $content = $followUp->getGeneratedContent();
         if (null === $content || '' === $content) {
-            $content = $this->aiService->generateFollowUpEmail($application, 'professionnel');
+            $content = $this->aiService->generateFollowUpEmail($application, 'professionnel', $followUp->getTemplateType());
             $followUp->setGeneratedContent($content);
+            $this->entityManager->flush();
         }
 
         $owner = $application->getOwner();
@@ -44,10 +45,16 @@ final readonly class FollowUpProcessorService
             throw new \RuntimeException('No owner found for follow-up '.$followUp->getId());
         }
 
+        $subject = match ($followUp->getTemplateType()) {
+            ScheduledFollowUp::TEMPLATE_THANK_YOU => 'Thank you for our interview - '.$jobOffer->getTitle(),
+            ScheduledFollowUp::TEMPLATE_SPONTANEOUS => 'Spontaneous application - '.$jobOffer->getTitle(),
+            default => 'Re: Application for '.$jobOffer->getTitle(),
+        };
+
         $email = (new Email())
             ->from($owner->getUserIdentifier())
             ->to($to)
-            ->subject('Re: Application for '.$jobOffer->getTitle())
+            ->subject($subject)
             ->text($content);
 
         $this->userMailerService->send((int) $owner->getId(), $email);

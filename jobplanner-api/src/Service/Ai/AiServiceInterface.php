@@ -104,7 +104,7 @@ PROMPT;
     /**
      * Generates a follow-up email adapted to the application.
      */
-    public function generateFollowUpEmail(Application $application, string $tone = 'professionnel'): string;
+    public function generateFollowUpEmail(Application $application, string $tone = 'professionnel', string $templateType = 'follow_up'): string;
 
     /**
      * Summarizes the content of an email.

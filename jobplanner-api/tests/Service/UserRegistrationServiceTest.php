@@ -74,9 +74,13 @@ final class UserRegistrationServiceTest extends TestCase
         $service = $this->createService($userRepository, $entityManager, $passwordHasher, $validator);
 
         $persistedUser = null;
-        $entityManager->expects($this->once())->method('persist')->willReturnCallback(function ($entity) use (&$persistedUser) {
+        $persistedRules = 0;
+        $entityManager->expects($this->exactly(3))->method('persist')->willReturnCallback(function ($entity) use (&$persistedUser, &$persistedRules) {
             if ($entity instanceof User) {
                 $persistedUser = $entity;
+            }
+            if ($entity instanceof \App\Entity\FollowUpRule) {
+                ++$persistedRules;
             }
         });
         $entityManager->expects($this->once())->method('flush');
@@ -89,6 +93,7 @@ final class UserRegistrationServiceTest extends TestCase
         $this->assertSame('new@example.com', $result['email']);
         $this->assertInstanceOf(User::class, $persistedUser);
         $this->assertSame('new@example.com', $persistedUser->getEmail());
+        $this->assertSame(2, $persistedRules);
     }
 
     private function createService(

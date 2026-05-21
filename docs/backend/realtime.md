@@ -5,6 +5,8 @@ Mercure pousse notif live.
 ## Ce qui part
 - mail recruteur entrant
 - import depuis extension
+- resultat analyse CV/offre IA (`ApplicationCvFitNotificationPublisher`)
+- notifs generiques user (`NotificationFactory` -> `MercureNotificationPublisher`)
 
 ## Flow
 - Backend fabrique payload notif.

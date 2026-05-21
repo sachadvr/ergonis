@@ -18,7 +18,6 @@ import {
   Target,
 } from 'lucide-vue-next'
 import { useApplicationsStore } from '../stores/applications.store'
-import { useSettingsStore } from '@/features/settings/stores/settings.store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -30,14 +29,27 @@ import type {
   ApplicationCvFitAnalysis,
   ApplicationFormValues,
   Interview,
+  ScheduledFollowUp,
 } from '@/types/models.types'
 
 const route = useRoute()
 const router = useRouter()
 const applicationsStore = useApplicationsStore()
-const settingsStore = useSettingsStore()
 const { currentApplication, isLoading } = storeToRefs(applicationsStore)
-const { mailboxSettings } = storeToRefs(settingsStore)
+
+const isTogglingFollowUps = ref(false)
+
+const handleToggleFollowUps = async (enabled: boolean): Promise<void> => {
+  if (!currentApplication.value) return
+  isTogglingFollowUps.value = true
+  try {
+    await applicationsStore.setFollowUpsEnabled(currentApplication.value.id, enabled)
+  } catch (e) {
+    console.error('Failed to toggle follow-ups', e)
+  } finally {
+    isTogglingFollowUps.value = false
+  }
+}
 
 type BlockId =
   | 'overview'
@@ -62,9 +74,6 @@ const companyOverviewEditorRef = ref<HTMLElement | null>(null)
 const locationEditorRef = ref<HTMLElement | null>(null)
 const jobUrlEditorRef = ref<HTMLElement | null>(null)
 const recruiterContactEmailEditorRef = ref<HTMLElement | null>(null)
-const recruiterSenderRef = ref<HTMLElement | null>(null)
-const recruiterSubjectRef = ref<HTMLElement | null>(null)
-const recruiterBodyRef = ref<HTMLElement | null>(null)
 const blockOrder = ref<BlockId[]>([
   'overview',
   'cvFit',
@@ -85,14 +94,10 @@ const cvFileInputRef = ref<HTMLInputElement | null>(null)
 const cvFile = ref<File | null>(null)
 const cvFitState = ref<'idle' | 'uploading' | 'queued' | 'done' | 'error'>('idle')
 const cvFitError = ref('')
-let recruiterSenderDraft = ''
-let recruiterSubjectDraft = ''
-let recruiterBodyDraft = ''
 let saveDebounceTimer: ReturnType<typeof setTimeout> | null = null
 let saveStateTimer: ReturnType<typeof setTimeout> | null = null
 
 const applicationId = computed(() => String(route.params.id))
-const currentMailboxImapUser = computed(() => mailboxSettings.value[0]?.imapUser || '')
 
 const statusVariant = (status: Application['status']) => {
   if (status === 'rejected') return 'destructive'
@@ -144,6 +149,31 @@ const interviewsToDisplay = computed(() => {
   const objectInterviews = interviews.filter((interview): interview is Interview => typeof interview === 'object')
   return objectInterviews.length ? objectInterviews : detailedInterviews.value
 })
+const describeFollowUp = (followUp: ScheduledFollowUp): string => {
+  const scheduled = new Date(followUp.scheduledAt).getTime()
+
+  if (followUp.templateType === 'thank_you') {
+    for (const interview of interviewsToDisplay.value) {
+      const diffDays = Math.round((scheduled - new Date(interview.scheduledAt).getTime()) / 86_400_000)
+      if (diffDays >= 0) {
+        return `Thank-you · ${diffDays}d after interview`
+      }
+    }
+    return 'Thank-you after interview'
+  }
+
+  if (followUp.templateType === 'spontaneous') {
+    return 'Spontaneous'
+  }
+
+  const appliedAt = currentApplication.value?.appliedAt
+  if (appliedAt) {
+    const diffDays = Math.round((scheduled - new Date(appliedAt).getTime()) / 86_400_000)
+    return `Follow-up · ${diffDays}d after applying`
+  }
+  return 'Follow-up'
+}
+
 const currentJobOfferId = computed(() => currentApplication.value?.jobOffer?.id)
 const cvFitResult = computed<ApplicationCvFitAnalysis | null>(() => currentApplication.value?.cvFitAnalysisResult ?? null)
 const cvFitStatus = computed(() => currentApplication.value?.cvFitAnalysisStatus ?? null)
@@ -253,16 +283,6 @@ const toEditableForm = (application: Application): ApplicationFormValues => ({
   interviewPrep: application.interviewPrep || '',
 })
 
-const resetRecruiterEmailDraft = () => {
-  recruiterSenderDraft = currentMailboxImapUser.value || currentApplication.value?.jobOffer?.recruiterContactEmail || ''
-  recruiterSubjectDraft = `Re: ${currentApplication.value?.jobTitle || ''}`.trim()
-  recruiterBodyDraft = ''
-
-  if (recruiterSenderRef.value) recruiterSenderRef.value.innerText = recruiterSenderDraft
-  if (recruiterSubjectRef.value) recruiterSubjectRef.value.innerText = recruiterSubjectDraft
-  if (recruiterBodyRef.value) recruiterBodyRef.value.innerText = recruiterBodyDraft
-}
-
 const hasInlineChanges = computed(() => {
   if (!currentApplication.value || !editableForm.value) return false
   const live = toEditableForm(currentApplication.value)
@@ -296,12 +316,6 @@ const syncPlainEditableDrafts = () => {
   syncPlainField('companyName', companyOverviewEditorRef.value)
   syncPlainField('location', locationEditorRef.value)
   syncPlainField('jobUrl', jobUrlEditorRef.value)
-}
-
-const syncRecruiterEmailDrafts = () => {
-  recruiterSenderDraft = normalizeInlineText(recruiterSenderRef.value?.innerText || '')
-  recruiterSubjectDraft = normalizeInlineText(recruiterSubjectRef.value?.innerText || '')
-  recruiterBodyDraft = (recruiterBodyRef.value?.innerText || '').trim()
 }
 
 const queueSave = () => {
@@ -512,12 +526,7 @@ watch(currentApplication, (application) => {
     syncPlainEditorText(locationEditorRef.value, editableForm.value?.location || '')
     syncPlainEditorText(jobUrlEditorRef.value, editableForm.value?.jobUrl || '')
     syncPlainEditorText(recruiterContactEmailEditorRef.value, editableForm.value?.recruiterContactEmail || '')
-    syncPlainEditorText(recruiterSenderRef.value, recruiterSenderDraft)
-    syncPlainEditorText(recruiterSubjectRef.value, recruiterSubjectDraft)
-    syncPlainEditorText(recruiterBodyRef.value, recruiterBodyDraft)
   })
-
-  resetRecruiterEmailDraft()
 })
 
 watch(applicationId, () => {
@@ -542,12 +551,6 @@ watch(cvFitStatus, (status) => {
   }
 })
 
-watch(currentMailboxImapUser, (imapUser) => {
-  if (!imapUser) return
-  recruiterSenderDraft = imapUser
-  if (recruiterSenderRef.value) recruiterSenderRef.value.innerText = imapUser
-})
-
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeyDown)
   if (saveDebounceTimer) clearTimeout(saveDebounceTimer)
@@ -555,10 +558,6 @@ onBeforeUnmount(() => {
 })
 
 onMounted(() => {
-  if (!mailboxSettings.value.length) {
-    settingsStore.fetchSettings()
-  }
-
   window.addEventListener('keydown', handleKeyDown)
 })
 </script>
@@ -966,23 +965,6 @@ onMounted(() => {
             <div v-if="interview.locationOrLink" class="mt-2 text-muted-foreground">{{ interview.locationOrLink }}</div>
             <div v-if="interview.notes" class="mt-2 whitespace-pre-wrap text-foreground">{{ interview.notes }}</div>
           </div>
-
-          <div class="rounded-[1.25rem] border border-dashed border-border/80 bg-secondary/30 p-4 space-y-3">
-            <div>
-              <div class="grid grid-cols-2 justify-center items-center">
-                <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground mb-1">Sender</div>
-                <div ref="recruiterSenderRef" class="editable-inline min-h-10 px-3 py-2 text-sm" contenteditable="true" @keydown.enter.prevent @blur="syncRecruiterEmailDrafts"></div>
-              </div>
-              <div class="grid grid-cols-2 justify-center items-center">
-                <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground mb-1">Subject</div>
-                <div ref="recruiterSubjectRef" class="editable-inline min-h-10 px-3 py-2 text-sm" contenteditable="true" @keydown.enter.prevent @blur="syncRecruiterEmailDrafts"></div>
-              </div>
-            </div>
-            <div>
-              <div class="text-xs uppercase tracking-[0.16em] text-muted-foreground mb-1">Body</div>
-              <div ref="recruiterBodyRef" class="editable-inline min-h-24 px-3 py-2 text-sm whitespace-pre-wrap" contenteditable="true" @blur="syncRecruiterEmailDrafts"></div>
-            </div>
-          </div>
         </CardContent>
       </Card>
 
@@ -996,17 +978,35 @@ onMounted(() => {
       >
         <CardHeader class="flex flex-row items-center justify-between gap-4">
           <CardTitle>Scheduled Follow-ups</CardTitle>
-          <button type="button" class="drag-handle" draggable="true" title="Drag to reorder" @dragstart="handleDragStart('followups', $event)" @dragend="handleDragEnd">
-            <GripVertical :size="16" />
-          </button>
+          <div class="flex items-center gap-3">
+            <label class="flex items-center gap-2 text-xs text-muted-foreground select-none">
+              <input
+                type="checkbox"
+                class="h-4 w-4 rounded border-border"
+                :checked="currentApplication.followUpsEnabled !== false"
+                :disabled="isTogglingFollowUps"
+                @change="handleToggleFollowUps(($event.target as HTMLInputElement).checked)"
+              />
+              Enabled
+            </label>
+            <button type="button" class="drag-handle" draggable="true" title="Drag to reorder" @dragstart="handleDragStart('followups', $event)" @dragend="handleDragEnd">
+              <GripVertical :size="16" />
+            </button>
+          </div>
         </CardHeader>
         <CardContent class="space-y-3">
-          <div v-if="!currentApplication.scheduledFollowUps?.length" class="text-sm text-muted-foreground">No scheduled follow-ups.</div>
-          <div v-for="followUp in currentApplication.scheduledFollowUps" :key="followUp.id" class="rounded-2xl bg-secondary/50 p-4 text-sm">
-            <div class="font-medium">{{ format(new Date(followUp.scheduledAt), 'PPP p') }}</div>
-            <div class="mt-1 text-muted-foreground">{{ followUp.status }}</div>
-            <div v-if="followUp.generatedContent" class="mt-2 whitespace-pre-wrap text-foreground">{{ followUp.generatedContent }}</div>
+          <div v-if="currentApplication.followUpsEnabled === false" class="text-sm text-muted-foreground">
+            Follow-ups are disabled for this application.
           </div>
+          <template v-else>
+            <div v-if="!currentApplication.scheduledFollowUps?.length" class="text-sm text-muted-foreground">No scheduled follow-ups.</div>
+            <div v-for="followUp in currentApplication.scheduledFollowUps" :key="followUp.id" class="rounded-2xl bg-secondary/50 p-4 text-sm">
+              <div class="font-medium">{{ format(new Date(followUp.scheduledAt), 'PPP p') }}</div>
+              <div class="mt-1 text-xs uppercase tracking-wide text-muted-foreground">{{ describeFollowUp(followUp) }}</div>
+              <div class="mt-1 text-muted-foreground">{{ followUp.status }}</div>
+              <div v-if="followUp.generatedContent" class="mt-2 whitespace-pre-wrap text-foreground">{{ followUp.generatedContent }}</div>
+            </div>
+          </template>
         </CardContent>
       </Card>
     </div>

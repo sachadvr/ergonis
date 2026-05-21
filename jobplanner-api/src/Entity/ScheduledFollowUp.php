@@ -29,6 +29,10 @@ class ScheduledFollowUp
     public const STATUS_SENT = 'sent';
     public const STATUS_CANCELLED = 'cancelled';
 
+    public const TEMPLATE_FOLLOW_UP = 'follow_up';
+    public const TEMPLATE_THANK_YOU = 'thank_you';
+    public const TEMPLATE_SPONTANEOUS = 'spontaneous';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -47,6 +51,10 @@ class ScheduledFollowUp
     #[ORM\Column(type: 'string', length: 20)]
     #[Groups(['scheduled_follow_up:read', 'application:read'])]
     private string $status = self::STATUS_PENDING;
+
+    #[ORM\Column(type: 'string', length: 50, options: ['default' => self::TEMPLATE_FOLLOW_UP])]
+    #[Groups(['scheduled_follow_up:read', 'application:read'])]
+    private string $templateType = self::TEMPLATE_FOLLOW_UP;
 
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     #[Groups(['scheduled_follow_up:read'])]
@@ -93,6 +101,18 @@ class ScheduledFollowUp
     public function setStatus(string $status): self
     {
         $this->status = $status;
+
+        return $this;
+    }
+
+    public function getTemplateType(): string
+    {
+        return $this->templateType;
+    }
+
+    public function setTemplateType(string $templateType): self
+    {
+        $this->templateType = $templateType;
 
         return $this;
     }

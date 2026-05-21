@@ -6,6 +6,8 @@ namespace App\Service;
 
 use App\Entity\Application;
 use App\Entity\ApplicationStatus;
+use App\Entity\FollowUpRule;
+use App\Entity\Interview;
 use App\Entity\ScheduledFollowUp;
 use App\Repository\FollowUpRuleRepository;
 
@@ -38,17 +40,22 @@ final readonly class FollowUpPlanningService
             return [];
         }
 
-        $rules = $this->followUpRuleRepository->findEnabledByUser($owner);
-        $existingDays = $this->getExistingScheduledDays($application);
+        if (!$application->getInterviews()->isEmpty()) {
+            return [];
+        }
+
+        $rules = $this->followUpRuleRepository->findEnabledByUserAndTemplate($owner, FollowUpRule::TEMPLATE_FOLLOW_UP);
+        $existingScheduledDates = $this->getExistingScheduledDates($application);
         $followUps = [];
 
         foreach ($rules as $rule) {
             $days = $rule->getDaysWithoutReply();
-            if (\in_array($days, $existingDays, true)) {
+            $scheduledAt = $appliedAt->modify("+{$days} days")->setTime(10, 0, 0);
+
+            if (\in_array($scheduledAt->format('Y-m-d'), $existingScheduledDates, true)) {
                 continue;
             }
 
-            $scheduledAt = $appliedAt->modify("+{$days} days")->setTime(10, 0, 0);
             if ($scheduledAt <= new \DateTimeImmutable()) {
                 continue;
             }
@@ -57,6 +64,54 @@ final readonly class FollowUpPlanningService
             $followUp->setApplication($application);
             $followUp->setScheduledAt($scheduledAt);
             $followUp->setStatus(ScheduledFollowUp::STATUS_PENDING);
+            $followUp->setTemplateType(ScheduledFollowUp::TEMPLATE_FOLLOW_UP);
+            $followUps[] = $followUp;
+        }
+
+        return $followUps;
+    }
+
+    /**
+     * @return ScheduledFollowUp[]
+     */
+    public function scheduleThankYousForInterview(Interview $interview): array
+    {
+        $application = $interview->getApplication();
+        $owner = $application->getOwner();
+        if (null === $owner) {
+            return [];
+        }
+
+        if (!$application->isFollowUpsEnabled()) {
+            return [];
+        }
+
+        $rules = $this->followUpRuleRepository->findEnabledByUserAndTemplate($owner, FollowUpRule::TEMPLATE_THANK_YOU);
+        if ([] === $rules) {
+            return [];
+        }
+
+        $interviewAt = $interview->getScheduledAt();
+        $existingScheduledDates = $this->getExistingScheduledDates($application);
+        $followUps = [];
+
+        foreach ($rules as $rule) {
+            $days = $rule->getDaysWithoutReply();
+            $scheduledAt = $interviewAt->modify("+{$days} days")->setTime(10, 0, 0);
+
+            if (\in_array($scheduledAt->format('Y-m-d'), $existingScheduledDates, true)) {
+                continue;
+            }
+
+            if ($scheduledAt <= new \DateTimeImmutable()) {
+                continue;
+            }
+
+            $followUp = new ScheduledFollowUp();
+            $followUp->setApplication($application);
+            $followUp->setScheduledAt($scheduledAt);
+            $followUp->setStatus(ScheduledFollowUp::STATUS_PENDING);
+            $followUp->setTemplateType(ScheduledFollowUp::TEMPLATE_THANK_YOU);
             $followUps[] = $followUp;
         }
 
@@ -65,30 +120,29 @@ final readonly class FollowUpPlanningService
 
     private function shouldScheduleFollowUps(Application $application): bool
     {
+        if (!$application->isFollowUpsEnabled()) {
+            return false;
+        }
+
         $status = $application->getStatus();
 
-        return ApplicationStatus::APPLIED === $status || ApplicationStatus::OFFER === $status;
+        return ApplicationStatus::APPLIED === $status;
     }
 
     /**
-     * @return int[]
+     * @return string[]
      */
-    private function getExistingScheduledDays(Application $application): array
+    private function getExistingScheduledDates(Application $application): array
     {
-        $days = [];
-        $appliedAt = $application->getAppliedAt();
-        if (null === $appliedAt) {
-            return $days;
-        }
+        $dates = [];
 
         foreach ($application->getScheduledFollowUps() as $fu) {
             if (ScheduledFollowUp::STATUS_PENDING !== $fu->getStatus()) {
                 continue;
             }
-            $diff = $appliedAt->diff($fu->getScheduledAt());
-            $days[] = (int) $diff->days;
+            $dates[] = $fu->getScheduledAt()->format('Y-m-d');
         }
 
-        return $days;
+        return $dates;
     }
 }

@@ -8,8 +8,8 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
-use ApiPlatform\Metadata\Put;
 use App\State\OwnedEntityInterface;
 use App\State\OwnedEntityProcessor;
 use Doctrine\ORM\Mapping as ORM;
@@ -21,7 +21,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         new GetCollection(),
         new Get(),
         new Post(processor: OwnedEntityProcessor::class),
-        new Put(),
+        new Patch(),
         new Delete(),
     ],
     normalizationContext: ['groups' => ['follow_up_rule:read']],

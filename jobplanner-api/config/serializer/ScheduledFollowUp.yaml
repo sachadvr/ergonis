@@ -1,14 +1,16 @@
 App\Entity\ScheduledFollowUp:
     attributes:
         id:
-            groups: ['scheduled_follow_up:read']
+            groups: ['scheduled_follow_up:read', 'application:read']
         application:
             groups: ['scheduled_follow_up:read']
         scheduledAt:
-            groups: ['scheduled_follow_up:read']
+            groups: ['scheduled_follow_up:read', 'application:read']
         status:
-            groups: ['scheduled_follow_up:read']
+            groups: ['scheduled_follow_up:read', 'application:read']
+        templateType:
+            groups: ['scheduled_follow_up:read', 'application:read']
         cancelledAt:
             groups: ['scheduled_follow_up:read']
         generatedContent:
-            groups: ['scheduled_follow_up:read']
+            groups: ['scheduled_follow_up:read', 'application:read']

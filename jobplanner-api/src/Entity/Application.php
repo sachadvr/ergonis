@@ -95,9 +95,15 @@ class Application implements OwnedEntityInterface
     /**
      * @var Collection<int, ScheduledFollowUp>
      */
+    #[ApiProperty(readableLink: true)]
     #[ORM\OneToMany(targetEntity: ScheduledFollowUp::class, mappedBy: 'application', cascade: ['persist', 'remove'])]
+    #[ORM\OrderBy(['scheduledAt' => 'ASC'])]
     #[Groups(['application:read'])]
     private Collection $scheduledFollowUps;
+
+    #[ORM\Column(type: 'boolean', options: ['default' => true])]
+    #[Groups(['application:read', 'application:write'])]
+    private bool $followUpsEnabled = true;
 
     #[ORM\Column(type: 'string', length: 32, nullable: true)]
     #[Groups(['application:read'])]
@@ -244,6 +250,18 @@ class Application implements OwnedEntityInterface
     public function getScheduledFollowUps(): Collection
     {
         return $this->scheduledFollowUps;
+    }
+
+    public function isFollowUpsEnabled(): bool
+    {
+        return $this->followUpsEnabled;
+    }
+
+    public function setFollowUpsEnabled(bool $followUpsEnabled): self
+    {
+        $this->followUpsEnabled = $followUpsEnabled;
+
+        return $this;
     }
 
     public function getCvFitAnalysisStatus(): ?string

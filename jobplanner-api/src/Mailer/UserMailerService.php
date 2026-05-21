@@ -7,6 +7,7 @@ namespace App\Mailer;
 use App\Entity\UserMailboxSettings;
 use App\Repository\UserMailboxSettingsRepository;
 use App\Security\MailboxSecretEncryptor;
+use App\Service\Mail\TokenRefreshService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
@@ -18,6 +19,7 @@ final readonly class UserMailerService
         private UserSmtpTransportFactory $transportFactory,
         private LoggerInterface $logger,
         private MailboxSecretEncryptor $secretEncryptor,
+        private TokenRefreshService $tokenRefreshService,
     ) {
     }
 
@@ -27,6 +29,8 @@ final readonly class UserMailerService
         if (null === $settings) {
             throw new \RuntimeException('No mailbox settings found for user '.$userId);
         }
+
+        $this->tokenRefreshService->ensureValid($settings);
 
         if (!$this->hasValidSmtpSettings($settings)) {
             throw new \RuntimeException('Invalid SMTP settings for user '.$userId);

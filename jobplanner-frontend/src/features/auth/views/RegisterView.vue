@@ -23,7 +23,13 @@ const handleRegister = async () => {
     await authStore.register(email.value, password.value)
     router.push({ name: 'Dashboard' })
   } catch (e) {
-    error.value = 'Failed to create account. Email might already be taken.'
+    const err = e as { data?: { errors?: Record<string, string>; detail?: string; message?: string } }
+    const fieldErrors = err.data?.errors
+    if (fieldErrors && Object.keys(fieldErrors).length) {
+      error.value = Object.values(fieldErrors).join(' ')
+    } else {
+      error.value = err.data?.detail || err.data?.message || 'Failed to create account. Email might already be taken.'
+    }
   } finally {
     isLoading.value = false
   }
@@ -100,9 +106,11 @@ const handleMicrosoftLogin = async () => {
                 id="password"
                 v-model="password"
                 type="password"
-                placeholder="Create a password"
+                placeholder="At least 8 characters"
+                minlength="8"
                 required
               />
+              <p class="text-xs text-muted-foreground">Use 8 or more characters.</p>
             </div>
 
             <div v-if="error" class="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">

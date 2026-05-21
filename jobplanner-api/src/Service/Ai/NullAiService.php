@@ -45,7 +45,7 @@ final class NullAiService implements AiServiceInterface
         ];
     }
 
-    public function generateFollowUpEmail(Application $application, string $tone = 'professionnel'): string
+    public function generateFollowUpEmail(Application $application, string $tone = 'professionnel', string $templateType = 'follow_up'): string
     {
         $jobTitle = $application->getJobOffer()->getTitle();
         $company = $application->getJobOffer()->getCompany();

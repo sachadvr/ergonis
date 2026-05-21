@@ -18,6 +18,10 @@ App\Entity\Application:
             groups: ['application:read']
         recruiterEmails:
             groups: ['application:read']
+        scheduledFollowUps:
+            groups: ['application:read']
+        followUpsEnabled:
+            groups: ['application:read', 'application:write']
         interviews:
             groups: ['application:read']
         cvFitAnalysisStatus:

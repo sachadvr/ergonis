@@ -104,7 +104,7 @@ final class AnthropicService extends AbstractAiService
         ];
     }
 
-    public function generateFollowUpEmail(Application $application, string $tone = 'professionnel'): string
+    public function generateFollowUpEmail(Application $application, string $tone = 'professionnel', string $templateType = 'follow_up'): string
     {
         $jobOffer = $application->getJobOffer();
         $offerTitle = $jobOffer->getTitle();
@@ -113,6 +113,8 @@ final class AnthropicService extends AbstractAiService
         if ('' === $this->apiKey) {
             return "Hello,\n\nI have the pleasure of contacting you regarding my application for the post of {$offerTitle} at {$company}.\n\nI remain at your disposal for any additional information.\n\nSincerely";
         }
+
+        $prompts = FollowUpEmailPromptBuilder::build($application, $tone, $templateType);
 
         try {
             $response = $this->httpClient->request('POST', 'https://api.anthropic.com/v1/messages', [
@@ -125,12 +127,9 @@ final class AnthropicService extends AbstractAiService
                     'model' => $this->model,
                     'max_tokens' => 512,
                     'messages' => [
-                        [
-                            'role' => 'user',
-                            'content' => "Generate a follow-up email for my application for the post of {$offerTitle} at {$company}. Use the same language as the offer. Your tone: {$tone}. No response received. Max 150 words.",
-                        ],
+                        ['role' => 'user', 'content' => $prompts['user']],
                     ],
-                    'system' => 'You write professional application emails in the same language as the offer.',
+                    'system' => $prompts['system'],
                 ],
             ]);
             $data = $response->toArray();

@@ -33,4 +33,21 @@ final class FollowUpRuleRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * @return FollowUpRule[]
+     */
+    public function findEnabledByUserAndTemplate(User $user, string $templateType): array
+    {
+        return $this->createQueryBuilder('r')
+            ->where('r.owner = :user')
+            ->andWhere('r.enabled = :enabled')
+            ->andWhere('r.templateType = :tpl')
+            ->setParameter('user', $user)
+            ->setParameter('enabled', true)
+            ->setParameter('tpl', $templateType)
+            ->orderBy('r.daysWithoutReply', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

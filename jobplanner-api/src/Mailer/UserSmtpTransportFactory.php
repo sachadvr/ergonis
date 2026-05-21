@@ -34,12 +34,7 @@ final readonly class UserSmtpTransportFactory
 
         if (null !== $settings->getOauthProvider() && null !== $settings->getAccessToken()) {
             $accessToken = $this->secretEncryptor->decrypt($settings->getAccessToken()) ?? '';
-            $oauthString = sprintf(
-                "user=%s\1auth=Bearer %s\1\1",
-                $settings->getImapUser(),
-                $accessToken
-            );
-            $password = $oauthString;
+            $password = $accessToken;
             $username = $settings->getImapUser();
         }
 

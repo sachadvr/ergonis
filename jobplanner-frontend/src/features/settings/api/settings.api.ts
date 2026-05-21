@@ -57,11 +57,33 @@ export const settingsApi = {
    */
   async updateFollowUpRule(id: number, data: Partial<FollowUpRule>): Promise<FollowUpRule> {
     return apiClient(`${API_ENDPOINTS.SETTINGS.FOLLOW_UP_RULES}/${id}`, {
-      method: 'PUT',
+      method: 'PATCH',
+      body: data,
+      headers: {
+        'Content-Type': 'application/merge-patch+json',
+      },
+    })
+  },
+
+  /**
+   * Create a follow-up rule
+   */
+  async createFollowUpRule(data: Partial<FollowUpRule>): Promise<FollowUpRule> {
+    return apiClient(API_ENDPOINTS.SETTINGS.FOLLOW_UP_RULES, {
+      method: 'POST',
       body: data,
       headers: {
         'Content-Type': 'application/ld+json',
       },
+    })
+  },
+
+  /**
+   * Delete a follow-up rule
+   */
+  async deleteFollowUpRule(id: number): Promise<void> {
+    return apiClient(`${API_ENDPOINTS.SETTINGS.FOLLOW_UP_RULES}/${id}`, {
+      method: 'DELETE',
     })
   },
 

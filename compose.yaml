@@ -65,8 +65,11 @@ services:
       CORS_ALLOW_ORIGIN: '^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'
       SIMULATION_MODE: "true"
       OLLAMA_URL: http://host.docker.internal:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-bjoernb/gemma4-31b-think:latest}
       MERCURE_PUBLIC_URL: http://mercure:3000/.well-known/mercure
       MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET:-dev-mercure-secret}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       database:
         condition: service_healthy
@@ -110,10 +113,13 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-!ChangeMe!}@database:5432/${POSTGRES_DB:-app}?serverVersion=16&charset=utf8
       AI_PROVIDER: ollama
       OLLAMA_URL: http://host.docker.internal:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-bjoernb/gemma4-31b-think:latest}
       MAILER_DSN: smtp://mailpit:1025
       SIMULATION_MODE: "true"
       MERCURE_PUBLIC_URL: http://mercure:3000/.well-known/mercure
       MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET:-dev-mercure-secret}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - database
 
@@ -139,9 +145,12 @@ services:
       MAILER_DSN: smtp://mailpit:1025
       AI_PROVIDER: ollama
       OLLAMA_URL: http://host.docker.internal:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-bjoernb/gemma4-31b-think:latest}
       SIMULATION_MODE: "true"
       MERCURE_PUBLIC_URL: http://mercure:3000/.well-known/mercure
       MERCURE_JWT_SECRET: ${MERCURE_JWT_SECRET:-dev-mercure-secret}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - database
       - mercure

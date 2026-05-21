@@ -66,6 +66,7 @@ export interface Application {
   recruiterEmails?: RecruiterEmail[]
   interviews?: Array<Interview | string>
   scheduledFollowUps?: ScheduledFollowUp[]
+  followUpsEnabled?: boolean
   cvFitAnalysisStatus?: 'queued' | 'processing' | 'completed' | 'failed' | null
   cvFitAnalysisResult?: ApplicationCvFitAnalysis | null
   cvFitAnalysisRequestedAt?: string | null
@@ -174,6 +175,7 @@ export interface ScheduledFollowUp {
   id: number
   scheduledAt: string
   status: 'pending' | 'sent' | 'cancelled'
+  templateType: 'follow_up' | 'thank_you' | 'spontaneous'
   cancelledAt?: string
   generatedContent?: string
 }

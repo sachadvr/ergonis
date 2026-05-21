@@ -1,12 +1,13 @@
 # AI
 
-IA sert 4 choses.
+IA sert 5 choses.
 
 ## Usages
 - extraire offre depuis contenu extension
 - analyser fit CV / offre
-- rediger mail relance
+- rediger mail relance (follow_up / thank_you / spontaneous via `FollowUpEmailPromptBuilder`)
 - resumer mail recruteur
+- suggerer reponses rapides au mail recruteur
 
 ## Provider
 - `AI_PROVIDER=openai|anthropic|ollama|null`

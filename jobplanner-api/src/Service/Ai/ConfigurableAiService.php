@@ -26,9 +26,9 @@ final readonly class ConfigurableAiService implements AiServiceInterface
         return $this->factory->get()->analyzeApplicationFit($application, $cvText);
     }
 
-    public function generateFollowUpEmail(Application $application, string $tone = 'professionnel'): string
+    public function generateFollowUpEmail(Application $application, string $tone = 'professionnel', string $templateType = 'follow_up'): string
     {
-        return $this->factory->get()->generateFollowUpEmail($application, $tone);
+        return $this->factory->get()->generateFollowUpEmail($application, $tone, $templateType);
     }
 
     public function summarizeEmail(string $emailBody): string

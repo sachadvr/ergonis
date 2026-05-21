@@ -22,3 +22,5 @@
 - API a besoin DB, JWT, mail, et variable IA.
 - Sans Mailpit ou SMTP valide, tests mail peuvent casser.
 - Hors Docker, `mailpit` host resolu pas.
+- Ollama tourne sur l'hote (pas dans compose), accede via `host.docker.internal:11434`.
+- `MAILBOX_ENCRYPTION_KEY` placeholder dans `.env.example`, remplacer par chaine aleatoire >= 32 chars.

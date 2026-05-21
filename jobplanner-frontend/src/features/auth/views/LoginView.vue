@@ -142,6 +142,11 @@ const handleMicrosoftLogin = async () => {
               Microsoft
             </Button>
           </div>
+
+          <p class="mt-4 text-center text-sm text-muted-foreground">
+            Don't have an account?
+            <router-link to="/auth/register" class="font-medium text-primary hover:underline">Create one</router-link>
+          </p>
         </form>
       </CardContent>
       </Card>

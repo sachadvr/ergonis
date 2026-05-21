@@ -45,6 +45,7 @@ export function applicationDto(apiApplication: any): Application {
     recruiterEmails: apiApplication.recruiterEmails,
     interviews: apiApplication.interviews,
     scheduledFollowUps: apiApplication.scheduledFollowUps,
+    followUpsEnabled: apiApplication.followUpsEnabled,
     cvFitAnalysisStatus: apiApplication.cvFitAnalysisStatus,
     cvFitAnalysisResult: apiApplication.cvFitAnalysisResult,
     cvFitAnalysisRequestedAt: apiApplication.cvFitAnalysisRequestedAt,

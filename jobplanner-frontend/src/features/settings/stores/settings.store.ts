@@ -23,7 +23,9 @@ export const useSettingsStore = defineStore('settings', () => {
 
       config.value = configResponse
       mailboxSettings.value = mailboxResponse.member || mailboxResponse['hydra:member'] || []
-      followUpRules.value = followUpResponse.member || followUpResponse['hydra:member'] || []
+
+      const rawRules = followUpResponse.member || followUpResponse['hydra:member'] || []
+      followUpRules.value = [...rawRules].sort((a, b) => a.daysWithoutReply - b.daysWithoutReply)
     } catch (e) {
       error.value = 'Failed to fetch settings'
       console.error('Error fetching settings:', e)
@@ -75,6 +77,31 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
+  async function createFollowUpRule(data: Partial<FollowUpRule>) {
+    try {
+      error.value = null
+      const created = await settingsApi.createFollowUpRule(data)
+      followUpRules.value = [...followUpRules.value, created]
+      return created
+    } catch (e) {
+      error.value = 'Failed to create follow-up rule'
+      console.error('Error creating follow-up rule:', e)
+      throw e
+    }
+  }
+
+  async function deleteFollowUpRule(id: number) {
+    try {
+      error.value = null
+      await settingsApi.deleteFollowUpRule(id)
+      followUpRules.value = followUpRules.value.filter((rule) => rule.id !== id)
+    } catch (e) {
+      error.value = 'Failed to delete follow-up rule'
+      console.error('Error deleting follow-up rule:', e)
+      throw e
+    }
+  }
+
   async function testMailboxConnection(): Promise<{ success: boolean; message: string }> {
     try {
       error.value = null
@@ -98,6 +125,8 @@ export const useSettingsStore = defineStore('settings', () => {
     fetchSettings,
     saveMailboxSettings,
     saveFollowUpRule,
+    createFollowUpRule,
+    deleteFollowUpRule,
     testMailboxConnection,
   }
 })

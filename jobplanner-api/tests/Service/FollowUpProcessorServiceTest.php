@@ -16,6 +16,7 @@ use App\Repository\UserMailboxSettingsRepository;
 use App\Security\MailboxSecretEncryptor;
 use App\Service\Ai\AiServiceInterface;
 use App\Service\FollowUpProcessorService;
+use App\Service\Mail\TokenRefreshService;
 use App\Tests\Support\DoctrineTestHarness;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
@@ -94,6 +95,12 @@ final class FollowUpProcessorServiceTest extends TestCase
             new UserSmtpTransportFactory($logger, new MailboxSecretEncryptor('test-secret')),
             $logger,
             new MailboxSecretEncryptor('test-secret'),
+            new TokenRefreshService(
+                $this->createStub(\Symfony\Contracts\HttpClient\HttpClientInterface::class),
+                $this->createStub(EntityManagerInterface::class),
+                $this->createStub(LoggerInterface::class),
+                new MailboxSecretEncryptor('test-secret'),
+            ),
         );
 
         return new FollowUpProcessorService(
