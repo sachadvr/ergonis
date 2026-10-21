@@ -11,10 +11,10 @@
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
-    "@tiptap/extension-highlight": "^3.22.3",
-    "@tiptap/extension-placeholder": "^3.22.3",
-    "@tiptap/starter-kit": "^3.22.3",
-    "@tiptap/vue-3": "^3.22.3",
+    "@tiptap/extension-highlight": "^3.32.0",
+    "@tiptap/extension-placeholder": "^3.32.0",
+    "@tiptap/starter-kit": "^3.32.0",
+    "@tiptap/vue-3": "^3.32.0",
     "@vueuse/core": "^14.2.1",
     "@vueuse/integrations": "^14.2.1",
     "@vueuse/motion": "^3.0.3",
@@ -27,7 +27,7 @@
     "radix-vue": "^1.9.17",
     "sortablejs": "^1.15.7",
     "tailwind-merge": "^3.5.0",
-    "vue": "^3.5.25",
+    "vue": "^3.5.42",
     "vue-router": "^5.0.3",
     "zod": "^4.3.6"
   },
@@ -43,12 +43,12 @@
     "autoprefixer": "^10.4.27",
     "eslint": "^10.0.3",
     "eslint-plugin-vue": "^10.8.0",
-    "postcss": "^8.5.8",
+    "postcss": "^8.5.23",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "tailwindcss": "^4.2.1",
     "typescript": "~5.9.3",
-    "vite": "^7.3.1",
+    "vite": "^7.3.7",
     "vue-tsc": "^3.1.5"
   }
 }
